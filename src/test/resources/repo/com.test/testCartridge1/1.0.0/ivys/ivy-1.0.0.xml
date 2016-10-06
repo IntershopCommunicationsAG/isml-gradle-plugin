@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0">
+  <info organisation="com.test" module="testCartridge1" revision="1.0.0" status="integration" publication="20161006220407"/>
+  <configurations/>
+  <publications>
+    <artifact name="testCartridge1" type="cartridge" ext="zip"/>
+    <artifact name="testCartridge1" type="jar" ext="jar"/>
+  </publications>
+  <dependencies/>
+</ivy-module>
