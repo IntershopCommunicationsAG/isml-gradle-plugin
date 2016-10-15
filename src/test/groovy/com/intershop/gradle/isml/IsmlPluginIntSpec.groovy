@@ -23,10 +23,7 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 @Unroll
 class IsmlPluginIntSpec extends AbstractIntegrationSpec {
 
-    String platformIntershopVersion = '10.2.9'
-
     def 'Test taglib and usage in one Cartridge - isml'() {
-
         given:
         copyResources('test_taglib')
 
@@ -43,19 +40,22 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
             }
 
             dependencies {
-                compile("com.intershop.platform:core:${platformIntershopVersion}") {
+                compile("com.intershop.platform:core:${platformVersion}") {
                     transitive = false
                 }
-                compile("com.intershop.platform:servletengine:${platformIntershopVersion}") {
+                compile("com.intershop.platform:servletengine:${platformVersion}") {
                     transitive = false
                 }
-                compile("com.intershop.platform:isml:${platformIntershopVersion}") {
+                compile("com.intershop.platform:isml:${platformVersion}") {
                     transitive = false
                 }
-                compile('org.slf4j:slf4j-api:1.7.12') {
+                compile("javax.servlet:javax.servlet-api:${servletVersion}") {
                     transitive = false
                 }
-                compile('org.apache.tomcat:tomcat-el-api:7.0.42') {
+                compile("org.slf4j:slf4j-api:${slf4jVersion}") {
+                    transitive = false
+                }
+                compile("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
                     transitive = false
                 }
             }
@@ -64,14 +64,22 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
                 jcenter()
 
                 ivy {
-                    url 'http://nexus/nexus/content/groups/ish-releases'
+                    url '${System.properties['intershop.host.url']}'
                     layout('pattern') {
                         ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
                         artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
                     }
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
                 }
                 maven {
-                    url 'http://nexus/nexus/content/groups/ish-releases'
+                    url '${System.properties['intershop.host.url']}'
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
                 }
             }
         """.stripIndent()
@@ -82,7 +90,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
         """.stripIndent()
 
         when:
-        List<String> args = ['isml', '-s', '-i']
+        List<String> args = ['clean', 'isml', '-s', '-i']
 
         def result = getPreparedGradleRunner()
                 .withArguments(args)
@@ -94,6 +102,101 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
 
         where:
         gradleVersion << supportedGradleVersions
+        platformVersion << getVersions('platform.intershop.versions')
+        servletVersion << getVersions('servlet.version')
+        slf4jVersion << getVersions('slf4j.version')
+        tomcatVersion << getVersions('tomcat.version')
+    }
+
+    def 'Test taglib and usage in one Cartridge and additional javaOptions - isml'() {
+        given:
+        copyResources('test_taglib')
+
+        File tplFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/taglibTest.isml.tpl')
+        File testFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/taglibTest.isml')
+
+        testFile << tplFile.text.replaceAll('@cartridge@', 'testCartridge')
+        tplFile.delete()
+
+        buildFile << """
+            plugins {
+                id 'java'
+                id 'com.intershop.gradle.isml'
+            }
+
+            dependencies {
+                compile("com.intershop.platform:core:${platformVersion}") {
+                    transitive = false
+                }
+                compile("com.intershop.platform:servletengine:${platformVersion}") {
+                    transitive = false
+                }
+                compile("com.intershop.platform:isml:${platformVersion}") {
+                    transitive = false
+                }
+                compile("javax.servlet:javax.servlet-api:${servletVersion}") {
+                    transitive = false
+                }
+                compile("org.slf4j:slf4j-api:${slf4jVersion}") {
+                    transitive = false
+                }
+                compile("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
+                    transitive = false
+                }
+            }
+
+            tasks.withType(com.intershop.gradle.isml.tasks.IsmlCompile){
+                eclipseCompilerJavaOptions.setMaxHeapSize('64m')
+                eclipseCompilerJavaOptions.jvmArgs += ['-Dhttp.proxyHost=10.0.0.100', '-Dhttp.proxyPort=8800']
+            }
+
+            repositories {
+                jcenter()
+
+                ivy {
+                    url '${System.properties['intershop.host.url']}'
+                    layout('pattern') {
+                        ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
+                        artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
+                    }
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
+                }
+                maven {
+                    url '${System.properties['intershop.host.url']}'
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
+                }
+            }
+        """.stripIndent()
+
+        File settingsGradle = new File(testProjectDir, 'settings.gradle')
+        settingsGradle << """
+        rootProject.name='testCartridge'
+        """.stripIndent()
+
+        when:
+        List<String> args = ['clean', 'isml', '-s', '-d']
+
+        def result = getPreparedGradleRunner()
+                .withArguments(args)
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        then:
+        result.task(':isml').outcome == SUCCESS
+        result.output.contains('-Dhttp.proxyHost=10.0.0.100 -Dhttp.proxyPort=8800 -Xmx64m')
+
+        where:
+        gradleVersion << supportedGradleVersions
+        platformVersion << getVersions('platform.intershop.versions')
+        servletVersion << getVersions('servlet.version')
+        slf4jVersion << getVersions('slf4j.version')
+        tomcatVersion << getVersions('tomcat.version')
     }
 
     def 'Test taglib and usage with project dependencies - isml'() {
@@ -120,19 +223,22 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
                 group = 'com.test'
 
                 dependencies {
-                    compile("com.intershop.platform:core:${platformIntershopVersion}") {
+                    compile("com.intershop.platform:core:${platformVersion}") {
                         transitive = false
                     }
-                    compile("com.intershop.platform:servletengine:${platformIntershopVersion}") {
+                    compile("com.intershop.platform:servletengine:${platformVersion}") {
                         transitive = false
                     }
-                    compile("com.intershop.platform:isml:${platformIntershopVersion}") {
+                    compile("com.intershop.platform:isml:${platformVersion}") {
                         transitive = false
                     }
-                    compile('org.slf4j:slf4j-api:1.7.12') {
+                    compile("javax.servlet:javax.servlet-api:${servletVersion}") {
                         transitive = false
                     }
-                    compile('org.apache.tomcat:tomcat-el-api:7.0.42') {
+                    compile("org.slf4j:slf4j-api:${slf4jVersion}") {
+                        transitive = false
+                    }
+                    compile("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
                         transitive = false
                     }
                 }
@@ -141,14 +247,22 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
                     jcenter()
 
                     ivy {
-                        url 'http://nexus/nexus/content/groups/ish-releases'
+                        url '${System.properties['intershop.host.url']}'
                         layout('pattern') {
                             ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
                             artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
                         }
+                        credentials {
+                            username '${System.properties['intershop.host.username']}'
+                            password '${System.properties['intershop.host.userpassword']}'
+                        }
                     }
                     maven {
-                        url 'http://nexus/nexus/content/groups/ish-releases'
+                        url '${System.properties['intershop.host.url']}'
+                        credentials {
+                            username '${System.properties['intershop.host.username']}'
+                            password '${System.properties['intershop.host.userpassword']}'
+                        }
                     }
                 }
             }
@@ -227,6 +341,10 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
 
         where:
         gradleVersion << supportedGradleVersions
+        platformVersion << getVersions('platform.intershop.versions')
+        servletVersion << getVersions('servlet.version')
+        slf4jVersion << getVersions('slf4j.version')
+        tomcatVersion << getVersions('tomcat.version')
     }
 
     def 'Test taglib and usage with dependencies - isml'() {
@@ -249,19 +367,22 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
             }
 
             dependencies {
-                compile("com.intershop.platform:core:${platformIntershopVersion}") {
+                compile("com.intershop.platform:core:${platformVersion}") {
                     transitive = false
                 }
-                compile("com.intershop.platform:servletengine:${platformIntershopVersion}") {
+                compile("com.intershop.platform:servletengine:${platformVersion}") {
                     transitive = false
                 }
-                compile("com.intershop.platform:isml:${platformIntershopVersion}") {
+                compile("com.intershop.platform:isml:${platformVersion}") {
                     transitive = false
                 }
-                compile('org.slf4j:slf4j-api:1.7.12') {
+                compile("javax.servlet:javax.servlet-api:${servletVersion}") {
                     transitive = false
                 }
-                compile('org.apache.tomcat:tomcat-el-api:7.0.42') {
+                compile("org.slf4j:slf4j-api:${slf4jVersion}") {
+                    transitive = false
+                }
+                compile("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
                     transitive = false
                 }
                 compile('com.test:testCartridge1:1.0.0') {
@@ -279,14 +400,22 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
                     }
                 }
                 ivy {
-                    url 'http://nexus/nexus/content/groups/ish-releases'
+                    url '${System.properties['intershop.host.url']}'
                     layout('pattern') {
                         ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
                         artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
                     }
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
                 }
                 maven {
-                    url 'http://nexus/nexus/content/groups/ish-releases'
+                    url '${System.properties['intershop.host.url']}'
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
                 }
             }
         """.stripIndent()
@@ -309,5 +438,19 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
 
         where:
         gradleVersion << supportedGradleVersions
+        platformVersion << getVersions('platform.intershop.versions')
+        servletVersion << getVersions('servlet.version')
+        slf4jVersion << getVersions('slf4j.version')
+        tomcatVersion << getVersions('tomcat.version')
     }
+
+    List<String> getVersions(String propertyName) {
+        String versionsProps = System.properties[propertyName]?: ''
+        String[] versionList = versionsProps.split(',')
+        return versionList*.trim()
+    }
+
+
+
+
 }

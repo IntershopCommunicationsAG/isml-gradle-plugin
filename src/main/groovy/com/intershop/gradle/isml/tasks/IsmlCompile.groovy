@@ -19,12 +19,12 @@ package com.intershop.gradle.isml.tasks
 import com.intershop.gradle.isml.IsmlExtension
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
-import org.gradle.api.GradleException
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.file.FileResolver
+import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.*
 import org.gradle.process.JavaForkOptions
 import org.gradle.process.internal.DefaultJavaForkOptions
@@ -34,80 +34,32 @@ import javax.inject.Inject
 
 class IsmlCompile extends DefaultTask {
 
-    // patterns
-    final static String FILTER_JSP = '**/**/*.jsp'
-    
-    // template encoding
-    private static final String  DEFAULT_CONTENT_ENCODING = 'UTF-8'
-    
-    // necessary for jsp path change made by Intershop
-    private static final String[] javaKeywords = ['abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch',
-                                                  'char', 'class', 'const', 'continue', 'default', 'do', 'double', 'else', 'enum', 'extends', 'final', 'finally',
-                                                  'float', 'for', 'goto', 'if', 'implements', 'import', 'instanceof', 'int', 'interface', 'long', 'native', 'new',
-                                                  'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'strictfp', 'super', 'switch',
-                                                  'synchronized', 'this', 'throw', 'throws', 'transient', 'try', 'void', 'volatile', 'while' ]
-    
+    // main class names
+    static final String JSP_ANTTASK_CLASSNAME = 'org.apache.jasper.JspC'
+
+    static final String ISML_ANTTASK_CLASSNAME = 'com.intershop.beehive.isml.capi.ISML2JSP'
+
+    static final String ECLIPSE_COMPILER_CLASSNAME = 'org.eclipse.jdt.internal.compiler.batch.Main'
+
+    // folder names
+    static final String TAGLIB_SOURCE_FOLDER = 'staticfiles/cartridge/tags'
+
     static final String PAGECOMPILE_FOLDER = 'pagecompile'
-    
-    @Input
-    String jspPackage = "ish.cartridges.${project.getName()}"
-    
-    @Input
-    sourceCompatibility = '1.6'
-    
-    @Input
-    targetCompatibility = '1.6'
 
-    ConfigurableFileTree sourceDir
-    
-    @SkipWhenEmpty
-    @InputFiles
-    ConfigurableFileTree getSourceDir() {
-        return sourceDir
-    }
-    
-    @OutputFiles
-    ConfigurableFileTree outputDirectory
-    
-    @Input
-    Set<File> classpath
+    static final String TAGLIB_FOLDER = 'tags'
 
-    @TaskAction
-    void generate() {
-        File outputDir = getOutputDirectory().dir
+    static final String RELEASE_TAGLIB_FOLDER = "release/${TAGLIB_FOLDER}"
 
-        outputDir.deleteDir()
-        outputDir.mkdir()
+    // patterns
+    final static String FILTER_TAGLIB = "*/${RELEASE_TAGLIB_FOLDER}/**/**"
 
-        File tempPagecompileDir = new File(getTemporaryDir(), PAGECOMPILE_FOLDER)
+    final static String FILTER_WEBINF = 'WEB-INF/**/**'
 
-        File pageCompileFolder = new File(outputDir, PAGECOMPILE_FOLDER)
-        File srcInternalDir =  getSourceDir().getDir()
+    // path of web.xml
+    private static final String WEB_XML_PATH = 'WEB-INF/web.xml'
 
-        File webInf = createWebInf(tempPagecompileDir)
-        prepareTagLibs(webInf)
-
-        generateJSP(srcInternalDir, tempPagecompileDir)
-        generateJava(tempPagecompileDir)
-        compile(tempPagecompileDir)
-
-        project.copy {
-            from(tempPagecompileDir) {
-                exclude "${webInf.getName()}/**/**"
-            }
-            into pageCompileFolder
-        }
-
-        unifyTimestamps(pageCompileFolder)
-    }
-
-    private File createWebInf(File pageCompileDir) {
-        File webXml = new File(pageCompileDir, "WEB-INF/web.xml")
-        if(! webXml.exists()) {
-            webXml.getParentFile().mkdirs()
-        }
-
-        webXml << """<?xml version="1.0" encoding="ISO-8859-1"?>
+    // simple web.xml
+    private static final String WEB_XML_CONTENT = '''<?xml version="1.0" encoding="ISO-8859-1"?>
         <web-app xmlns="http://java.sun.com/xml/ns/javaee"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
@@ -115,132 +67,294 @@ class IsmlCompile extends DefaultTask {
           version="3.0">
 
         </web-app>
-        """.stripIndent()
+        '''.stripIndent()
+    
+    // necessary for jsp path change made by Intershop
+    private static final String[] JAVA_KEYWORDS = ['abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch',
+                                                   'char', 'class', 'const', 'continue', 'default', 'do', 'double', 'else', 'enum', 'extends', 'final', 'finally',
+                                                   'float', 'for', 'goto', 'if', 'implements', 'import', 'instanceof', 'int', 'interface', 'long', 'native', 'new',
+                                                   'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'strictfp', 'super', 'switch',
+                                                   'synchronized', 'this', 'throw', 'throws', 'transient', 'try', 'void', 'volatile', 'while' ]
+
+    /**
+     * Java fork options for the Java task.
+     */
+    JavaForkOptions eclipseCompilerJavaOptions
+
+    /**
+     * JSP package name
+     */
+    @Input
+    String jspPackage = "ish.cartridges.${project.getName()}"
+
+    /**
+     * Source compatibility of java files (result of Jsp2Java)
+     */
+    @Input
+    sourceCompatibility = '1.6'
+
+    /**
+     * Target compatibility of java files (result of Jsp2Java)
+     */
+    @Input
+    targetCompatibility = '1.6'
+
+    /**
+     * sourceSet name of java files
+     */
+    @Input
+    String sourceSetName
+
+    /**
+     * Configuration for isml compilation to class files
+     */
+    @Input
+    String ismlConfigurationName
+
+    /**
+     * File encoding
+     */
+    String encoding
+
+    /**
+     * Input files (ISML files)
+     */
+    ConfigurableFileTree sourceDir
+
+    @SkipWhenEmpty
+    @InputFiles
+    ConfigurableFileTree getSourceDir() {
+        return sourceDir
+    }
+
+    /**
+     * Output of this task is a source structure with
+     * jsp, java and class files
+     */
+    @OutputFiles
+    ConfigurableFileTree outputDirectory
+
+    @TaskAction
+    void generate() {
+        // prepare output directory
+        File outputDir = getOutputDirectory().dir
+        prepareDirectory(outputDir)
+
+        // prepare temporary output directory
+        File tempPagecompileDir = new File(getTemporaryDir(), PAGECOMPILE_FOLDER)
+        prepareDirectory(tempPagecompileDir)
+
+        // prepare web-inf directory
+        File webInf = createWebInf(tempPagecompileDir)
+        // prepare tag libs configuration
+        prepareTagLibs(webInf)
+
+        // create classpath of the project
+        String classpath = getProjectClasspath(getSourceSetName(), tempPagecompileDir)
+
+        // isml2jsp
+        generateJSP(getSourceDir().getDir(), tempPagecompileDir, classpath)
+        // jsp2java
+        generateJava(tempPagecompileDir, classpath)
+        // compile
+        compile(tempPagecompileDir, classpath)
+
+        // copy result
+        File pageCompileFolder = new File(outputDir, PAGECOMPILE_FOLDER)
+        project.copy {
+            from(tempPagecompileDir) {
+                exclude FILTER_WEBINF
+            }
+            into pageCompileFolder
+        }
+
+        // unify time stamp - all files must have the same timestamp
+        unifyTimestamps(pageCompileFolder)
+    }
+
+    /**
+     * Create temporary web.xml for JSP task
+     *
+     * @param rootWebDir     root dir for jsp compile
+     * @return web-inf directory of root web directory
+     */
+    private File createWebInf(File rootWebDir) {
+        File webXml = new File(rootWebDir, WEB_XML_PATH)
+        if(! webXml.exists()) {
+            webXml.getParentFile().mkdirs()
+        } else {
+            webXml.delete()
+        }
+        webXml << WEB_XML_CONTENT
 
         return webXml.getParentFile()
     }
 
+    /**
+     * Copy taglibs to the correct folder for JSP compile
+     *
+     * @param webInfFolder web-inf directory of root web directory
+     */
     private void prepareTagLibs(File webInfFolder) {
-        //Identify first own tags
-        File projectTagsFolder = project.file('staticfiles/cartridge/tags')
-        File porjectWebInfTagFolder = new File(webInfFolder, "tags/${project.name}")
+        //1. Identify own taglibs
+        File projectTagsFolder = project.file(TAGLIB_SOURCE_FOLDER)
+        File projectWebInfTagFolder = new File(webInfFolder, "${TAGLIB_FOLDER}/${project.name}")
         if(projectTagsFolder.exists() && projectTagsFolder.listFiles().size() > 0) {
+            project.logger.debug('prepare taglibs of the current project')
             project.copy {
                 from(projectTagsFolder)
-                into(porjectWebInfTagFolder)
+                into(projectWebInfTagFolder)
             }
         }
 
-        //Identify tag of multiproject dependencies
+        //2. Identify taglibs of multiproject dependencies
         project.configurations.collectMany { it.allDependencies }.findAll { it instanceof ProjectDependency } .unique().each { ProjectDependency pd ->
-            projectTagsFolder = new File(pd.dependencyProject.projectDir, 'staticfiles/cartridge/tags')
-            porjectWebInfTagFolder = new File(webInfFolder, "tags/${pd.dependencyProject.name}")
+            projectTagsFolder = new File(pd.dependencyProject.projectDir, TAGLIB_SOURCE_FOLDER)
+            projectWebInfTagFolder = new File(webInfFolder, "${TAGLIB_FOLDER}/${pd.dependencyProject.name}")
             if(projectTagsFolder.exists() && projectTagsFolder.listFiles().size() > 0) {
+                project.logger.debug('prepare taglibs of project {}', pd.dependencyProject.name)
                 project.copy {
                     from(projectTagsFolder)
-                    into(porjectWebInfTagFolder)
+                    into(projectWebInfTagFolder)
                 }
             }
         }
 
-        //Identify tag of dependencies
+        //3. Identify taglibs of dependencies
         project.configurations.getByName('compile').getResolvedConfiguration().getResolvedArtifacts().each { ResolvedArtifact artifact ->
             if (artifact.type == 'cartridge') {
-                porjectWebInfTagFolder = new File(webInfFolder, "tags/${artifact.name}")
-                File tempTagsDir = new File(getTemporaryDir(), "tmpTagLib/${artifact.name}")
+                projectWebInfTagFolder = new File(webInfFolder, "${TAGLIB_FOLDER}/${artifact.name}")
+                File tempTagsDir = new File(getTemporaryDir(), "tmp${TAGLIB_FOLDER}/${artifact.name}")
                 project.copy {
                     from project.zipTree(artifact.getFile())
-                    include '*/release/tags/**/**'
+                    include FILTER_TAGLIB
                     into tempTagsDir
                 }
-                projectTagsFolder = new File(tempTagsDir,"${artifact.name}/release/tags")
-                println projectTagsFolder
+                projectTagsFolder = new File(tempTagsDir,"${artifact.name}/${RELEASE_TAGLIB_FOLDER}")
                 if(projectTagsFolder.exists() && projectTagsFolder.listFiles().size() > 0) {
+                    project.logger.debug('prepare taglibs of project {}', artifact.name)
                     project.copy {
                         from(projectTagsFolder)
-                        into(porjectWebInfTagFolder)
+                        into(projectWebInfTagFolder)
                     }
                 }
             }
         }
     }
 
-    private void generateJSP(File ismlSrcDir, File pageCompileDir) {
-        project.logger.info('Compile isml templates to jsp')
-        
+    /**
+     * Calculates the classpath of this project and adds some
+     * build path directories
+     *
+     * @param javaSourceSetName     name of the java source set, which should be added
+     * @param pageCompileDir        file of the page compile directory
+     * @return                      the classpath
+     */
+    @CompileStatic
+    private String getProjectClasspath(String javaSourceSetName, File pageCompileDir) {
+        JavaPluginConvention javaConvention = project.convention.getPlugin(JavaPluginConvention.class)
+
+        SourceSet main = javaConvention.sourceSets.getByName(javaSourceSetName)
+
+        FileCollection ismlCompileClasspath = project.files(main.output.classesDir,
+                main.output.resourcesDir,
+                pageCompileDir,
+                project.getConfigurations().getAt(getIsmlConfigurationName()).filter({File itFile -> itFile.name.endsWith('.jar')}))
+
+        return ismlCompileClasspath.asPath
+    }
+
+    /**
+     * Removes the dir and creates the directory
+     * @param dir
+     */
+    @CompileStatic
+    private static void prepareDirectory(File dir) {
+        dir.deleteDir()
+        dir.mkdirs()
+    }
+
+    /**
+     * ISML to JSP compilation
+     * This step uses the compile classpath of the component.
+     *
+     * @param ismlSrcDir source directory with ISML files
+     * @param pageCompileDir output directory of this step
+     * @param classpath of the project extended with build files and pagecompile dir
+     */
+    private void generateJSP(File ismlSrcDir, File pageCompileDir, String classpath) {
+        project.logger.info('Compile isml templates to jsp from {} into {}', ismlSrcDir, pageCompileDir)
+
         //intialize ant task
         ant.taskdef (name : 'ISML2JSP',
-            classname : 'com.intershop.beehive.isml.capi.ISML2JSP',
-            classpath : project.files(getClasspath()).asPath)
+            classname : ISML_ANTTASK_CLASSNAME,
+            classpath : classpath)
         
         //run anttask
         ant.ISML2JSP(
                 srcdir:  ismlSrcDir,
                 destdir: pageCompileDir,
-                contentEncoding : DEFAULT_CONTENT_ENCODING) {
+                contentEncoding : getEncoding()) {
             JspEncoding(
                 mimeType : 'text/html',
-                encoding : DEFAULT_CONTENT_ENCODING
+                encoding : getEncoding()
             )
         }
-
-        // copy jsp files from the original folder to the jsp folder
-        ant.copy(todir: pageCompileDir) {
-            fileset(dir: ismlSrcDir,
-                    includes: FILTER_JSP)
-        }
     }
-    
-    private void generateJava(File pageCompileDir) {
-        project.logger.info('Compile jsp templates to java')
 
-        FileCollection jspCompilerConfiguration = getProject().getConfigurations().getAt(IsmlExtension.JSPJASPERCOMPILER_CONFIGURATION_NAME)
+    /**
+     * Generate java files from jsp files.
+     *
+     * @param pageCompileDir directory with jsp files
+     * @param classpath of the project extended with build files and pagecompile dir
+     */
+    private void generateJava(File pageCompileDir, String classpath) {
+        project.logger.info('Compile jsp templates to java in {}', pageCompileDir)
+
+        FileCollection jspCompilerConfiguration = project.getConfigurations().getAt(IsmlExtension.JSPJASPERCOMPILER_CONFIGURATION_NAME)
 
         //intialize ant task
         ant.taskdef (
                 name : 'JASPER',
-                classname : 'org.apache.jasper.JspC',
+                classname : JSP_ANTTASK_CLASSNAME,
                 classpath : jspCompilerConfiguration.asPath
         )
-        
-        if(! pageCompileDir.exists()) {
-            throw new GradleException("The directory ${pageCompileDir.absolutePath} does not exists! Check location of your isml templates!")
-        }
 
         //run anttask
         ant.JASPER(
                 uriroot:  pageCompileDir,
                 outputDir: pageCompileDir,
                 package: makeJavaPackageFromPackage(getJspPackage()),
-                classpath: project.files(getClasspath()).asPath,
-                //verbose: '0',
-                javaEncoding: DEFAULT_CONTENT_ENCODING,
+                classpath: classpath,
+                verbose: '0',
+                javaEncoding: getEncoding(),
                 compilerTargetVM: targetCompatibility,
                 compilerSourceVM: sourceCompatibility)
     }
 
     @CompileStatic
-    private void compile(File pageCompileDir) {
-        project.logger.info('Compile java templates to class')
+    private void compile(File pageCompileDir, String classpath) {
+        project.logger.info('Compile java templates to class in {}', pageCompileDir)
 
-        JavaExecHandleBuilder exechandler = prepareCompilerExec(pageCompileDir)
-        if (exechandler) {
-            exechandler.build().start().waitForFinish().assertNormalExitValue()
+        JavaExecHandleBuilder execHandler = prepareCompilerExec(pageCompileDir, classpath)
+        if (execHandler) {
+            execHandler.build().start().waitForFinish().assertNormalExitValue()
         }
     }
 
     @CompileStatic
-    private JavaExecHandleBuilder prepareCompilerExec(File pageCompileDir) {
+    private JavaExecHandleBuilder prepareCompilerExec(File pageCompileDir, String classpath) {
         FileCollection eclipseCompilerConfiguration = getProject().getConfigurations().getAt(IsmlExtension.ECLIPSECOMPILER_CONFIGURATION_NAME)
 
         File confFile = new File(getTemporaryDir(), "eclipsecompiler.config")
-        confFile << "-g -nowarn -encoding ${DEFAULT_CONTENT_ENCODING} -target ${getTargetCompatibility()} -source ${getSourceCompatibility()} -classpath ${project.files(getClasspath() + pageCompileDir).asPath}"
+        confFile << "-g -nowarn -encoding ${getEncoding()} -target ${getTargetCompatibility()} -source ${getSourceCompatibility()} -classpath ${classpath}"
 
         JavaExecHandleBuilder javaExec = new JavaExecHandleBuilder(getFileResolver())
+        getEclipseCompilerJavaOptions().copyTo(javaExec)
 
         return javaExec
                 .setClasspath(eclipseCompilerConfiguration)
-                .setMain('org.eclipse.jdt.internal.compiler.batch.Main')
+                .setMain(ECLIPSE_COMPILER_CLASSNAME)
                 .setArgs(["@${confFile.absolutePath}", pageCompileDir.absolutePath] )
     }
 
@@ -249,7 +363,7 @@ class IsmlCompile extends DefaultTask {
     // first access.
     @CompileStatic
     private void unifyTimestamps(File pageCompileDir) {
-        project.logger.info('Unifying compiled template timestamps.')
+        project.logger.info('Unifying compiled template timestamps in {}.', pageCompileDir)
         unifyTimestamps(pageCompileDir, System.currentTimeMillis())
     }
 
@@ -309,21 +423,21 @@ class IsmlCompile extends DefaultTask {
     }
 
     private static String mangleChar(char ch) {
-        char[] result = new char[5];
-        result[0] = '_';
-        result[1] = Character.forDigit((ch >> 12) & 0xf, 16);
-        result[2] = Character.forDigit((ch >> 8) & 0xf, 16);
-        result[3] = Character.forDigit((ch >> 4) & 0xf, 16);
-        result[4] = Character.forDigit(ch & 0xf, 16);
+        char[] result = new char[5]
+        result[0] = '_'
+        result[1] = Character.forDigit((ch >> 12) & 0xf, 16)
+        result[2] = Character.forDigit((ch >> 8) & 0xf, 16)
+        result[3] = Character.forDigit((ch >> 4) & 0xf, 16)
+        result[4] = Character.forDigit(ch & 0xf, 16)
         return new String(result);
     }
 
     private static boolean isJavaKeyword(String key) {
         int i = 0;
-        int j = javaKeywords.length;
+        int j = JAVA_KEYWORDS.length;
         while (i < j) {
             int k = (i + j) / 2;
-            int result = javaKeywords[k].compareTo(key);
+            int result = JAVA_KEYWORDS[k].compareTo(key);
             if (result == 0) {
                 return true;
             }
@@ -341,13 +455,13 @@ class IsmlCompile extends DefaultTask {
      *
      * @return JavaForkOptions
      */
-
-    public JavaForkOptions getForkOptions() {
-        if (forkOptions == null) {
-            forkOptions = new DefaultJavaForkOptions(getFileResolver());
+    @CompileStatic
+    public JavaForkOptions getEclipseCompilerJavaOptions() {
+        if (eclipseCompilerJavaOptions == null) {
+            eclipseCompilerJavaOptions = new DefaultJavaForkOptions(getFileResolver())
         }
 
-        return forkOptions;
+        return eclipseCompilerJavaOptions
     }
 
     @CompileStatic

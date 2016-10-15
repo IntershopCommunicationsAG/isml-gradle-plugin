@@ -18,7 +18,6 @@ package com.intershop.gradle.isml.util
 
 import groovy.transform.CompileStatic
 import org.gradle.api.Named
-import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.SourceSet
 import org.gradle.util.GUtil
 
@@ -28,7 +27,6 @@ class IsmlSourceSet implements Named {
     String name
     
     String ismlPath = "staticfiles/cartridge/templates"
-    FileCollection compileClasspath
     
     IsmlSourceSet(String displayName) {
         this.name = displayName
