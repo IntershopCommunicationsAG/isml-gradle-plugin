@@ -14,9 +14,8 @@
  *  limitations under the License.
  */
 
-package com.intershop.gradle.isml
+package com.intershop.gradle.isml.extension
 
-import com.intershop.gradle.isml.util.IsmlSourceSet
 import groovy.transform.CompileStatic
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
@@ -43,6 +42,9 @@ class IsmlExtension {
 
     //file encoding
     static final String DEFAULT_FILEENCODING = 'UTF-8'
+
+    //default ISML template
+    static final String DEFAULT_TEMPLATEPATH = 'staticfiles/cartridge/templates'
 
     /**
      * sourceSets with ISML files

@@ -14,14 +14,13 @@
  *  limitations under the License.
  */
 
-package com.intershop.gradle.isml.tasks
+package com.intershop.gradle.isml.task
 
-import com.intershop.gradle.isml.IsmlExtension
+import com.intershop.gradle.isml.extension.IsmlExtension
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.ResolvedArtifact
-import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.file.FileResolver
 import org.gradle.api.plugins.JavaPluginConvention
@@ -119,25 +118,21 @@ class IsmlCompile extends DefaultTask {
     /**
      * Input files (ISML files)
      */
-    ConfigurableFileTree sourceDir
-
     @SkipWhenEmpty
-    @InputFiles
-    ConfigurableFileTree getSourceDir() {
-        return sourceDir
-    }
+    @InputDirectory
+    File srcDirectory
 
     /**
      * Output of this task is a source structure with
      * jsp, java and class files
      */
-    @OutputFiles
-    ConfigurableFileTree outputDirectory
+    @OutputDirectory
+    File outputDirectory
 
     @TaskAction
     void generate() {
         // prepare output directory
-        File outputDir = getOutputDirectory().dir
+        File outputDir = getOutputDirectory()
         prepareDirectory(outputDir)
 
         // prepare temporary output directory
@@ -153,7 +148,7 @@ class IsmlCompile extends DefaultTask {
         String classpath = getProjectClasspath(getSourceSetName(), tempPagecompileDir)
 
         // isml2jsp
-        generateJSP(getSourceDir().getDir(), tempPagecompileDir, classpath)
+        generateJSP(getSrcDirectory(), tempPagecompileDir, classpath)
         // jsp2java
         generateJava(tempPagecompileDir, classpath)
         // compile
@@ -221,7 +216,7 @@ class IsmlCompile extends DefaultTask {
         }
 
         //3. Identify taglibs of dependencies
-        project.configurations.getByName('compile').getResolvedConfiguration().getResolvedArtifacts().each { ResolvedArtifact artifact ->
+        project.configurations.getByName(getIsmlConfigurationName()).getResolvedConfiguration().getResolvedArtifacts().each { ResolvedArtifact artifact ->
             if (artifact.type == 'cartridge') {
                 projectWebInfTagFolder = new File(webInfFolder, "${TAGLIB_FOLDER}/${artifact.name}")
                 File tempTagsDir = new File(getTemporaryDir(), "tmp${TAGLIB_FOLDER}/${artifact.name}")
@@ -252,14 +247,21 @@ class IsmlCompile extends DefaultTask {
      */
     @CompileStatic
     private String getProjectClasspath(String javaSourceSetName, File pageCompileDir) {
-        JavaPluginConvention javaConvention = project.convention.getPlugin(JavaPluginConvention.class)
+        FileCollection ismlCompileClasspath = null
 
-        SourceSet main = javaConvention.sourceSets.getByName(javaSourceSetName)
+        if(project.convention.findPlugin(JavaPluginConvention.class)) {
+            JavaPluginConvention javaConvention = project.convention.getPlugin(JavaPluginConvention.class)
+            SourceSet main = javaConvention.sourceSets.getByName(javaSourceSetName)
 
-        FileCollection ismlCompileClasspath = project.files(main.output.classesDir,
-                main.output.resourcesDir,
-                pageCompileDir,
-                project.getConfigurations().getAt(getIsmlConfigurationName()).filter({File itFile -> itFile.name.endsWith('.jar')}))
+            ismlCompileClasspath = project.files(main.output.classesDir,
+                    main.output.resourcesDir,
+                    pageCompileDir,
+                    project.getConfigurations().getAt(getIsmlConfigurationName()).filter({ File itFile -> itFile.name.endsWith('.jar') }))
+        } else {
+            ismlCompileClasspath = project.files(
+                    pageCompileDir,
+                    project.getConfigurations().getAt(getIsmlConfigurationName()).filter({ File itFile -> itFile.name.endsWith('.jar') }))
+        }
 
         return ismlCompileClasspath.asPath
     }
@@ -284,6 +286,8 @@ class IsmlCompile extends DefaultTask {
      */
     private void generateJSP(File ismlSrcDir, File pageCompileDir, String classpath) {
         project.logger.info('Compile isml templates to jsp from {} into {}', ismlSrcDir, pageCompileDir)
+
+        println ismlSrcDir
 
         //intialize ant task
         ant.taskdef (name : 'ISML2JSP',

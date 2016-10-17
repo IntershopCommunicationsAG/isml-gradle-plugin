@@ -15,16 +15,15 @@
  */
 package com.intershop.gradle.isml
 
-import com.intershop.gradle.isml.tasks.IsmlCompile
-import com.intershop.gradle.isml.util.IsmlSourceSet
+import com.intershop.gradle.isml.extension.IsmlExtension
+import com.intershop.gradle.isml.task.IsmlCompile
+import com.intershop.gradle.isml.extension.IsmlSourceSet
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.dsl.DependencyHandler
-import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
-
 /**
  * Plugin implementation
  */
@@ -40,16 +39,16 @@ class IsmlPlugin implements Plugin<Project> {
      * @param project
      */
     void apply (Project project) {
-        project.plugins.apply(JavaBasePlugin)
-
         project.logger.info("Create extension ${IsmlExtension.ISML_EXTENSION_NAME}")
-        this.extension = project.extensions.findByType(IsmlExtension) ?: project.extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension, project)
+        extension = project.extensions.findByType(IsmlExtension) ?: project.extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension, project)
 
         // Add configuration
         addEclipseCompilerConfiguration(project, extension)
         addJSPJasperCompilerConfiguration(project, extension)
 
-        extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
+        extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET) {
+            srcDirectory = new File(project.projectDir, IsmlExtension.DEFAULT_TEMPLATEPATH)
+        }
 
         // configure template source set
         configureSourceSets(project)
@@ -68,10 +67,12 @@ class IsmlPlugin implements Plugin<Project> {
         // configure template source sets
         extension.getSourceSets().all { IsmlSourceSet ismlSourceSet ->
             // Generate jsp, java and class files to the correct folder
-            IsmlCompile task = project.getTasks().create(ismlSourceSet.ismlTaskName,  IsmlCompile.class)
-            task.outputDirectory = project.fileTree(new File(project.buildDir, "${IsmlExtension.ISML_OUTPUTPATH}/${ismlSourceSet.name}"))
+            IsmlCompile task = project.getTasks().create(ismlSourceSet.getTaskName(),  IsmlCompile.class)
 
-            task.conventionMapping.sourceDir = { project.fileTree(ismlSourceSet.getIsmlPath()) }
+            task.onlyIf { ismlSourceSet.getSrcDirectory().exists() }
+
+            task.outputDirectory = new File(project.buildDir, "${IsmlExtension.ISML_OUTPUTPATH}/${ismlSourceSet.name}")
+            task.conventionMapping.srcDirectory = { ismlSourceSet.getSrcDirectory() }
             task.conventionMapping.ismlConfigurationName = { extension.getIsmlConfigurationName() }
             task.conventionMapping.sourceSetName = { extension.getJavaSourceSetName() }
             task.conventionMapping.encoding = { extension.getTemplateEncoding() }

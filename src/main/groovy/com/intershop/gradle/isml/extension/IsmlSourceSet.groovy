@@ -14,11 +14,10 @@
  *  limitations under the License.
  */
 
-package com.intershop.gradle.isml.util
+package com.intershop.gradle.isml.extension
 
 import groovy.transform.CompileStatic
 import org.gradle.api.Named
-import org.gradle.api.tasks.SourceSet
 import org.gradle.util.GUtil
 
 @CompileStatic
@@ -26,28 +25,14 @@ class IsmlSourceSet implements Named {
     
     String name
     
-    String ismlPath = "staticfiles/cartridge/templates"
+    File srcDirectory
     
-    IsmlSourceSet(String displayName) {
-        this.name = displayName
+    IsmlSourceSet(String name) {
+        this.name = name
     }
     
     // Tasknames
-    String getIsmlTaskName() {
-        return getTaskName('isml2class', name);
-    }
-    
-    String getTaskName(String verb, String target) {
-        if (verb == null) {
-            return "${getTaskBaseName()}${GUtil.toCamelCase(target)}"
-        }
-        if (target == null) {
-            return "${verb}${GUtil.toCamelCase(name)}" 
-        }
-        return "${verb}${GUtil.toCamelCase(target)}"
-    }
-    
-    private String getTaskBaseName() {
-        return name.equals(SourceSet.MAIN_SOURCE_SET_NAME) ? "" : GUtil.toCamelCase(name);
+    String getTaskName() {
+        return "isml2class${GUtil.toCamelCase(name)}"
     }
 }

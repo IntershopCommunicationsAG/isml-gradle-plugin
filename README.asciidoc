@@ -1,0 +1,123 @@
+= ISML Gradle Plugin
+:latestRevision: 1.0.0
+:toc:
+
+== Summary
+This plugin compiles ISML files of Intershop to Java class files. It generates also JSP and Java files from ISML files.
+All files of the output have the same time stamp.
+
+== Usage
+To apply the ISML Gradle Plugin to your projects, add the following in your build script:
+
+[source,groovy]
+[subs=+attributes]
+.build.gradle
+----
+plugins {
+    id 'com.intershop.gradle.isml' version '{latestRevision}'
+}
+----
+
+The plugin will create a default configuration for ISML templates of an Intershop project. The plugin uses the project
+dependencies for the ISML task and the compilation of the files.
+
+== Tasks
+The ISML Gradle plugin adds one task `isml` to the project. This task depends on all ISML plugin tasks 'isml2class*'.
+
+[cols="25%,30%,45%", width="95%, options="header"]
+|===
+|Task name  |Type            |Description
+|isml       | Task           | Overall ``isml`` code generation task of a project. This task depends on all ``isml2class`` tasks.
+|isml2class<source set name> | com.intershop.gradle.isml.task.IsmlCompile | This task compiles ISML files to class files.
+|===
+
+== Project Extension 'isml'
+This plugin adds an extension *`isml`* to the project.
+
+=== Properties
+[cols="17%,17%,17%,49%", width="90%, options="header"]
+|===
+|Property                 | Type    | Default value | Description
+|*jspCompilerVersion*     |`String` | '7.0.42'      | The version of JSP compiler.
+|*eclipseCompilerVersion* |`String` | '4.2.2'       | The version of Eclipse Java compiler. This version depends on the JSP compiler. Please check the used Tomcat version.
+|*templateEncoding*       |`String` | 'UTF-8'       | Template encoding. This is also used for JSP and Java compilation.
+|*javaSourceSetName*      |`String` | 'main'        | Name of the Java source set, which can be used for ISML compilation.
+|*ismlConfigurationName*  |`String` | 'runtime'     | Name of the configuration, which is used for the classpath of ISML compilation.
+
+|===
+
+=== Methods
+[cols="20%,15%,65%", width="95%", options="header"]
+|===
+|Method | Values | Description
+|*sourceSets*      |<<ismlSourceSet, IsmlSourceSet>>  | This contains all folders with ISML templates.
+|===
+
+==== [[ismlSourceSet]]Object 'sourceSet' (IsmlSourceSet)
+
+===== Properties
+
+[cols="17%,17%,15%,51%", width="90%, options="header"]
+|===
+|Property       | Type     | Default value    | Description
+|*name*         | `String` | 'main'                                            | The name of the ISML source set
+|*srcDirectory* | `File` | '<project dir>/staticfiles/cartridge/templates'     | The input directory of the task.
+|*taskName*     | `String` | 'isml2classMain'                                  | The task name.
+|===
+
+
+=== Example Configurations
+==== Simple configuration
+[source,groovy,subs="attributes"]
+----
+plugins {
+    id 'com.intershop.gradle.isml' version '{latestRevision}'
+}
+
+configurations {
+    compile
+    runtime.extendsFrom(compile)
+}
+
+dependencies {
+    compile "com.intershop.platform:core:<ICM platform version>"
+    compile "com.intershop.platform:isml:<ICM platform version>"
+    ...
+}
+----
+
+==== Configuration with additional VM settings for Eclipse Java compiler
+[source,groovy,subs="attributes"]
+----
+plugins {
+    id 'com.intershop.gradle.isml' version '{latestRevision}'
+}
+
+configurations {
+    compile
+    runtime.extendsFrom(compile)
+}
+
+tasks.withType(com.intershop.gradle.isml.task.IsmlCompile){
+    eclipseCompilerJavaOptions.setMaxHeapSize('64m')
+}
+
+dependencies {
+    compile "com.intershop.platform:core:<ICM platform version>"
+    compile "com.intershop.platform:isml:<ICM platform version>"
+    ...
+}
+----
+
+== License
+
+Copyright 2014-2016 Intershop Communications.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+
+

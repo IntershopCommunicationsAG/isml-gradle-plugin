@@ -39,7 +39,7 @@ class IsmlPluginTest extends Specification
         project.apply plugin: IsmlPlugin
 
         then:
-        project.extensions.isml.sourceSets.main.getIsmlPath() == 'staticfiles/cartridge/templates'
+        project.extensions.isml.sourceSets.main.getName() == 'main'
     }
 
     def 'should add ISML task'()

@@ -108,6 +108,89 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
         tomcatVersion << getVersions('tomcat.version')
     }
 
+    def 'Test isml'() {
+        given:
+        copyResources('test_isml')
+
+        buildFile << """
+            plugins {
+                id 'com.intershop.gradle.isml'
+            }
+
+            configurations {
+                compile
+                runtime.extendsFrom(compile)
+            }
+
+            dependencies {
+                compile("com.intershop.platform:core:${platformVersion}") {
+                    transitive = false
+                }
+                compile("com.intershop.platform:servletengine:${platformVersion}") {
+                    transitive = false
+                }
+                compile("com.intershop.platform:isml:${platformVersion}") {
+                    transitive = false
+                }
+                compile("javax.servlet:javax.servlet-api:${servletVersion}") {
+                    transitive = false
+                }
+                compile("org.slf4j:slf4j-api:${slf4jVersion}") {
+                    transitive = false
+                }
+                compile("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
+                    transitive = false
+                }
+            }
+
+            repositories {
+                jcenter()
+
+                ivy {
+                    url '${System.properties['intershop.host.url']}'
+                    layout('pattern') {
+                        ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
+                        artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
+                    }
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
+                }
+                maven {
+                    url '${System.properties['intershop.host.url']}'
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
+                }
+            }
+        """.stripIndent()
+
+        File settingsGradle = new File(testProjectDir, 'settings.gradle')
+        settingsGradle << """
+        rootProject.name='testCartridge'
+        """.stripIndent()
+
+        when:
+        List<String> args = ['isml', '-s', '-i']
+
+        def result = getPreparedGradleRunner()
+                .withArguments(args)
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        then:
+        result.task(':isml').outcome == SUCCESS
+
+        where:
+        gradleVersion << supportedGradleVersions
+        platformVersion << getVersions('platform.intershop.versions')
+        servletVersion << getVersions('servlet.version')
+        slf4jVersion << getVersions('slf4j.version')
+        tomcatVersion << getVersions('tomcat.version')
+    }
+
     def 'Test taglib and usage in one Cartridge and additional javaOptions - isml'() {
         given:
         copyResources('test_taglib')
@@ -145,7 +228,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
                 }
             }
 
-            tasks.withType(com.intershop.gradle.isml.tasks.IsmlCompile){
+            tasks.withType(com.intershop.gradle.isml.task.IsmlCompile){
                 eclipseCompilerJavaOptions.setMaxHeapSize('64m')
                 eclipseCompilerJavaOptions.jvmArgs += ['-Dhttp.proxyHost=10.0.0.100', '-Dhttp.proxyPort=8800']
             }
@@ -214,7 +297,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
                 id 'com.intershop.gradle.isml'
             }
 
-            allprojects {
+            subprojects {
                 apply plugin: 'java'
                 apply plugin: 'ivy-publish'
                 apply plugin: 'com.intershop.gradle.isml'
