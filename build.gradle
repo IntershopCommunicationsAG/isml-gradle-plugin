@@ -219,7 +219,7 @@ pluginBundle {
 
     plugins {
         gradleTestPlugin {
-            id = 'com.intershop.gradle.buildinfo'
+            id = 'com.intershop.gradle.isml'
             displayName = project.description
         }
     }
