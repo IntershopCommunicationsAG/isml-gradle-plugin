@@ -69,8 +69,8 @@ test {
     systemProperty 'slf4j.version',               '1.7.12   ,1.7.12 ,1.7.12  ,1.7.12'
     systemProperty 'tomcat.version',              '7.0.42   ,7.0.42 ,7.0.42  ,7.0.42'
     systemProperty 'intershop.host.url', 'https://repository.intershop.de/releases/'
-    systemProperty 'intershop.host.username',     project.intershopRepoUserName
-    systemProperty 'intershop.host.userpassword', project.intershopRepoUserPasswd
+    systemProperty 'intershop.host.username',     System.getProperty('ISHUSERNAME')
+    systemProperty 'intershop.host.userpassword', System.getProperty('ISHKEY')
 }
 
 task copyAsciiDoc {
