@@ -24,7 +24,7 @@ dependencies for the ISML task and the compilation of the files.
 == Tasks
 The ISML Gradle plugin adds one task `isml` to the project. This task depends on all ISML plugin tasks 'isml2class*'.
 
-[cols="25%,30%,45%", width="95%, options="header"]
+[cols="25%,30%,45%", width="90%, options="header"]
 |===
 |Task name  |Type            |Description
 |isml       | Task           | Overall ``isml`` code generation task of a project. This task depends on all ``isml2class`` tasks.
@@ -47,7 +47,7 @@ This plugin adds an extension *`isml`* to the project.
 |===
 
 === Methods
-[cols="20%,15%,65%", width="95%", options="header"]
+[cols="20%,15%,65%", width="90%", options="header"]
 |===
 |Method | Values | Description
 |*sourceSets*      |<<ismlSourceSet, IsmlSourceSet>>  | This contains all folders with ISML templates.
@@ -61,7 +61,7 @@ This plugin adds an extension *`isml`* to the project.
 |===
 |Property       | Type     | Default value    | Description
 |*name*         | `String` | 'main'                                            | The name of the ISML source set
-|*srcDirectory* | `File` | '<project dir>/staticfiles/cartridge/templates'     | The input directory of the task.
+|*srcDirectory* | `File` | '<project&nbsp;dir>/staticfiles/cartridge/templates'     | The input directory of the task.
 |*taskName*     | `String` | 'isml2classMain'                                  | The task name.
 |===
 
@@ -80,8 +80,8 @@ configurations {
 }
 
 dependencies {
-    compile "com.intershop.platform:core:<ICM platform version>"
-    compile "com.intershop.platform:isml:<ICM platform version>"
+    compile "com.intershop.platform:core:&lt;ICM platform version&gt;"
+    compile "com.intershop.platform:isml:&lt;ICM platform version&gt;"
     ...
 }
 ----
@@ -103,8 +103,8 @@ tasks.withType(com.intershop.gradle.isml.task.IsmlCompile){
 }
 
 dependencies {
-    compile "com.intershop.platform:core:<ICM platform version>"
-    compile "com.intershop.platform:isml:<ICM platform version>"
+    compile "com.intershop.platform:core:&lt;ICM platform version&gt;"
+    compile "com.intershop.platform:isml:&lt;ICM platform version&gt;"
     ...
 }
 ----
