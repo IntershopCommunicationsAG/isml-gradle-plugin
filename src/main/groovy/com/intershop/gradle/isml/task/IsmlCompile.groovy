@@ -111,6 +111,30 @@ class IsmlCompile extends DefaultTask {
     String ismlConfigurationName
 
     /**
+     * Input Dependency
+     */
+    @InputFiles
+    @Classpath
+    FileCollection getClasspathFiles() {
+        FileCollection ismlCompileClasspath = null
+
+        if(project.convention.findPlugin(JavaPluginConvention.class)) {
+            JavaPluginConvention javaConvention = project.convention.getPlugin(JavaPluginConvention.class)
+            SourceSet main = javaConvention.sourceSets.getByName(getSourceSetName())
+
+            ismlCompileClasspath = project.files(main.output.classesDir,
+                    main.output.resourcesDir,
+                    new File(getTemporaryDir(), PAGECOMPILE_FOLDER),
+                    project.getConfigurations().getAt(getIsmlConfigurationName()).filter({ File itFile -> itFile.name.endsWith('.jar') }))
+        } else {
+            ismlCompileClasspath = project.files(
+                    new File(getTemporaryDir(), PAGECOMPILE_FOLDER),
+                    project.getConfigurations().getAt(getIsmlConfigurationName()).filter({ File itFile -> itFile.name.endsWith('.jar') }))
+        }
+        return ismlCompileClasspath
+    }
+
+    /**
      * File encoding
      */
     String encoding
@@ -145,7 +169,7 @@ class IsmlCompile extends DefaultTask {
         prepareTagLibs(webInf)
 
         // create classpath of the project
-        String classpath = getProjectClasspath(getSourceSetName(), tempPagecompileDir)
+        String classpath = getClasspathFiles().asPath
 
         // isml2jsp
         generateJSP(getSrcDirectory(), tempPagecompileDir, classpath)
@@ -235,35 +259,6 @@ class IsmlCompile extends DefaultTask {
                 }
             }
         }
-    }
-
-    /**
-     * Calculates the classpath of this project and adds some
-     * build path directories
-     *
-     * @param javaSourceSetName     name of the java source set, which should be added
-     * @param pageCompileDir        file of the page compile directory
-     * @return                      the classpath
-     */
-    @CompileStatic
-    private String getProjectClasspath(String javaSourceSetName, File pageCompileDir) {
-        FileCollection ismlCompileClasspath = null
-
-        if(project.convention.findPlugin(JavaPluginConvention.class)) {
-            JavaPluginConvention javaConvention = project.convention.getPlugin(JavaPluginConvention.class)
-            SourceSet main = javaConvention.sourceSets.getByName(javaSourceSetName)
-
-            ismlCompileClasspath = project.files(main.output.classesDir,
-                    main.output.resourcesDir,
-                    pageCompileDir,
-                    project.getConfigurations().getAt(getIsmlConfigurationName()).filter({ File itFile -> itFile.name.endsWith('.jar') }))
-        } else {
-            ismlCompileClasspath = project.files(
-                    pageCompileDir,
-                    project.getConfigurations().getAt(getIsmlConfigurationName()).filter({ File itFile -> itFile.name.endsWith('.jar') }))
-        }
-
-        return ismlCompileClasspath.asPath
     }
 
     /**
