@@ -108,6 +108,188 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
         tomcatVersion << getVersions('tomcat.version')
     }
 
+    //TODO: Test incremental build of isml: changes on isml file
+    def 'Test isml incemental build with a changed file'() {
+        given:
+        copyResources('test_isml')
+
+        buildFile << """
+            plugins {
+                id 'com.intershop.gradle.isml'
+            }
+
+            configurations {
+                compile
+                runtime.extendsFrom(compile)
+            }
+
+            dependencies {
+                compile("com.intershop.platform:core:${platformVersion}") {
+                    transitive = false
+                }
+                compile("com.intershop.platform:servletengine:${platformVersion}") {
+                    transitive = false
+                }
+                compile("com.intershop.platform:isml:${platformVersion}") {
+                    transitive = false
+                }
+                compile("javax.servlet:javax.servlet-api:${servletVersion}") {
+                    transitive = false
+                }
+                compile("org.slf4j:slf4j-api:${slf4jVersion}") {
+                    transitive = false
+                }
+                compile("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
+                    transitive = false
+                }
+            }
+
+            repositories {
+                jcenter()
+
+                ivy {
+                    url '${System.properties['intershop.host.url']}'
+                    layout('pattern') {
+                        ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
+                        artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
+                    }
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
+                }
+                maven {
+                    url '${System.properties['intershop.host.url']}'
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
+                }
+            }
+        """.stripIndent()
+
+        File settingsGradle = new File(testProjectDir, 'settings.gradle')
+        settingsGradle << """
+        rootProject.name='testCartridge'
+        """.stripIndent()
+
+        File ismlFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/test.isml')
+        long ismlLastModified = ismlFile.lastModified()
+
+        when:
+        List<String> args = ['isml', '-s', '-i']
+
+        def result = getPreparedGradleRunner()
+                .withArguments(args)
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        File jspFile = new File(testProjectDir, 'build/generated/isml/main/pagecompile/default/support/test.jsp')
+        File javaFile =  new File(testProjectDir, 'build/generated/isml/main/pagecompile/ish/cartridges/testCartridge/default_/support/test_jsp.java')
+        File classFile = new File(testProjectDir, 'build/generated/isml/main/pagecompile/ish/cartridges/testCartridge/default_/support/test_jsp.class')
+
+
+        then:
+        result.task(':isml').outcome == SUCCESS
+        jspFile.exists()
+        javaFile.exists()
+        classFile.exists()
+
+        jspFile.lastModified() == javaFile.lastModified()
+        jspFile.lastModified() == classFile.lastModified()
+
+        where:
+        gradleVersion << supportedGradleVersions
+        platformVersion << getVersions('platform.intershop.versions')
+        servletVersion << getVersions('servlet.version')
+        slf4jVersion << getVersions('slf4j.version')
+        tomcatVersion << getVersions('tomcat.version')
+    }
+
+    //TODO: Test incremental build of isml: changes on classpath
+    def 'Test isml incemental build with a changed classpath'() {
+        given:
+        copyResources('test_isml')
+
+        buildFile << """
+            plugins {
+                id 'com.intershop.gradle.isml'
+            }
+
+            configurations {
+                compile
+                runtime.extendsFrom(compile)
+            }
+
+            dependencies {
+                compile("com.intershop.platform:core:${platformVersion}") {
+                    transitive = false
+                }
+                compile("com.intershop.platform:servletengine:${platformVersion}") {
+                    transitive = false
+                }
+                compile("com.intershop.platform:isml:${platformVersion}") {
+                    transitive = false
+                }
+                compile("javax.servlet:javax.servlet-api:${servletVersion}") {
+                    transitive = false
+                }
+                compile("org.slf4j:slf4j-api:${slf4jVersion}") {
+                    transitive = false
+                }
+                compile("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
+                    transitive = false
+                }
+            }
+
+            repositories {
+                jcenter()
+
+                ivy {
+                    url '${System.properties['intershop.host.url']}'
+                    layout('pattern') {
+                        ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
+                        artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
+                    }
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
+                }
+                maven {
+                    url '${System.properties['intershop.host.url']}'
+                    credentials {
+                        username '${System.properties['intershop.host.username']}'
+                        password '${System.properties['intershop.host.userpassword']}'
+                    }
+                }
+            }
+        """.stripIndent()
+
+        File settingsGradle = new File(testProjectDir, 'settings.gradle')
+        settingsGradle << """
+        rootProject.name='testCartridge'
+        """.stripIndent()
+
+        when:
+        List<String> args = ['isml', '-s', '-i']
+
+        def result = getPreparedGradleRunner()
+                .withArguments(args)
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        then:
+        result.task(':isml').outcome == SUCCESS
+
+        where:
+        gradleVersion << supportedGradleVersions
+        platformVersion << getVersions('platform.intershop.versions')
+        servletVersion << getVersions('servlet.version')
+        slf4jVersion << getVersions('slf4j.version')
+        tomcatVersion << getVersions('tomcat.version')
+    }
+
     def 'Test isml'() {
         given:
         copyResources('test_isml')

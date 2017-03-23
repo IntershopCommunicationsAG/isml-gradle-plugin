@@ -16,36 +16,35 @@
 
 package com.intershop.gradle.isml
 
-import org.gradle.api.Project
-import org.gradle.testfixtures.ProjectBuilder
-import spock.lang.Specification
+import com.intershop.gradle.test.AbstractProjectSpec
+import org.gradle.api.Plugin
 
-class IsmlPluginTest extends Specification
-{
-    final Project project = ProjectBuilder.builder().build()
+class IsmlPluginTest extends AbstractProjectSpec {
 
-    def 'should add extension named isml'()
-    {
+    @Override
+    Plugin getPlugin() {
+        return new IsmlPlugin()
+    }
+
+    def 'should add extension named isml'() {
         when:
-        project.apply plugin: IsmlPlugin
+        plugin.apply(project)
 
         then:
         project.extensions.isml
     }
 
-    def 'should add ISML sourceSet'()
-    {
+    def 'should add ISML sourceSet'() {
         when:
-        project.apply plugin: IsmlPlugin
+        plugin.apply(project)
 
         then:
         project.extensions.isml.sourceSets.main.getName() == 'main'
     }
 
-    def 'should add ISML task'()
-    {
+    def 'should add ISML task'() {
         given:
-        project.apply plugin: IsmlPlugin
+        plugin.apply(project)
 
         when:
         project.extensions.isml.sourceSets {

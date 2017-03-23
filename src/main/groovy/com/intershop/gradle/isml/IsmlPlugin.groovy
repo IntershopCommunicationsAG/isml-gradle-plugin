@@ -46,8 +46,10 @@ class IsmlPlugin implements Plugin<Project> {
         addEclipseCompilerConfiguration(project, extension)
         addJSPJasperCompilerConfiguration(project, extension)
 
-        extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET) {
-            srcDirectory = new File(project.projectDir, IsmlExtension.DEFAULT_TEMPLATEPATH)
+        if(! extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET)) {
+            extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET) {
+                srcDirectory = new File(project.projectDir, IsmlExtension.DEFAULT_TEMPLATEPATH)
+            }
         }
 
         // configure template source set
@@ -59,7 +61,7 @@ class IsmlPlugin implements Plugin<Project> {
      */
     private void configureSourceSets(final Project project) {
         // Task creation
-        Task ismlMain = project.getTasks().create(IsmlExtension.ISML_TASK_NAME).configure {
+        Task ismlMain = project.getTasks().maybeCreate(IsmlExtension.ISML_TASK_NAME).configure {
             description = IsmlExtension.ISML_TASK_DESCRIPTION
             group = IsmlExtension.ISML_GROUP_NAME
         }
@@ -67,7 +69,7 @@ class IsmlPlugin implements Plugin<Project> {
         // configure template source sets
         extension.getSourceSets().all { IsmlSourceSet ismlSourceSet ->
             // Generate jsp, java and class files to the correct folder
-            IsmlCompile task = project.getTasks().create(ismlSourceSet.getTaskName(),  IsmlCompile.class)
+            IsmlCompile task = project.getTasks().maybeCreate(ismlSourceSet.getTaskName(),  IsmlCompile.class)
 
             task.onlyIf { ismlSourceSet.getSrcDirectory().exists() }
 
