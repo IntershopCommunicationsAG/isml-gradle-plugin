@@ -282,8 +282,6 @@ class IsmlCompile extends DefaultTask {
     private void generateJSP(File ismlSrcDir, File pageCompileDir, String classpath) {
         project.logger.info('Compile isml templates to jsp from {} into {}', ismlSrcDir, pageCompileDir)
 
-        println ismlSrcDir
-
         //intialize ant task
         ant.taskdef (name : 'ISML2JSP',
             classname : ISML_ANTTASK_CLASSNAME,
