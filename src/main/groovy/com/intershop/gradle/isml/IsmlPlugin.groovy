@@ -23,7 +23,10 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.dsl.DependencyHandler
+import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.language.assembler.tasks.Assemble
+
 /**
  * Plugin implementation
  */
@@ -66,6 +69,8 @@ class IsmlPlugin implements Plugin<Project> {
             group = IsmlExtension.ISML_GROUP_NAME
         }
 
+        Task assembelTask = project.getTasks().findByName(Assemble.TASK_NAME)
+
         // configure template source sets
         extension.getSourceSets().all { IsmlSourceSet ismlSourceSet ->
             // Generate jsp, java and class files to the correct folder
@@ -84,6 +89,7 @@ class IsmlPlugin implements Plugin<Project> {
             }
 
             ismlMain.dependsOn(task)
+            assembelTask?.dependsOn(task)
         }
     }
 
