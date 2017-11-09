@@ -18,6 +18,7 @@ package com.intershop.gradle.isml.task
 
 import com.intershop.gradle.isml.extension.IsmlExtension
 import groovy.transform.CompileStatic
+import org.codehaus.groovy.transform.sc.StaticCompileTransformation
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.ResolvedArtifact
@@ -137,6 +138,8 @@ class IsmlCompile extends DefaultTask {
     /**
      * File encoding
      */
+    @Optional
+    @Input
     String encoding
 
     /**
@@ -453,6 +456,7 @@ class IsmlCompile extends DefaultTask {
      * @return JavaForkOptions
      */
     @CompileStatic
+    @Internal
     public JavaForkOptions getEclipseCompilerJavaOptions() {
         if (eclipseCompilerJavaOptions == null) {
             eclipseCompilerJavaOptions = new DefaultJavaForkOptions(getFileResolver())
