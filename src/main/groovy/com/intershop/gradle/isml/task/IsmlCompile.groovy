@@ -347,6 +347,11 @@ class IsmlCompile extends DefaultTask {
         FileCollection eclipseCompilerConfiguration = getProject().getConfigurations().getAt(IsmlExtension.ECLIPSECOMPILER_CONFIGURATION_NAME)
 
         File confFile = new File(getTemporaryDir(), "eclipsecompiler.config")
+
+        // confFile must be handled like input parameter ...
+        if(confFile.exists()) {
+            confFile.delete()
+        }
         confFile << "-g -nowarn -encoding ${getEncoding()} -target ${getTargetCompatibility()} -source ${getSourceCompatibility()} -classpath ${classpath}"
 
         JavaExecHandleBuilder javaExec = new JavaExecHandleBuilder(getFileResolver())
