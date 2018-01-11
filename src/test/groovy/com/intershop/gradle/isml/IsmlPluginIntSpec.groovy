@@ -364,6 +364,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
 
         then:
         result.task(':isml').outcome == SUCCESS
+        (new File(testProjectDir, 'build/generated/isml/main/pagecompile/ish/cartridges/testCartridge/common/errorPages/error400_jsp.class')).exists()
 
         where:
         gradleVersion << supportedGradleVersions

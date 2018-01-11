@@ -58,6 +58,9 @@ class IsmlCompile extends DefaultTask {
     // path of web.xml
     private static final String WEB_XML_PATH = 'WEB-INF/web.xml'
 
+    // patterns
+    final static String FILTER_JSP = '**/**/*.jsp'
+
     // simple web.xml
     private static final String WEB_XML_CONTENT = '''<?xml version="1.0" encoding="ISO-8859-1"?>
         <web-app xmlns="http://java.sun.com/xml/ns/javaee"
@@ -299,6 +302,14 @@ class IsmlCompile extends DefaultTask {
                 mimeType : 'text/html',
                 encoding : getEncoding()
             )
+        }
+
+        // copy jsp files from the original folder to the jsp folder
+        project.copy {
+            from(ismlSrcDir) {
+                include FILTER_JSP
+            }
+            into pageCompileDir
         }
     }
 
