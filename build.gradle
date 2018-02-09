@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 plugins {
     // project plugins
     id 'java-gradle-plugin'
     id 'groovy'
+    id 'nebula.kotlin' version '1.2.21'
+
     // test coverage
     id 'jacoco'
 
     // ide plugin
     id 'idea'
-
-    // intershop test plugin
-    id 'com.intershop.gradle.test' version '2.2.0'
 
     // plugin for documentation
     id 'org.asciidoctor.convert' version '1.5.3'
@@ -34,7 +32,7 @@ plugins {
     id 'maven-publish'
 
     // intershop version plugin
-    id 'com.intershop.gradle.scmversion' version '2.5.5'
+    id 'com.intershop.gradle.scmversion' version '3.4.0'
 
     // plugin for publishing to Gradle Portal
     id 'com.gradle.plugin-publish' version '0.9.9'
@@ -53,8 +51,25 @@ group 'com.intershop.gradle.isml'
 description 'ISML plugin for Intershop'
 version = scm.version.version
 
+gradlePlugin {
+    plugins {
+        ismlPlugin {
+            id = 'com.intershop.gradle.isml'
+            implementationClass = 'com.intershop.gradle.isml.IsmlPlugin'
+        }
+        ismltaglibPlugin {
+            id = 'com.intershop.gradle.ismltaglib'
+            implementationClass = 'com.intershop.gradle.isml.IsmlTagLibPlugin'
+        }
+    }
+}
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
 
 // set correct project status
 if (project.version.endsWith('-SNAPSHOT')) {
@@ -63,7 +78,7 @@ if (project.version.endsWith('-SNAPSHOT')) {
 
 // test configuration
 test {
-    systemProperty 'intershop.gradle.versions',   '2.11     ,2.11'
+    systemProperty 'intershop.gradle.versions',   '4.5.1    ,4.5.1'
     systemProperty 'platform.intershop.versions', '10.2.15  ,11.1.1'
     systemProperty 'servlet.version',             '3.0.1    ,3.0.1'
     systemProperty 'slf4j.version',               '1.7.12   ,1.7.12'
@@ -156,7 +171,7 @@ publishing {
             }
 
             pom.withXml {
-                def Node root = asNode();
+                Node root = asNode()
                 root.appendNode('name', project.name)
                 root.appendNode('description', project.description)
                 root.appendNode('url', "https:/gitlab.intershop.de/IntershopGradlePlugins/${project.name}")
@@ -169,7 +184,7 @@ publishing {
                 org.appendNode( 'name', 'Intershop Communications' )
                 org.appendNode( 'url', 'http://intershop.com' )
 
-                def license = root.appendNode( 'licenses' ).appendNode( 'license' );
+                def license = root.appendNode( 'licenses' ).appendNode( 'license' )
                 license.appendNode( 'name', 'Apache License, Version 2.0' )
                 license.appendNode( 'url', 'http://www.apache.org/licenses/LICENSE-2.0' )
                 license.appendNode( 'distribution', 'repo' )
@@ -218,24 +233,41 @@ pluginBundle {
     tags = ['intershop', 'gradle', 'plugin', 'build', 'isml']
 
     plugins {
-        gradleTestPlugin {
-            id = 'com.intershop.gradle.isml'
+        ismlPlugin {
+            id = gradlePlugin.plugins.ismlPlugin.id
+            displayName = project.description
+        }
+        ismltaglibPlugin {
+            id = gradlePlugin.plugins.ismltaglibPlugin.id
             displayName = project.description
         }
     }
 }
 
 dependencies {
-    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
-        exclude group: 'org.codehaus.groovy'
-    }
-    testCompile 'commons-io:commons-io:2.2'
+    compileOnly 'org.jetbrains:annotations:15.0'
 
     compileOnly 'org.eclipse.jdt.core.compiler:ecj:4.2.2'
+    compileOnly 'org.apache.tomcat:tomcat-jasper:7.0.42'
+    compileOnly 'com.intershop.platform:isml:13.0.8'
 
-    runtime 'org.apache.tomcat:tomcat-jasper:7.0.42'
+    testCompile 'commons-io:commons-io:2.2'
+    testCompile 'com.intershop.gradle.test:test-gradle-plugin:3.0.0'
+    testCompile gradleTestKit()
 }
 
 repositories {
     jcenter()
+
+    ivy {
+        url 'https://repository.intershop.de/releases/'
+        layout('pattern') {
+            ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
+            artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
+        }
+        credentials {
+            username System.getenv('ISHUSERNAME') ?: System.getProperty('ISHUSERNAME')
+            password System.getenv('ISHKEY') ?: System.getProperty('ISHKEY')
+        }
+    }
 }
