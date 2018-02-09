@@ -38,6 +38,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         const val FILTER_JSP = "**/**/*.jsp"
     }
 
+    @Internal
     val outputDirProperty: DirectoryProperty = this.newOutputDirectory()
 
     var outputDir: File
@@ -50,6 +51,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         }
 
     // folder with taglibs
+    @Internal
     val tagLibsInputDirProperty: DirectoryProperty = this.newInputDirectory()
 
     val tagLibsInputDir: File?
@@ -64,7 +66,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         }
 
     // folder with isml sources
-    @NotNull
+    @Internal
     val inputDirProperty: DirectoryProperty = this.newInputDirectory()
 
     var inputDir: File
@@ -78,6 +80,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         }
 
     // (java) configuration name for isml compilation
+    @Internal
     val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
 
     var ismlConfiguration: String
@@ -90,6 +93,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         }
 
     // jsp package path
+    @Internal
     val jspPackageProperty: Property<String> = project.objects.property(String::class.java)
 
     var jspPackage: String
@@ -102,6 +106,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         }
 
     // java source set name
+    @Internal
     val soureSetNameProperty: Property<String> = project.objects.property(String::class.java)
 
     var sourceSetName: String
@@ -115,6 +120,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         }
 
     // java source compatibility
+    @Internal
     val sourceCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
 
     var sourceCompatibility: String
@@ -127,6 +133,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         }
 
     // java target compatibility
+    @Internal
     val targetCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
 
     var targetCompatibility: String
@@ -139,6 +146,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         }
 
     // encoding for files
+    @Internal
     val encodingProperty: Property<String> = project.objects.property(String::class.java)
 
     var encoding: String

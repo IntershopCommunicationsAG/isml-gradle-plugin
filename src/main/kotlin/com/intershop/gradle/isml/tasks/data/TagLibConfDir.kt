@@ -21,5 +21,5 @@ import org.gradle.api.tasks.Optional
 import java.io.File
 
 
-data class TagLibConfDir constructor(@Optional @InputDirectory override val conffile: File,
+data class TagLibConfDir constructor(@InputDirectory override val conffile: File,
                                      @Input override val projectName: String) : TagLibConf

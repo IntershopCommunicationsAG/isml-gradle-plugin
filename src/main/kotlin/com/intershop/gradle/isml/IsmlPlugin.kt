@@ -42,6 +42,7 @@ class IsmlPlugin : Plugin<Project> {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
                 mainIsmlSourceSet.srcDirectoryProvider.set(layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH))
                 mainIsmlSourceSet.outputDirProvider.set(layout.buildDirectory.dir("${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}"))
+                mainIsmlSourceSet.jspPackageProvider.set("ish.cartridges.${project.name}")
             }
 
             configureTask(this, extension)

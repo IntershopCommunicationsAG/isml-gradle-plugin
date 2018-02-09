@@ -36,7 +36,6 @@ class IsmlSourceSet(project: Project, val srcname: String) : Named {
 
     init {
         outputDirProvider.set(project.layout.buildDirectory.dir(IsmlExtension.ISML_OUTPUTPATH))
-        jspPackageProvider.set("ish.cartridges.${project.name}")
     }
 
     var srcDir: File

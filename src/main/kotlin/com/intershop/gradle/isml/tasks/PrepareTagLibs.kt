@@ -23,10 +23,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import java.io.File
 import java.util.stream.Collectors
 import java.util.zip.ZipFile
@@ -45,6 +42,7 @@ open class PrepareTagLibs : DefaultTask() {
         const val TAGLIB_FOLDER = "tags"
     }
 
+    @Internal
     val outputDirProperty: DirectoryProperty = newOutputDirectory()
 
     val outputDir: File
@@ -53,6 +51,7 @@ open class PrepareTagLibs : DefaultTask() {
             return outputDirProperty.get().asFile
         }
 
+    @Internal
     val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
 
     var ismlConfiguration: String

@@ -78,8 +78,6 @@ open class IsmlExtension(project: Project) {
     val jspCompilerVersionProvider: Property<String> = project.objects.property(String::class.java)
     // Eclipse compiler version depends on the Tomcat version
     val eclipseCompilerVersionProvider: Property<String> = project.objects.property(String::class.java)
-    // ISML template encoding
-    val templateEncodingProvider: Property<String> = project.objects.property(String::class.java)
     // Java SourceSet name which is used for template compilation
     val sourceSetNameProvider: Property<String> = project.objects.property(String::class.java)
     // Configuration name which is used for template compilation
@@ -97,7 +95,6 @@ open class IsmlExtension(project: Project) {
 
         jspCompilerVersionProvider.set(JSP_COMPILER_VERSION)
         eclipseCompilerVersionProvider.set(ECLIPSE_COMPILER_VERSION)
-        templateEncodingProvider.set(DEFAULT_FILEENCODING)
         sourceSetNameProvider.set(SourceSet.MAIN_SOURCE_SET_NAME)
         ismlConfigurationNameProvider.set("compile")
         sourceCompatibilityProvider.set("1.6")
@@ -136,17 +133,6 @@ open class IsmlExtension(project: Project) {
         }
         set(value) {
             eclipseCompilerVersionProvider.set(value)
-        }
-
-    /**
-     * ISML template encoding
-     */
-    var templateEncoding: String
-        get() {
-            return templateEncodingProvider.get()
-        }
-        set(value) {
-            templateEncodingProvider.set(value)
         }
 
     /**
