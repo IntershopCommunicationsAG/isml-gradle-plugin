@@ -30,7 +30,6 @@ class IsmlPlugin : Plugin<Project> {
     }
 
     override fun apply(project: Project) {
-
         with(project) {
             logger.info("Isml plugin adds extension {} to {}", IsmlExtension.ISML_EXTENSION_NAME, project.name)
             val extension = extensions.findByType(IsmlExtension::class.java) ?: project.extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java, project)

@@ -16,7 +16,7 @@
 
 package com.intershop.gradle.isml.extension
 
-import groovy.lang.Closure
+import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
@@ -24,6 +24,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+
 
 open class IsmlExtension(project: Project) {
 
@@ -67,8 +68,8 @@ open class IsmlExtension(project: Project) {
      */
     val sourceSets: NamedDomainObjectContainer<IsmlSourceSet> = project.container(IsmlSourceSet::class.java, IsmlSourceSetFactory(project))
 
-    fun sourceSets(closure: Closure<Unit>) {
-        sourceSets.configure(closure)
+    fun sourceSets(configureAction: Action<in NamedDomainObjectContainer<IsmlSourceSet>>) {
+        configureAction.execute(sourceSets)
     }
 
     // Taglib folder
