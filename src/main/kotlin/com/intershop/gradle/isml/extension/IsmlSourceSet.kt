@@ -71,6 +71,6 @@ class IsmlSourceSet(project: Project, val srcname: String) : Named {
     }
 
     private fun String.toCamelCase() : String {
-        return split("_").joinToString("") { it.toLowerCase().capitalize() }
+        return split("_").joinToString("") { it.capitalize() }
     }
 }

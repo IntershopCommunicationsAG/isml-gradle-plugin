@@ -35,7 +35,7 @@ open class IsmlCompileRunner @Inject constructor(private val sourceDir: File,
                                                  private val tempWebInfFolder: File): Runnable {
 
     companion object {
-        val log: Logger = LoggerFactory.getLogger(ISML2JSP::class.java.name)
+        val log: Logger = LoggerFactory.getLogger(IsmlCompileRunner::class.java.name)
 
         // necessary for jsp path change made by Intershop
         val JAVA_KEYWORDS = arrayOf("abstract", "assert", "boolean", "break", "byte", "case", "catch",
