@@ -31,11 +31,11 @@ class IsmlPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         with(project) {
-            logger.info("Isml plugin adds extension {} to {}", IsmlExtension.ISML_EXTENSION_NAME, project.name)
-            val extension = extensions.findByType(IsmlExtension::class.java) ?: project.extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java, project)
+            logger.info("Isml plugin adds extension {} to {}", IsmlExtension.ISML_EXTENSION_NAME, name)
+            val extension = extensions.findByType(IsmlExtension::class.java) ?: extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java, this)
 
-            addEclipseCompilerConfiguration(project, extension)
-            addJSPJasperCompilerConfiguration(project, extension)
+            addEclipseCompilerConfiguration(this, extension)
+            addJSPJasperCompilerConfiguration(this, extension)
 
             if(extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
