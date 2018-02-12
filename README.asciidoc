@@ -101,7 +101,7 @@ dependencies {
 }
 ----
 
-==== Configuration with additional VM settings for Java compiler runner
+==== Configuration with additional Java VM settings for process runner
 [source,groovy,subs="attributes"]
 ----
 plugins {
