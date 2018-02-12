@@ -25,7 +25,6 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
-
 open class IsmlExtension(project: Project) {
 
     companion object {

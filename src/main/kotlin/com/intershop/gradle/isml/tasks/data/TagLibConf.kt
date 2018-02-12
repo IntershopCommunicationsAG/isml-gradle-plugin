@@ -15,7 +15,6 @@
  */
 package com.intershop.gradle.isml.tasks.data
 
-import org.gradle.api.tasks.Input
 import java.io.File
 
 interface TagLibConf {

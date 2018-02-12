@@ -17,9 +17,7 @@ package com.intershop.gradle.isml.tasks.data
 
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Optional
 import java.io.File
-
 
 data class TagLibConfDir constructor(@InputDirectory override val conffile: File,
                                      @Input override val projectName: String) : TagLibConf

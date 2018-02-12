@@ -21,7 +21,6 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import java.io.File
 
-
 class IsmlSourceSet(project: Project, val srcname: String) : Named {
 
     override fun getName() : String {
