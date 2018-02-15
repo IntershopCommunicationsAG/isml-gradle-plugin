@@ -16,13 +16,18 @@
 package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
+import com.intershop.gradle.isml.tasks.PrepareTagLibs.Companion.CARTRIDGE_STATIC_FOLDER
+import com.intershop.gradle.isml.tasks.PrepareTagLibs.Companion.RELEASE_STATIC_FOLDER
+import com.intershop.gradle.isml.tasks.PrepareTagLibs.Companion.TAGLIB_FOLDER
 import com.intershop.gradle.isml.tasks.data.TagLibConf
 import com.intershop.gradle.isml.tasks.data.TagLibConfDir
 import com.intershop.gradle.isml.tasks.data.TagLibConfZip
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import java.io.File
 import java.util.stream.Collectors
@@ -42,26 +47,22 @@ open class PrepareTagLibs : DefaultTask() {
         const val TAGLIB_FOLDER = "tags"
     }
 
-    @Internal
     val outputDirProperty: DirectoryProperty = newOutputDirectory()
 
+    @get:OutputDirectory
     val outputDir: File
-        @OutputDirectory
-        get() {
-            return outputDirProperty.get().asFile
-        }
+        get() = outputDirProperty.get().asFile
 
-    @Internal
-    val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
+    fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
 
+    private val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
+
+    @get:Input
     var ismlConfiguration: String
-        @Input
-        get() {
-            return ismlConfigurationProperty.get()
-        }
-        set(value) {
-            ismlConfigurationProperty.set(value)
-        }
+        get() = ismlConfigurationProperty.get()
+        set(value) = ismlConfigurationProperty.set(value)
+
+    fun provideIsmlConfiguration(ismlConfiguration: Provider<String>) = ismlConfigurationProperty.set(ismlConfiguration)
 
     @get:Nested
     private val taglibConfigurations: List<TagLibConf> by lazy {

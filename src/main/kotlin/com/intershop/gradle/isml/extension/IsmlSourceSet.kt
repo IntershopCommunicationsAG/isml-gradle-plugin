@@ -17,8 +17,10 @@ package com.intershop.gradle.isml.extension
 
 import org.gradle.api.Named
 import org.gradle.api.Project
+import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import java.io.File
 
 class IsmlSourceSet(project: Project, val srcname: String) : Named {
@@ -27,42 +29,41 @@ class IsmlSourceSet(project: Project, val srcname: String) : Named {
         return srcname
     }
 
-    val srcDirectoryProvider: DirectoryProperty = project.layout.directoryProperty()
-    val outputDirProvider: DirectoryProperty = project.layout.directoryProperty()
+    private val srcDirectoryProperty: DirectoryProperty = project.layout.directoryProperty()
+    private val outputDirProperty: DirectoryProperty = project.layout.directoryProperty()
 
     // Jsp Package name
-    val jspPackageProvider: Property<String> = project.objects.property(String::class.java)
+    private val jspPackageProperty: Property<String> = project.objects.property(String::class.java)
 
     init {
-        outputDirProvider.set(project.layout.buildDirectory.dir(IsmlExtension.ISML_OUTPUTPATH))
+        outputDirProperty.set(project.layout.buildDirectory.dir(IsmlExtension.ISML_OUTPUTPATH))
     }
 
+    // isml source directory
+    val srcDirectoryProvider: Provider<Directory>
+        get() = srcDirectoryProperty
+
     var srcDir: File
-        get() {
-            return srcDirectoryProvider.get().asFile
-        }
-        set(value) {
-            this.srcDirectoryProvider.set(value)
-        }
+        get() = srcDirectoryProperty.get().asFile
+        set(value) = srcDirectoryProperty.set(value)
+
+    // output directory
+    val outputDirProvider: Provider<Directory>
+        get() = outputDirProperty
 
     var outputDir: File
-        get() {
-            return outputDirProvider.get().asFile
-        }
-        set(value) {
-            this.outputDirProvider.set(value)
-        }
+        get() = outputDirProperty.get().asFile
+        set(value) = outputDirProperty.set(value)
 
     /**
      * Jsp Package name
      */
-     var jspPackage: String
-        get() {
-            return jspPackageProvider.get()
-        }
-        set(value) {
-            jspPackageProvider.set(value)
-        }
+    val jspPackageProvider: Provider<String>
+        get() = jspPackageProperty
+
+    var jspPackage: String
+        get() = jspPackageProperty.get()
+        set(value) = jspPackageProperty.set(value)
 
     // Tasknames
     fun getIsmlTaskName(): String {
@@ -70,6 +71,6 @@ class IsmlSourceSet(project: Project, val srcname: String) : Named {
     }
 
     private fun String.toCamelCase() : String {
-        return split("_").joinToString("") { it.capitalize() }
+        return split(" ").joinToString("") { it.capitalize() }
     }
 }

@@ -39,9 +39,9 @@ class IsmlPlugin : Plugin<Project> {
 
             if(extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
-                mainIsmlSourceSet.srcDirectoryProvider.set(layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH))
-                mainIsmlSourceSet.outputDirProvider.set(layout.buildDirectory.dir("${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}"))
-                mainIsmlSourceSet.jspPackageProvider.set("ish.cartridges.${project.name}")
+                mainIsmlSourceSet.srcDir = layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH).asFile
+                mainIsmlSourceSet.outputDir = layout.buildDirectory.dir("${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}").get().asFile
+                mainIsmlSourceSet.jspPackage = "ish.cartridges.${project.name}"
             }
 
             configureTask(this, extension)
@@ -62,16 +62,16 @@ class IsmlPlugin : Plugin<Project> {
                 tasks.maybeCreate(ismlSourceSet.getIsmlTaskName(), IsmlCompile::class.java).apply {
                     group = IsmlExtension.ISML_GROUP_NAME
 
-                    ismlConfigurationProperty.set(extension.ismlConfigurationNameProvider)
-                    outputDirProperty.set(ismlSourceSet.outputDirProvider)
-                    inputDirProperty.set(ismlSourceSet.srcDirectoryProvider)
-                    jspPackageProperty.set(ismlSourceSet.jspPackageProvider)
+                    provideIsmlConfiguration(extension.ismlConfigurationNameProvider)
+                    provideOutputDir(ismlSourceSet.outputDirProvider)
+                    provideInputDir(ismlSourceSet.srcDirectoryProvider)
+                    provideJspPackage(ismlSourceSet.jspPackageProvider)
 
-                    soureSetNameProperty.set(extension.sourceSetNameProvider)
+                    provideSourceSetName(extension.sourceSetNameProvider)
 
-                    sourceCompatibilityProperty.set(extension.sourceCompatibilityProvider)
-                    targetCompatibilityProperty.set(extension.targetCompatibilityProvider)
-                    encodingProperty.set(extension.encodingProvider)
+                    provideSourceCompatibility(extension.sourceCompatibilityProvider)
+                    provideTargetCompatibility(extension.targetCompatibilityProvider)
+                    provideEncoding(extension.encodingProvider)
 
                     if(prepareTaglibs != null && prepareTaglibs is PrepareTagLibs) {
                         tagLibsInputDirProperty.set(prepareTaglibs.outputDirProperty)

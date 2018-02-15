@@ -16,12 +16,16 @@
 package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
+import com.intershop.gradle.isml.tasks.IsmlCompile.Companion.FILTER_JSP
+import com.intershop.gradle.isml.tasks.IsmlCompile.Companion.PAGECOMPILE_FOLDER
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.process.JavaForkOptions
 import org.gradle.workers.ForkMode
@@ -29,6 +33,10 @@ import org.gradle.workers.IsolationMode
 import org.gradle.workers.WorkerExecutor
 import java.io.File
 import javax.inject.Inject
+import kotlin.reflect.KProperty
+
+operator fun <T> Property<T>.setValue(receiver: Any?, property: KProperty<*>, value: T) = set(value)
+operator fun <T> Property<T>.getValue(receiver: Any?, property: KProperty<*>): T = get()
 
 open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExecutor) : DefaultTask(){
 
@@ -37,25 +45,21 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         const val FILTER_JSP = "**/**/*.jsp"
     }
 
-    @Internal
     val outputDirProperty: DirectoryProperty = this.newOutputDirectory()
 
+    @get:OutputDirectory
     var outputDir: File
-        @OutputDirectory
-        get() {
-            return outputDirProperty.get().asFile
-        }
-        set(value) {
-            outputDirProperty.set(value)
-        }
+        get() = outputDirProperty.get().asFile
+        set(value)= outputDirProperty.set(value)
+
+    fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
 
     // folder with taglibs
-    @Internal
     val tagLibsInputDirProperty: DirectoryProperty = this.newInputDirectory()
 
+    @get:Optional
+    @get:InputDirectory
     val tagLibsInputDir: File?
-        @Optional
-        @InputDirectory
         get() {
             return if(tagLibsInputDirProperty.orNull != null) {
                 tagLibsInputDirProperty.get().asFile
@@ -64,98 +68,67 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
             }
         }
 
-    // folder with isml sources
-    @Internal
-    val inputDirProperty: DirectoryProperty = this.newInputDirectory()
+    fun provideTagLibsInputDir(tagLibsInputDir: Provider<Directory>) = tagLibsInputDirProperty.set(tagLibsInputDir)
 
+    // folder with isml sources
+    private val inputDirProperty: DirectoryProperty = this.newInputDirectory()
+
+    @get:SkipWhenEmpty
+    @get:InputDirectory
     var inputDir: File
-        @SkipWhenEmpty
-        @InputDirectory
-        get() {
-            return inputDirProperty.get().asFile
-        }
-        set(value) {
-            inputDirProperty.set(value)
-        }
+        get() = inputDirProperty.get().asFile
+        set(value) = inputDirProperty.set(value)
+
+    fun provideInputDir(inputDir: Provider<Directory>) = inputDirProperty.set(inputDir)
 
     // (java) configuration name for isml compilation
-    @Internal
-    val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
+    private val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
 
-    var ismlConfiguration: String
-        @Input
-        get() {
-            return ismlConfigurationProperty.get()
-        }
-        set(value) {
-            ismlConfigurationProperty.set(value)
-        }
+    @get:Input
+    var ismlConfiguration by ismlConfigurationProperty
+
+    fun provideIsmlConfiguration(ismlConfiguration: Provider<String>) = ismlConfigurationProperty.set(ismlConfiguration)
 
     // jsp package path
-    @Internal
-    val jspPackageProperty: Property<String> = project.objects.property(String::class.java)
+    private val jspPackageProperty: Property<String> = project.objects.property(String::class.java)
 
-    var jspPackage: String
-        @Input
-        get() {
-            return jspPackageProperty.get()
-        }
-        set(value) {
-            jspPackageProperty.set(value)
-        }
+    @get:Input
+    var jspPackage by jspPackageProperty
+
+    fun provideJspPackage(jspPackage: Provider<String>) = jspPackageProperty.set(jspPackage)
 
     // java source set name
-    @Internal
-    val soureSetNameProperty: Property<String> = project.objects.property(String::class.java)
+    private val soureSetNameProperty: Property<String> = project.objects.property(String::class.java)
 
-    var sourceSetName: String
-        @Optional
-        @Input
-        get() {
-            return soureSetNameProperty.get()
-        }
-        set(value) {
-            soureSetNameProperty.set(value)
-        }
+    @get:Optional
+    @get:Input
+    var sourceSetName by soureSetNameProperty
+
+    fun provideSourceSetName(sourceSetName: Provider<String>) = soureSetNameProperty.set(sourceSetName)
 
     // java source compatibility
-    @Internal
-    val sourceCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
+    private val sourceCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
 
-    var sourceCompatibility: String
-        @Input
-        get() {
-            return sourceCompatibilityProperty.get()
-        }
-        set(value) {
-            sourceCompatibilityProperty.set(value)
-        }
+    @get:Input
+    var sourceCompatibility by sourceCompatibilityProperty
+
+    fun provideSourceCompatibility(sourceCompatibility: Provider<String>) = sourceCompatibilityProperty.set(sourceCompatibility)
 
     // java target compatibility
-    @Internal
-    val targetCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
+    private val targetCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
 
-    var targetCompatibility: String
-        @Input
-        get() {
-            return targetCompatibilityProperty.get()
-        }
-        set(value) {
-            targetCompatibilityProperty.set(value)
-        }
+    @get:Input
+    var targetCompatibility by targetCompatibilityProperty
+
+    fun provideTargetCompatibility(targetCompatibility: Provider<String>) = targetCompatibilityProperty.set(targetCompatibility)
 
     // encoding for files
-    @Internal
-    val encodingProperty: Property<String> = project.objects.property(String::class.java)
+    private val encodingProperty: Property<String> = project.objects.property(String::class.java)
 
-    var encoding: String
-        @Input
-        get() {
-            return encodingProperty.get()
-        }
-        set(value) {
-            encodingProperty.set(value)
-        }
+    @get:Input
+    var encoding by encodingProperty
+
+    fun provideEncoding(encoding: Provider<String>) = encodingProperty.set(encoding)
 
     // internal properties
     @get:InputFiles
@@ -248,7 +221,6 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
 
         workerExecutor.await()
     }
-
 
     private fun prepareFolder(folder: File) {
         folder.deleteRecursively()

@@ -19,11 +19,16 @@ package com.intershop.gradle.isml.extension
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
+import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.TaskAction
 import java.io.File
+import kotlin.reflect.KProperty
+
+operator fun <T> Property<T>.setValue(receiver: Any?, property: KProperty<*>, value: T) = set(value)
+operator fun <T> Property<T>.getValue(receiver: Any?, property: KProperty<*>): T = get()
 
 open class IsmlExtension(project: Project) {
 
@@ -72,128 +77,101 @@ open class IsmlExtension(project: Project) {
     }
 
     // Taglib folder
-    val taglibFolderProvider: DirectoryProperty = project.layout.directoryProperty()
+    private val taglibFolderProperty: DirectoryProperty = project.layout.directoryProperty()
 
     // JSP compiler version / Tomcat version
-    val jspCompilerVersionProvider: Property<String> = project.objects.property(String::class.java)
+    private val jspCompilerVersionProperty: Property<String> = project.objects.property(String::class.java)
     // Eclipse compiler version depends on the Tomcat version
-    val eclipseCompilerVersionProvider: Property<String> = project.objects.property(String::class.java)
+    private val eclipseCompilerVersionProperty: Property<String> = project.objects.property(String::class.java)
     // Java SourceSet name which is used for template compilation
-    val sourceSetNameProvider: Property<String> = project.objects.property(String::class.java)
+    private val sourceSetNameProperty: Property<String> = project.objects.property(String::class.java)
     // Configuration name which is used for template compilation
-    val ismlConfigurationNameProvider: Property<String> = project.objects.property(String::class.java)
+    private val ismlConfigurationNameProperty: Property<String> = project.objects.property(String::class.java)
 
     // Source compatibility of java files (result of Jsp2Java)
-    val sourceCompatibilityProvider: Property<String> = project.objects.property(String::class.java)
+    private val sourceCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
     // Target compatibility of java files (result of Jsp2Java)
-    val targetCompatibilityProvider: Property<String> = project.objects.property(String::class.java)
+    private val targetCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
     // File encoding
-    val encodingProvider: Property<String> = project.objects.property(String::class.java)
+    private val encodingProperty: Property<String> = project.objects.property(String::class.java)
 
     init {
-        taglibFolderProvider.set(project.layout.buildDirectory.dir(IsmlExtension.ISMLTAGLIB_OUTPUTPATH))
+        taglibFolderProperty.set(project.layout.buildDirectory.dir(IsmlExtension.ISMLTAGLIB_OUTPUTPATH))
 
-        jspCompilerVersionProvider.set(JSP_COMPILER_VERSION)
-        eclipseCompilerVersionProvider.set(ECLIPSE_COMPILER_VERSION)
-        sourceSetNameProvider.set(SourceSet.MAIN_SOURCE_SET_NAME)
-        ismlConfigurationNameProvider.set("compile")
-        sourceCompatibilityProvider.set("1.6")
-        targetCompatibilityProvider.set("1.6")
-        encodingProvider.set(DEFAULT_FILEENCODING)
+        jspCompilerVersionProperty.set(JSP_COMPILER_VERSION)
+        eclipseCompilerVersionProperty.set(ECLIPSE_COMPILER_VERSION)
+        sourceSetNameProperty.set(SourceSet.MAIN_SOURCE_SET_NAME)
+        ismlConfigurationNameProperty.set("compile")
+        sourceCompatibilityProperty.set("1.6")
+        targetCompatibilityProperty.set("1.6")
+        encodingProperty.set(DEFAULT_FILEENCODING)
     }
 
     /**
      * Folder with tag lib configuration
      */
+    val taglibFolderProvider: Provider<Directory>
+        get() = taglibFolderProperty
+
     var taglibFolder: File
-        get() {
-            return taglibFolderProvider.get().asFile
-        }
-        set(value) {
-            this.taglibFolderProvider.set(value)
-        }
+        get() = taglibFolderProperty.get().asFile
+        set(value) = taglibFolderProperty.set(value)
 
     /**
      * JSP compiler version / Tomcat version
      */
-    var jspCompilerVersion: String
-        get() {
-            return jspCompilerVersionProvider.get()
-        }
-        set(value) {
-            jspCompilerVersionProvider.set(value)
-        }
+    val jspCompilerVersionProvider: Provider<String>
+        get() = jspCompilerVersionProperty
+
+    var jspCompilerVersion by jspCompilerVersionProperty
 
     /**
      * Eclipse compiler version depends on the Tomcat version
      */
-    var eclipseCompilerVersion: String
-        get() {
-            return eclipseCompilerVersionProvider.get()
-        }
-        set(value) {
-            eclipseCompilerVersionProvider.set(value)
-        }
+    val eclipseCompilerVersionProvider: Provider<String>
+        get() = eclipseCompilerVersionProperty
+
+    var eclipseCompilerVersion by eclipseCompilerVersionProperty
 
     /**
      * Java SourceSet name which is used for template compilation
      * Default value is 'main'
      */
-    var sourceSetName: String
-        get() {
-            return sourceSetNameProvider.get()
-        }
-        set(value) {
-            sourceSetNameProvider.set(value)
-        }
+    val sourceSetNameProvider: Provider<String>
+        get() = sourceSetNameProperty
+
+    var sourceSetName by sourceSetNameProperty
 
     /**
      * Configuration name which is used for template compilation
      * Default value is 'runtimeElements'
      */
-    var ismlConfigurationName: String
-        get() {
-            return ismlConfigurationNameProvider.get()
-        }
-        set(value) {
-            ismlConfigurationNameProvider.set(value)
-        }
+    val ismlConfigurationNameProvider: Provider<String>
+        get() = ismlConfigurationNameProperty
+
+    var ismlConfigurationName by ismlConfigurationNameProperty
 
     /**
      * Source compatibility of java files (result of Jsp2Java)
      */
-    var sourceCompatibility: String
-        get() {
-            return sourceCompatibilityProvider.get()
-        }
-        set(value) {
-            sourceCompatibilityProvider.set(value)
-        }
+    val sourceCompatibilityProvider: Provider<String>
+        get() = sourceCompatibilityProperty
+
+    var sourceCompatibility by sourceCompatibilityProperty
 
     /**
      * Target compatibility of java files (result of Jsp2Java)
      */
-    var targetCompatibility: String
-        get() {
-            return targetCompatibilityProvider.get()
-        }
-        set(value) {
-            targetCompatibilityProvider.set(value)
-        }
+    val targetCompatibilityProvider: Provider<String>
+        get() = targetCompatibilityProperty
+
+    var targetCompatibility by targetCompatibilityProperty
 
     /**
      * File encoding
      */
-    var encoding: String
-        get() {
-            return encodingProvider.get()
-        }
-        set(value) {
-            encodingProvider.set(value)
-        }
+    val encodingProvider: Provider<String>
+        get() = encodingProperty
 
-    @TaskAction
-    fun generate() {
-
-    }
+    var encoding by encodingProperty
 }
