@@ -16,8 +16,6 @@
 package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
-import com.intershop.gradle.isml.tasks.IsmlCompile.Companion.FILTER_JSP
-import com.intershop.gradle.isml.tasks.IsmlCompile.Companion.PAGECOMPILE_FOLDER
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
@@ -26,7 +24,13 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.SkipWhenEmpty
+import org.gradle.api.tasks.TaskAction
 import org.gradle.process.JavaForkOptions
 import org.gradle.workers.ForkMode
 import org.gradle.workers.IsolationMode
@@ -35,9 +39,18 @@ import java.io.File
 import javax.inject.Inject
 import kotlin.reflect.KProperty
 
+/**
+ * Add a set function to a String property.
+ */
 operator fun <T> Property<T>.setValue(receiver: Any?, property: KProperty<*>, value: T) = set(value)
+/**
+ * Add a get function to a String property.
+ */
 operator fun <T> Property<T>.getValue(receiver: Any?, property: KProperty<*>): T = get()
 
+/**
+ * Task for compiling isml to class files.
+ */
 open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExecutor) : DefaultTask(){
 
     companion object {
@@ -45,18 +58,30 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         const val FILTER_JSP = "**/**/*.jsp"
     }
 
-    val outputDirProperty: DirectoryProperty = this.newOutputDirectory()
+    private val outputDirProperty: DirectoryProperty = project.objects.directoryProperty()
 
+    /**
+     * Output directory for generated files.
+     *
+     * @property outputDir
+     */
     @get:OutputDirectory
     var outputDir: File
         get() = outputDirProperty.get().asFile
         set(value)= outputDirProperty.set(value)
 
+    /**
+     * Add provider for outputDir.
+     */
     fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
 
-    // folder with taglibs
-    val tagLibsInputDirProperty: DirectoryProperty = this.newInputDirectory()
+    val tagLibsInputDirProperty: DirectoryProperty = project.objects.directoryProperty()
 
+    /**
+     * Input directory for TagLibs.
+     *
+     * @property tagLibsInputDir
+     */
     @get:Optional
     @get:InputDirectory
     val tagLibsInputDir: File?
@@ -68,66 +93,122 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
             }
         }
 
+    /**
+     * Add provider for taglibs dir.
+     */
     fun provideTagLibsInputDir(tagLibsInputDir: Provider<Directory>) = tagLibsInputDirProperty.set(tagLibsInputDir)
 
-    // folder with isml sources
-    private val inputDirProperty: DirectoryProperty = this.newInputDirectory()
+    private val inputDirProperty: DirectoryProperty = project.objects.directoryProperty()
 
+    /**
+     * Input directory for ISML files.
+     *
+     * @property inputDir
+     */
     @get:SkipWhenEmpty
     @get:InputDirectory
     var inputDir: File
         get() = inputDirProperty.get().asFile
         set(value) = inputDirProperty.set(value)
 
+    /**
+     * Add provider for inputDir.
+     */
     fun provideInputDir(inputDir: Provider<Directory>) = inputDirProperty.set(inputDir)
 
     // (java) configuration name for isml compilation
     private val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
 
+    /**
+     * ISMl configuration property.
+     *
+     * @property ismlConfiguration
+     */
     @get:Input
     var ismlConfiguration by ismlConfigurationProperty
 
+    /**
+     * Add provider for ismlConfiguration.
+     */
     fun provideIsmlConfiguration(ismlConfiguration: Provider<String>) = ismlConfigurationProperty.set(ismlConfiguration)
 
-    // jsp package path
     private val jspPackageProperty: Property<String> = project.objects.property(String::class.java)
 
+    /**
+     * JSP package configuration property.
+     *
+     * @property jspPackage
+     */
     @get:Input
     var jspPackage by jspPackageProperty
 
+    /**
+     * Add provider for jspPackage.
+     */
     fun provideJspPackage(jspPackage: Provider<String>) = jspPackageProperty.set(jspPackage)
 
     // java source set name
     private val soureSetNameProperty: Property<String> = project.objects.property(String::class.java)
 
+    /**
+     * Java source set name.
+     *
+     * @property sourceSetName
+     */
     @get:Optional
     @get:Input
     var sourceSetName by soureSetNameProperty
 
+    /**
+     * Add provider for sourceSetName.
+     */
     fun provideSourceSetName(sourceSetName: Provider<String>) = soureSetNameProperty.set(sourceSetName)
 
-    // java source compatibility
     private val sourceCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
 
+    /**
+     * Source compatibility configuration for ISML processing.
+     *
+     * @property sourceCompatibility
+     */
     @get:Input
     var sourceCompatibility by sourceCompatibilityProperty
 
-    fun provideSourceCompatibility(sourceCompatibility: Provider<String>) = sourceCompatibilityProperty.set(sourceCompatibility)
+    /**
+     * Add provider for sourceCompatibility.
+     */
+    fun provideSourceCompatibility(sourceCompatibility: Provider<String>) =
+            sourceCompatibilityProperty.set(sourceCompatibility)
 
-    // java target compatibility
     private val targetCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
 
+    /**
+     * Target compatibility configuration for ISML processing.
+     *
+     * @property targetCompatibility
+     */
     @get:Input
     var targetCompatibility by targetCompatibilityProperty
 
-    fun provideTargetCompatibility(targetCompatibility: Provider<String>) = targetCompatibilityProperty.set(targetCompatibility)
+    /**
+     * Add provider for targetCompatibility.
+     */
+    fun provideTargetCompatibility(targetCompatibility: Provider<String>) =
+            targetCompatibilityProperty.set(targetCompatibility)
 
-    // encoding for files
     private val encodingProperty: Property<String> = project.objects.property(String::class.java)
 
+    /**
+     * Encoding configuration for ISML processing.
+     *
+     * @property encodingProperty
+     */
     @get:Input
     var encoding by encodingProperty
 
+    /**
+     * Add provider for encoding.
+     */
     fun provideEncoding(encoding: Provider<String>) = encodingProperty.set(encoding)
 
     // internal properties
@@ -142,7 +223,9 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
 
             returnFiles.from(mainSourceSet.output.classesDirs, mainSourceSet.output.resourcesDir)
         }
-        returnFiles.from(project.configurations.findByName(ismlConfiguration)?.filter { it.name.endsWith(".jar") })
+        returnFiles.from(project.configurations.findByName(ismlConfiguration)?.filter {
+            it.name.endsWith(".jar")
+        })
 
         returnFiles
     }
@@ -156,18 +239,21 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         returnFiles
     }
 
-    /**
-     * Java fork options for the Java task.
-     */
     private var internalForkOptionsAction: Action<in JavaForkOptions>? = null
 
+    /**
+     * Adds additional fork options.
+     */
     fun forkOptions(forkOptionsAction: Action<in JavaForkOptions>) {
         internalForkOptionsAction = forkOptionsAction
     }
 
+    /**
+     * This is the task action and processes ISML files.
+     */
     @TaskAction
     fun ismlcompile() {
-        //prepare output directory
+        //prepare output director
         prepareFolder(outputDir)
         val pageCompileFolder = File(outputDir, PAGECOMPILE_FOLDER)
         val webinf = File(pageCompileFolder, IsmlExtension.WEB_XML_PATH)
@@ -215,7 +301,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
             it.forkMode = ForkMode.AUTO
             if(internalForkOptionsAction != null) {
                 project.logger.debug("ISML compile runner Add configured JavaForkOptions.")
-                (internalForkOptionsAction as Action<in JavaForkOptions>).execute(it.forkOptions)
+                internalForkOptionsAction?.execute(it.forkOptions)
             }
         })
 
@@ -226,5 +312,4 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         folder.deleteRecursively()
         folder.mkdirs()
     }
-
 }

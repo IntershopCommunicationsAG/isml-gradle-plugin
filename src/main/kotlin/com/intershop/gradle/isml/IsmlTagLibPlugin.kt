@@ -20,6 +20,9 @@ import com.intershop.gradle.isml.tasks.PrepareTagLibs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
+/**
+ * Plugin Class implementation.
+ */
 class IsmlTagLibPlugin : Plugin<Project> {
 
     companion object {
@@ -30,7 +33,8 @@ class IsmlTagLibPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
             logger.info("ISML TagLib plugin adds extension {} to {}", IsmlExtension.ISML_EXTENSION_NAME, project.name)
-            val extension = extensions.findByType(IsmlExtension::class.java) ?: project.extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java, project)
+            val extension = extensions.findByType(IsmlExtension::class.java) ?:
+                        project.extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java, project)
 
             tasks.maybeCreate(TASKNAME, PrepareTagLibs::class.java).apply {
                 description = TASKDESCRIPTION

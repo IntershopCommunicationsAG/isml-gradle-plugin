@@ -22,6 +22,9 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import javax.inject.Inject
 
+/**
+ * Work class for tasks to generate class files from ISML files.
+ */
 open class IsmlCompileRunner @Inject constructor(private val sourceDir: File,
                                                  private val outputDir: File,
                                                  private val encoding: String,
@@ -39,10 +42,11 @@ open class IsmlCompileRunner @Inject constructor(private val sourceDir: File,
 
         // necessary for jsp path change made by Intershop
         val JAVA_KEYWORDS = arrayOf("abstract", "assert", "boolean", "break", "byte", "case", "catch",
-            "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally",
-            "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new",
-            "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch",
-            "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while")
+                "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final",
+                "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface",
+                "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static",
+                "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void",
+                "volatile", "while")
     }
 
     override fun run() {

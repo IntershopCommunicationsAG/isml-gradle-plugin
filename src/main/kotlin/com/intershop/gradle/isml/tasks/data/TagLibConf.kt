@@ -17,8 +17,18 @@ package com.intershop.gradle.isml.tasks.data
 
 import java.io.File
 
+/**
+ * Interface for a TagLib configuration.
+ */
 interface TagLibConf {
 
+    /**
+     * Configuration file for tag configuration.
+     */
     val conffile: File
+
+    /**
+     * Project name of this tag lib.
+     */
     val projectName: String
 }

@@ -23,14 +23,17 @@ import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import java.io.File
 
+/**
+ * Configuration container for ISMl code complentation.
+ */
 class IsmlSourceSet(project: Project, val srcname: String) : Named {
 
     override fun getName() : String {
         return srcname
     }
 
-    private val srcDirectoryProperty: DirectoryProperty = project.layout.directoryProperty()
-    private val outputDirProperty: DirectoryProperty = project.layout.directoryProperty()
+    private val srcDirectoryProperty: DirectoryProperty = project.objects.directoryProperty()
+    private val outputDirProperty: DirectoryProperty = project.objects.directoryProperty()
 
     // Jsp Package name
     private val jspPackageProperty: Property<String> = project.objects.property(String::class.java)
@@ -39,33 +42,53 @@ class IsmlSourceSet(project: Project, val srcname: String) : Named {
         outputDirProperty.set(project.layout.buildDirectory.dir(IsmlExtension.ISML_OUTPUTPATH))
     }
 
-    // isml source directory
+    /**
+     * Provider for srcDir property.
+     */
     val srcDirectoryProvider: Provider<Directory>
         get() = srcDirectoryProperty
 
+    /**
+     * Source directory with ISM files.
+     *
+     * @property srcDir
+     */
     var srcDir: File
         get() = srcDirectoryProperty.get().asFile
         set(value) = srcDirectoryProperty.set(value)
 
-    // output directory
+    /**
+     * Provider for output directory property.
+     */
     val outputDirProvider: Provider<Directory>
         get() = outputDirProperty
 
+    /**
+     * Output directory with class and jsp files.
+     *
+     * @property outputDir
+     */
     var outputDir: File
         get() = outputDirProperty.get().asFile
         set(value) = outputDirProperty.set(value)
 
     /**
-     * Jsp Package name
+     * Jsp Package name provider.
      */
     val jspPackageProvider: Provider<String>
         get() = jspPackageProperty
 
+    /**
+     * Jsp Package name property.
+     */
     var jspPackage: String
         get() = jspPackageProperty.get()
         set(value) = jspPackageProperty.set(value)
 
-    // Tasknames
+    /**
+     * Calculate the task name for the task.
+     * @return task name for configuration
+     */
     fun getIsmlTaskName(): String {
         return "isml2class${srcname.toCamelCase()}"
     }

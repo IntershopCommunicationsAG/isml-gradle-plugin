@@ -19,5 +19,8 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import java.io.File
 
+/**
+ * Data class for TagLib processing - configuration directory.
+ */
 data class TagLibConfDir constructor(@InputDirectory override val conffile: File,
                                      @Input override val projectName: String) : TagLibConf

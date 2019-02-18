@@ -18,6 +18,9 @@ package com.intershop.gradle.isml.extension
 import org.gradle.api.NamedDomainObjectFactory
 import org.gradle.api.Project
 
+/**
+ * Class to configure named source sets.
+ */
 class IsmlSourceSetFactory(private val project: Project) : NamedDomainObjectFactory<IsmlSourceSet> {
     override fun create(name: String) : IsmlSourceSet {
         return IsmlSourceSet(project, name)

@@ -21,18 +21,19 @@ import com.intershop.beehive.isml.internal.TemplatePrecompileUtils
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
-import java.util.*
 import javax.servlet.ServletException
 
 val log = LoggerFactory.getLogger(ISML2JSP::class.java.name)!!
 
 /**
- * This class is an offline ISML to JSP compiler. A running server is NOT
- * required.
+ * This class is an offline ISML to JSP compiler. A running server is NOT required.
  */
-class ISML2JSP(private val srcDir: File, private val destdir: File, val contentEncoding: String, val encodingMap : Map<String, String>) {
+class ISML2JSP(private val srcDir: File,
+               private val destdir: File,
+               val contentEncoding: String,
+               val encodingMap : Map<String, String>) {
 
-    /**
+    /*
      * Creates the compiler configuration.
      * @return Compiler condifuration
      */
@@ -50,7 +51,7 @@ class ISML2JSP(private val srcDir: File, private val destdir: File, val contentE
             }
         }
 
-    /**
+    /*
      * This internal helper collects all template file names out of the given directory
      * recursively. The names are built to match the requirements of building template IDs, i.e.
      * containing a sub directory (optionally) and a template file name (w/ extension) separated
@@ -60,7 +61,6 @@ class ISML2JSP(private val srcDir: File, private val destdir: File, val contentE
      * @param subDirPath The sub directory path
      * @param result The resulting template names.
      */
-
     private fun getAllTemplateFileNames(dir: File, subDirPath: String?, result: MutableCollection<String>) {
         // get all isml files and subdirs
         val files = dir.listFiles(ISMLTemplateConstants.ismlFilter)
@@ -103,7 +103,9 @@ class ISML2JSP(private val srcDir: File, private val destdir: File, val contentE
                 for (ismlFileName in ismlFiles) {
                     // scan for files to compile
                     val ismlSubPathName = langDirs[i].name.plus(File.separatorChar).plus(ismlFileName)
-                    val jspSubPathName = ismlSubPathName.substring(0, ismlSubPathName.length - ISMLTemplateConstants.TEMPLATE_EXTENSION.length).plus(ISMLTemplateConstants.TEMPLATE_PAGECOMPILE_EXTENSION)
+                    val jspSubPathName = ismlSubPathName.
+                            substring(0, ismlSubPathName.length - ISMLTemplateConstants.TEMPLATE_EXTENSION.length).
+                            plus(ISMLTemplateConstants.TEMPLATE_PAGECOMPILE_EXTENSION)
 
                     val sourceFile = File(srcDir, ismlSubPathName)
                     val jspFile = File(destdir, jspSubPathName)
@@ -150,5 +152,4 @@ class ISML2JSP(private val srcDir: File, private val destdir: File, val contentE
             precompUtils.compileISML(sourceFile, jspFile)
         }
     }
-
 }

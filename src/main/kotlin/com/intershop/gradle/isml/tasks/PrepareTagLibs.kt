@@ -16,9 +16,6 @@
 package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
-import com.intershop.gradle.isml.tasks.PrepareTagLibs.Companion.CARTRIDGE_STATIC_FOLDER
-import com.intershop.gradle.isml.tasks.PrepareTagLibs.Companion.RELEASE_STATIC_FOLDER
-import com.intershop.gradle.isml.tasks.PrepareTagLibs.Companion.TAGLIB_FOLDER
 import com.intershop.gradle.isml.tasks.data.TagLibConf
 import com.intershop.gradle.isml.tasks.data.TagLibConfDir
 import com.intershop.gradle.isml.tasks.data.TagLibConfZip
@@ -28,11 +25,17 @@ import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.stream.Collectors
 import java.util.zip.ZipFile
 
+/**
+ * This task prepares the tag libs for ISML procecessing.
+ */
 open class PrepareTagLibs : DefaultTask() {
 
     companion object {
@@ -47,21 +50,37 @@ open class PrepareTagLibs : DefaultTask() {
         const val TAGLIB_FOLDER = "tags"
     }
 
-    val outputDirProperty: DirectoryProperty = newOutputDirectory()
+    val outputDirProperty: DirectoryProperty = project.objects.directoryProperty()
 
+    /**
+     * Output directory for prepared files.
+     *
+     * @property outputDir
+     */
     @get:OutputDirectory
     val outputDir: File
         get() = outputDirProperty.get().asFile
 
+    /**
+     * Add provider for outputDir.
+     */
     fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
 
     private val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
 
+    /**
+     * ISMl configuration property.
+     *
+     * @property ismlConfiguration
+     */
     @get:Input
     var ismlConfiguration: String
         get() = ismlConfigurationProperty.get()
         set(value) = ismlConfigurationProperty.set(value)
 
+    /**
+     * Add provider for ismlConfiguration.
+     */
     fun provideIsmlConfiguration(ismlConfiguration: Provider<String>) = ismlConfigurationProperty.set(ismlConfiguration)
 
     @get:Nested
@@ -91,7 +110,8 @@ open class PrepareTagLibs : DefaultTask() {
                 it.resolvedConfiguration.resolvedArtifacts.forEach { artifact ->
                     if (artifact.type == "cartridge") {
                         val zipFile = ZipFile(artifact.file)
-                        val list = zipFile.stream().filter { zipEntry -> zipEntry.name.matches(".*/$RELEASE_STATIC_FOLDER/$TAGLIB_FOLDER.+".toRegex()) }
+                        val list = zipFile.stream().filter { zipEntry ->
+                            zipEntry.name.matches(".*/$RELEASE_STATIC_FOLDER/$TAGLIB_FOLDER.+".toRegex()) }
                                 .map { entry -> entry.name }
                                 .collect(Collectors.toList())
                         if (list.size > 0) {
@@ -107,6 +127,9 @@ open class PrepareTagLibs : DefaultTask() {
         returnList
     }
 
+    /**
+     * This is the task action for processes TagLib files.
+     */
     @TaskAction
     fun runTagLibPreparation() {
         val webinf = File(outputDir, IsmlExtension.WEB_XML_PATH)
@@ -122,7 +145,8 @@ open class PrepareTagLibs : DefaultTask() {
                     it.from(project.zipTree(taglibConf.conffile))
                     it.include("*/$RELEASE_STATIC_FOLDER/$TAGLIB_FOLDER/**/**")
                     it.eachFile { details ->
-                        details.path = details.path.removePrefix("${taglibConf.projectName}/$RELEASE_STATIC_FOLDER/$TAGLIB_FOLDER/")
+                        details.path = details.path.removePrefix(
+                                "${taglibConf.projectName}/$RELEASE_STATIC_FOLDER/$TAGLIB_FOLDER/")
                     }
                     it.into(File(targetFile, taglibConf.projectName))
                 }

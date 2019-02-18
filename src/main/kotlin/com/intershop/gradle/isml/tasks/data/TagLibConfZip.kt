@@ -19,5 +19,8 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import java.io.File
 
+/**
+ * Data class for TagLib processing - TagLibs from zip files.
+ */
 data class TagLibConfZip constructor(@InputFile override val conffile: File,
                                      @Input override val projectName: String) : TagLibConf

@@ -22,6 +22,9 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.language.assembler.tasks.Assemble
 
+/**
+ * Plugin Class implementation.
+ */
 class IsmlPlugin : Plugin<Project> {
 
     companion object {
@@ -32,7 +35,8 @@ class IsmlPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
             logger.info("Isml plugin adds extension {} to {}", IsmlExtension.ISML_EXTENSION_NAME, name)
-            val extension = extensions.findByType(IsmlExtension::class.java) ?: extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java, this)
+            val extension = extensions.findByType(IsmlExtension::class.java) ?:
+                                extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java, this)
 
             addEclipseCompilerConfiguration(this, extension)
             addJSPJasperCompilerConfiguration(this, extension)
@@ -40,7 +44,9 @@ class IsmlPlugin : Plugin<Project> {
             if(extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
                 mainIsmlSourceSet.srcDir = layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH).asFile
-                mainIsmlSourceSet.outputDir = layout.buildDirectory.dir("${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}").get().asFile
+                mainIsmlSourceSet.outputDir = layout.buildDirectory.dir(
+                        "${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}"
+                ).get().asFile
                 mainIsmlSourceSet.jspPackage = "ish.cartridges.${project.name}"
             }
 
@@ -75,6 +81,7 @@ class IsmlPlugin : Plugin<Project> {
 
                     if(prepareTaglibs != null && prepareTaglibs is PrepareTagLibs) {
                         tagLibsInputDirProperty.set(prepareTaglibs.outputDirProperty)
+                        this.dependsOn(prepareTaglibs)
                     }
 
                     ismlMain.dependsOn(this)
@@ -91,7 +98,8 @@ class IsmlPlugin : Plugin<Project> {
                 .setDescription("Configuration for Eclipse compiler")
                 .defaultDependencies {
                     val dependencyHandler = project.dependencies
-                    it.add(dependencyHandler.create("org.eclipse.jdt.core.compiler:ecj:".plus(extension.eclipseCompilerVersion)))
+                    it.add(dependencyHandler.create("org.eclipse.jdt.core.compiler:ecj:".
+                            plus(extension.eclipseCompilerVersion)))
                 }
     }
 
@@ -102,7 +110,8 @@ class IsmlPlugin : Plugin<Project> {
                 .setDescription("Configuration for JSP compiler")
                 .defaultDependencies {
                     val dependencyHandler = project.dependencies
-                    it.add(dependencyHandler.create("org.apache.tomcat:tomcat-jasper:".plus(extension.jspCompilerVersion)))
+                    it.add(dependencyHandler.create("org.apache.tomcat:tomcat-jasper:".
+                            plus(extension.jspCompilerVersion)))
                 }
     }
 }

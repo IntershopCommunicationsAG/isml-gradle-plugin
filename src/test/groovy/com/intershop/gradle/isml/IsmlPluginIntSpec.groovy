@@ -15,14 +15,14 @@
  */
 package com.intershop.gradle.isml
 
-import com.intershop.gradle.test.AbstractIntegrationSpec
+import com.intershop.gradle.test.AbstractIntegrationGroovySpec
 import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 
 @Unroll
-class IsmlPluginIntSpec extends AbstractIntegrationSpec {
+class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
     def 'Test taglib and usage in one Cartridge - isml'() {
         given:
@@ -284,7 +284,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
         """.stripIndent()
 
         when:
-        List<String> args = ['isml', '-s', '-i']
+        List<String> args = ['isml', '-s', '-d']
 
         def result = getPreparedGradleRunner()
                 .withArguments(args)
@@ -440,8 +440,8 @@ class IsmlPluginIntSpec extends AbstractIntegrationSpec {
             }
         """.stripIndent()
 
-        createSubProject('testCartridge1', settingsGradle, '')
-        createSubProject('testCartridge2', settingsGradle, '')
+        createSubProject('testCartridge1', '')
+        createSubProject('testCartridge2', '')
 
         copyResources('test_taglib', 'testCartridge1')
 
