@@ -1,24 +1,31 @@
-= ISML Gradle Plugin
-:latestRevision: 1.0.0
+= ISML Gradle Plugins
+:latestRevision: 2.0.0
 :toc:
+:icons: font
+
+NOTE: Version 2 of this plugin will only work with Gradle 5 and JDK 8.
 
 == Summary
-This plugin compiles ISML files of Intershop to Java class files. It generates also JSP and Java files from ISML files.
+This package provides two plugins - one plugin for the ISML tag lib support and one for the compilation of ISML files.
+These plugins compile ISML files of Intershop to Java class files. It generates also JSP and Java files from ISML files.
 All files of the output have the same time stamp.
 
 == Usage
-To apply the ISML Gradle Plugin to your projects, add the following in your build script:
+To apply the ISML Gradle Plugins to your projects, add the following in your build script:
 
 [source,groovy]
 [subs=+attributes]
 .build.gradle
 ----
 plugins {
+    // only necessary to use additonal TagLibs
+    id 'com.intershop.gradle.ismltaglib' version '{latestRevision}'
+    // necessary for the compilation of ISML files
     id 'com.intershop.gradle.isml' version '{latestRevision}'
 }
 ----
 
-The plugin will create a default configuration for ISML templates of an Intershop project. The plugin uses the project
+The compiler plugin will create a default configuration for ISML templates of an Intershop project. The plugin uses the project
 dependencies for the ISML task and the compilation of the files.
 
 == Tasks
@@ -27,8 +34,10 @@ The ISML Gradle plugin adds one task `isml` to the project. This task depends on
 [cols="25%,30%,45%", width="90%, options="header"]
 |===
 |Task name  |Type            |Description
+|prepareTagLibs | com.intershop.gradle.isml.tasks.PrepareTagLibs | This task prepares the environment for ISML compilation with TagLibs.
+The output of this task is directly used by the isml2class* tasks.
 |isml       | Task           | Overall ``isml`` code generation task of a project. This task depends on all ``isml2class`` tasks.
-|isml2class<source set name> | com.intershop.gradle.isml.task.IsmlCompile | This task compiles ISML files to class files.
+|isml2class<source set name> | com.intershop.gradle.isml.tasks.IsmlCompile | This task compiles ISML files to class files.
 |===
 
 == Project Extension 'isml'
@@ -40,9 +49,12 @@ This plugin adds an extension *`isml`* to the project.
 |Property                 | Type    | Default value | Description
 |*jspCompilerVersion*     |`String` | '7.0.42'      | The version of JSP compiler.
 |*eclipseCompilerVersion* |`String` | '4.2.2'       | The version of Eclipse Java compiler. This version depends on the JSP compiler. Please check the used Tomcat version.
-|*templateEncoding*       |`String` | 'UTF-8'       | Template encoding. This is also used for JSP and Java compilation.
-|*javaSourceSetName*      |`String` | 'main'        | Name of the Java source set, which can be used for ISML compilation.
+|*encoding*       |`String` | 'UTF-8'       | Template encoding. This is also used for JSP and Java compilation.
+|*sourceSetName*      |`String` | 'main'        | Name of the Java source set, which can be used for ISML compilation.
 |*ismlConfigurationName*  |`String` | 'runtime'     | Name of the configuration, which is used for the classpath of ISML compilation.
+|*sourceCompatibility*  |`String` | '1.6' | This Java source compatibility is used for the compilation of java files.
+|*targetCompatibility*  |`String` | '1.6' | This Java target compatibility is used for the compilation of java files.
+|*taglibFolder*  | `File` | null | Folder with WEB-INF and TagLib configuration files.
 
 |===
 
@@ -61,7 +73,9 @@ This plugin adds an extension *`isml`* to the project.
 |===
 |Property       | Type     | Default value    | Description
 |*name*         | `String` | 'main'                                            | The name of the ISML source set
-|*srcDirectory* | `File` | '<project&nbsp;dir>/staticfiles/cartridge/templates'     | The input directory of the task.
+|*srcDir* | `File` | '<project&nbsp;dir>/staticfiles/cartridge/templates'     | The input directory of the task.
+|*outputDir* | `File` | '<project&nbsp;builddir>/generated/isml/main'   | The output directory of the compiler task.
+|*jspPackage* | `String` | 'ish.cartridges.<project&nbsp;name>  | The package name of the compiled JSP files.
 |*taskName*     | `String` | 'isml2classMain'                                  | The task name.
 |===
 
@@ -71,6 +85,7 @@ This plugin adds an extension *`isml`* to the project.
 [source,groovy,subs="attributes"]
 ----
 plugins {
+    id 'com.intershop.gradle.ismltaglib' version '{latestRevision}'
     id 'com.intershop.gradle.isml' version '{latestRevision}'
 }
 
@@ -86,10 +101,11 @@ dependencies {
 }
 ----
 
-==== Configuration with additional VM settings for Eclipse Java compiler
+==== Configuration with additional Java VM settings for process runner
 [source,groovy,subs="attributes"]
 ----
 plugins {
+    id 'com.intershop.gradle.ismltaglib' version '{latestRevision}'
     id 'com.intershop.gradle.isml' version '{latestRevision}'
 }
 
@@ -98,8 +114,11 @@ configurations {
     runtime.extendsFrom(compile)
 }
 
-tasks.withType(com.intershop.gradle.isml.task.IsmlCompile){
-    eclipseCompilerJavaOptions.setMaxHeapSize('64m')
+tasks.withType(com.intershop.gradle.isml.tasks.IsmlCompile) {
+    forkOptions { JavaForkOptions options ->
+        options.setMaxHeapSize('64m')
+        options.jvmArgs += ['-Dhttp.proxyHost=10.0.0.100', '-Dhttp.proxyPort=8800']
+    }
 }
 
 dependencies {
@@ -111,7 +130,7 @@ dependencies {
 
 == License
 
-Copyright 2014-2016 Intershop Communications.
+Copyright 2014-2018 Intershop Communications.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
 
