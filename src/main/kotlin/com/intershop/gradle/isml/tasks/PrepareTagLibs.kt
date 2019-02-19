@@ -19,6 +19,7 @@ import com.intershop.gradle.isml.extension.IsmlExtension
 import com.intershop.gradle.isml.tasks.data.TagLibConf
 import com.intershop.gradle.isml.tasks.data.TagLibConfDir
 import com.intershop.gradle.isml.tasks.data.TagLibConfZip
+import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.Directory
@@ -94,8 +95,7 @@ open class PrepareTagLibs : DefaultTask() {
         }
 
         project.configurations.findByName(ismlConfiguration)?.let {
-            it.dependencies.withType(ProjectDependency::class.java).forEach {
-
+            it.allDependencies.withType(ProjectDependency::class.java).forEach {
                 project.logger.debug("Project dependency found: {}", it.dependencyProject.name)
                 with(it.dependencyProject.file("$CARTRIDGE_STATIC_FOLDER/$TAGLIB_FOLDER")) {
                     if(exists() && listFiles().isNotEmpty()) {

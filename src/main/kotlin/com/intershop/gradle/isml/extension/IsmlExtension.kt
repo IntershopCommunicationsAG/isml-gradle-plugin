@@ -124,7 +124,7 @@ open class IsmlExtension(project: Project) {
         jspCompilerVersionProperty.set(JSP_COMPILER_VERSION)
         eclipseCompilerVersionProperty.set(ECLIPSE_COMPILER_VERSION)
         sourceSetNameProperty.set(SourceSet.MAIN_SOURCE_SET_NAME)
-        ismlConfigurationNameProperty.set("compile")
+        ismlConfigurationNameProperty.set("runtimeClasspath") //("compile") //
         sourceCompatibilityProperty.set("1.6")
         targetCompatibilityProperty.set("1.6")
         encodingProperty.set(DEFAULT_FILEENCODING)
