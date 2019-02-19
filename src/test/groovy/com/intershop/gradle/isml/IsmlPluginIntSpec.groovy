@@ -460,7 +460,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         tplFile2.delete()
 
         when:
-        List<String> args = ['isml', 'publish', '-s', '-i']
+        List<String> args = ['isml', 'publish', '-s', '-d']
 
         def result = getPreparedGradleRunner()
                 .withArguments(args)
