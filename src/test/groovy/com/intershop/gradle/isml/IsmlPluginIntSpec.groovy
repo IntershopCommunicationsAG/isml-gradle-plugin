@@ -88,6 +88,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             configurations {
                 compile
                 runtime.extendsFrom(compile)
+                runtimeClasspath.extendsFrom(compile)
             }
 
             dependencies {
@@ -183,6 +184,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             configurations {
                 compile
                 runtime.extendsFrom(compile)
+                runtimeClasspath.extendsFrom(compile)
             }
 
             dependencies {
@@ -265,6 +267,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             configurations {
                 compile
                 runtime.extendsFrom(compile)
+                runtimeClasspath.extendsFrom(compile)
             }
 
             dependencies {
