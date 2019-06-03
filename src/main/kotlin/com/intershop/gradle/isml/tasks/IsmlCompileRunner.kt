@@ -16,6 +16,8 @@
 package com.intershop.gradle.isml.tasks
 
 import org.apache.jasper.JspC
+import org.apache.log4j.Level
+import org.apache.log4j.LogManager
 import org.eclipse.jdt.internal.compiler.batch.Main
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -35,11 +37,11 @@ open class IsmlCompileRunner @Inject constructor(private val sourceDir: File,
                                                  private val compilerOut: File,
                                                  private val compilerError: File,
                                                  private val classpath: String,
-                                                 private val tempWebInfFolder: File): Runnable {
+                                                 private val tempWebInfFolder: File,
+                                                 private val logLevel: Level): Runnable {
 
     companion object {
         val log: Logger = LoggerFactory.getLogger(IsmlCompileRunner::class.java.name)
-
         // necessary for jsp path change made by Intershop
         val JAVA_KEYWORDS = arrayOf("abstract", "assert", "boolean", "break", "byte", "case", "catch",
                 "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final",
@@ -50,6 +52,8 @@ open class IsmlCompileRunner @Inject constructor(private val sourceDir: File,
     }
 
     override fun run() {
+        LogManager.getRootLogger().level = logLevel
+
         log.info("Start ISML compilation in source: {}", sourceDir.absolutePath)
         // run ISML compiler
         val ismlCompiler = ISML2JSP(sourceDir, outputDir, encoding, mutableMapOf("text/html" to encoding) )
