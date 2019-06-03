@@ -280,7 +280,7 @@ dependencies {
 
     compileOnly("org.eclipse.jdt.core.compiler:ecj:4.2.2")
     compileOnly("org.apache.tomcat:tomcat-jasper:7.0.42")
-    compileOnly("com.intershop.platform:isml:13.0.8")
+    compileOnly("com.intershop.platform:isml:21.0.0")
 
     testCompile("commons-io:commons-io:2.2")
     testImplementation("com.intershop.gradle.test:test-gradle-plugin:3.1.0-dev.2")
@@ -288,8 +288,6 @@ dependencies {
 }
 
 repositories {
-    jcenter()
-
     ivy {
         url = uri("https://repository.intershop.de/releases/")
         patternLayout {
@@ -301,4 +299,6 @@ repositories {
             password = System.getenv("ISHKEY") ?: System.getProperty("ISHKEY")
         }
     }
+
+    jcenter()
 }
