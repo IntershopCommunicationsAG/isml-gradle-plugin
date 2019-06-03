@@ -16,11 +16,13 @@
 package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
+import org.apache.log4j.Level
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
@@ -281,6 +283,13 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
         // tool specific files must be in front of all other to override the server specific files
         val classpathCollection = project.files(toolsclasspathfiles, classpathfiles, pageCompileFolder)
 
+        var runLoggerLevel = when(project.logging.level) {
+            LogLevel.INFO -> Level.INFO
+            LogLevel.DEBUG -> Level.DEBUG
+            LogLevel.ERROR -> Level.ERROR
+            else -> Level.WARN
+        }
+
         // start compiler runner
         workerExecutor.submit(IsmlCompileRunner::class.java, {
             it.displayName = "Worker compiles ISML files to class files."
@@ -295,7 +304,8 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
                     File(temporaryDir, "compiler-out.log"),
                     File(temporaryDir, "compiler-error.log"),
                     classpathCollection.asPath,
-                    webinf.parentFile)
+                    webinf.parentFile,
+                    runLoggerLevel)
             it.classpath(classpathCollection)
             it.isolationMode = IsolationMode.CLASSLOADER
             it.forkMode = ForkMode.AUTO
@@ -303,6 +313,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
                 project.logger.debug("ISML compile runner Add configured JavaForkOptions.")
                 internalForkOptionsAction?.execute(it.forkOptions)
             }
+
         })
 
         workerExecutor.await()
