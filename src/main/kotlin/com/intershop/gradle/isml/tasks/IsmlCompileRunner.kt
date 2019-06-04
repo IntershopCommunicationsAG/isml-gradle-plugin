@@ -16,6 +16,7 @@
 package com.intershop.gradle.isml.tasks
 
 import org.apache.jasper.JspC
+import org.apache.log4j.Category
 import org.apache.log4j.Level
 import org.apache.log4j.LogManager
 import org.eclipse.jdt.internal.compiler.batch.Main
@@ -52,7 +53,11 @@ open class IsmlCompileRunner @Inject constructor(private val sourceDir: File,
     }
 
     override fun run() {
-        LogManager.getLogger("IsmlCompile").level = logLevel
+        LogManager.getCurrentLoggers().iterator().forEach {
+            if(it is Category) {
+                it.level = logLevel
+            }
+        }
 
         log.info("Start ISML compilation in source: {}", sourceDir.absolutePath)
         // run ISML compiler

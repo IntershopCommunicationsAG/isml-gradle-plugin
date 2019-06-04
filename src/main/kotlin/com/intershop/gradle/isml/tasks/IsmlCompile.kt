@@ -225,8 +225,9 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
 
             returnFiles.from(mainSourceSet.output.classesDirs, mainSourceSet.output.resourcesDir)
         }
+
         returnFiles.from(project.configurations.findByName(ismlConfiguration)?.filter {
-            it.name.endsWith(".jar")
+            it.name.endsWith(".jar") && ! (it.name.startsWith("logback-classic") && ! it.path.contains("wrapper"))
         })
 
         returnFiles
