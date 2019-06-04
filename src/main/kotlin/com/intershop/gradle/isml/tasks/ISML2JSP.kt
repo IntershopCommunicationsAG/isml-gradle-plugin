@@ -18,12 +18,10 @@ package com.intershop.gradle.isml.tasks
 import com.intershop.beehive.isml.capi.ISMLCompilerConfiguration
 import com.intershop.beehive.isml.capi.ISMLTemplateConstants
 import com.intershop.beehive.isml.internal.TemplatePrecompileUtils
-import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 import java.io.File
 import java.io.IOException
 import javax.servlet.ServletException
-
-val log = LoggerFactory.getLogger(ISML2JSP::class.java.name)!!
 
 /**
  * This class is an offline ISML to JSP compiler. A running server is NOT required.
@@ -31,7 +29,8 @@ val log = LoggerFactory.getLogger(ISML2JSP::class.java.name)!!
 class ISML2JSP(private val srcDir: File,
                private val destdir: File,
                val contentEncoding: String,
-               val encodingMap : Map<String, String>) {
+               val encodingMap : Map<String, String>,
+               val log : Logger) {
 
     /*
      * Creates the compiler configuration.

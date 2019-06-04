@@ -100,6 +100,7 @@ class IsmlPlugin : Plugin<Project> {
                     val dependencyHandler = project.dependencies
                     it.add(dependencyHandler.create("org.eclipse.jdt.core.compiler:ecj:".
                             plus(extension.eclipseCompilerVersion)))
+                    it.removeIf({it.group == "ch.qos.logback" && it.name == "logback-classic" })
                 }
     }
 
@@ -112,6 +113,7 @@ class IsmlPlugin : Plugin<Project> {
                     val dependencyHandler = project.dependencies
                     it.add(dependencyHandler.create("org.apache.tomcat:tomcat-jasper:".
                             plus(extension.jspCompilerVersion)))
+                    it.removeIf({it.group == "ch.qos.logback" && it.name == "logback-classic" })
                 }
     }
 }
