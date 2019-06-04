@@ -307,7 +307,7 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
                     webinf.parentFile,
                     runLoggerLevel)
             it.classpath(classpathCollection)
-            it.isolationMode = IsolationMode.CLASSLOADER
+            it.isolationMode = IsolationMode.PROCESS
             it.forkMode = ForkMode.AUTO
             if(internalForkOptionsAction != null) {
                 project.logger.debug("ISML compile runner Add configured JavaForkOptions.")

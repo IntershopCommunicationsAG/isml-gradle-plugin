@@ -41,7 +41,7 @@ open class IsmlCompileRunner @Inject constructor(private val sourceDir: File,
                                                  private val logLevel: Level): Runnable {
 
     companion object {
-        val log: Logger = LoggerFactory.getLogger(IsmlCompileRunner::class.java.name)
+        val log: Logger = LoggerFactory.getLogger("IsmlCompile")
         // necessary for jsp path change made by Intershop
         val JAVA_KEYWORDS = arrayOf("abstract", "assert", "boolean", "break", "byte", "case", "catch",
                 "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final",
@@ -52,11 +52,11 @@ open class IsmlCompileRunner @Inject constructor(private val sourceDir: File,
     }
 
     override fun run() {
-        LogManager.getRootLogger().level = logLevel
+        LogManager.getLogger("IsmlCompile").level = logLevel
 
         log.info("Start ISML compilation in source: {}", sourceDir.absolutePath)
         // run ISML compiler
-        val ismlCompiler = ISML2JSP(sourceDir, outputDir, encoding, mutableMapOf("text/html" to encoding) )
+        val ismlCompiler = ISML2JSP(sourceDir, outputDir, encoding, mutableMapOf("text/html" to encoding), log)
         ismlCompiler.execute()
 
         // run JSP compiler
