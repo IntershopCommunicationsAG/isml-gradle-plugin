@@ -17,29 +17,17 @@ package com.intershop.gradle.isml.tasks
 
 import org.apache.jasper.JspC
 import org.apache.log4j.Category
-import org.apache.log4j.Level
 import org.apache.log4j.LogManager
 import org.eclipse.jdt.internal.compiler.batch.Main
+import org.gradle.workers.WorkAction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import javax.inject.Inject
 
 /**
  * Work class for tasks to generate class files from ISML files.
  */
-open class IsmlCompileRunner @Inject constructor(private val sourceDir: File,
-                                                 private val outputDir: File,
-                                                 private val encoding: String,
-                                                 private val jspPackage: String,
-                                                 private val sourceCompatibility: String,
-                                                 private val targetCompatibility: String,
-                                                 private val eclipseConfFile: File,
-                                                 private val compilerOut: File,
-                                                 private val compilerError: File,
-                                                 private val classpath: String,
-                                                 private val tempWebInfFolder: File,
-                                                 private val logLevel: Level): Runnable {
+abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
 
     companion object {
         val log: Logger = LoggerFactory.getLogger("IsmlCompile")
@@ -52,43 +40,50 @@ open class IsmlCompileRunner @Inject constructor(private val sourceDir: File,
                 "volatile", "while")
     }
 
-    override fun run() {
+    override fun execute() {
+
         LogManager.getCurrentLoggers().iterator().forEach {
             if(it is Category) {
-                it.level = logLevel
+                it.level = getParameters().logLevel.get()
             }
         }
 
-        log.info("Start ISML compilation in source: {}", sourceDir.absolutePath)
+        log.info("Start ISML compilation in source: {}", getParameters().sourceDir.get().absolutePath)
         // run ISML compiler
-        val ismlCompiler = ISML2JSP(sourceDir, outputDir, encoding, mutableMapOf("text/html" to encoding), log)
+        val ismlCompiler = ISML2JSP(getParameters().sourceDir.get(), getParameters().outputDir.get(),
+                getParameters().encoding.get(), mutableMapOf("text/html" to getParameters().encoding.get()), log)
         ismlCompiler.execute()
 
         // run JSP compiler
         val jspc = JspC()
-        jspc.setArgs(arrayOf("-p", makeJavaPackageFromPackage(jspPackage),
-                "-uriroot", outputDir.absolutePath,
-                "-d", outputDir.absolutePath,
-                "-javaEncoding", encoding,
-                "-source", sourceCompatibility,
-                "-target", targetCompatibility))
+        jspc.setArgs(arrayOf("-p", makeJavaPackageFromPackage(getParameters().jspPackage.get()),
+                "-uriroot", getParameters().outputDir.get().absolutePath,
+                "-d", getParameters().outputDir.get().absolutePath,
+                "-javaEncoding", getParameters().encoding.get(),
+                "-source", getParameters().sourceCompatibility.get(),
+                "-target", getParameters().targetCompatibility.get()))
+
         jspc.execute()
 
-        // run eclipse compileer
+        val eclipseConfFile = getParameters().eclipseConfFile.get()
+        // run eclipse compiler
         if(eclipseConfFile.exists()) {
             eclipseConfFile.delete()
         }
 
-        eclipseConfFile.writeText("-g -nowarn -encoding $encoding -target $targetCompatibility -source $sourceCompatibility -classpath $classpath")
+        eclipseConfFile.writeText("-g -nowarn -encoding ${getParameters().encoding.get()} " +
+                "-target ${getParameters().targetCompatibility.get()} " +
+                "-source ${getParameters().sourceCompatibility.get()} " +
+                "-classpath ${getParameters().classpath.get()}")
 
-        val compiler = Main( compilerOut.printWriter(), compilerError.printWriter(), false, null, null)
-        compiler.compile(arrayOf("@${eclipseConfFile.absolutePath}", outputDir.absolutePath))
+        val compiler = Main( getParameters().compilerOut.get().printWriter(), getParameters().compilerError.get().printWriter(), false, null, null)
+        compiler.compile(arrayOf("@${eclipseConfFile.absolutePath}",  getParameters().outputDir.get().absolutePath))
 
         // remove WEB-INF folder
-        tempWebInfFolder.deleteRecursively()
+        getParameters().tempWebInfFolder.get().deleteRecursively()
 
         // set same timestamp for all files
-        unifyTimestamps(outputDir)
+        unifyTimestamps(getParameters().outputDir.get())
     }
 
     private fun makeJavaPackageFromPackage(packageName: String) : String {
