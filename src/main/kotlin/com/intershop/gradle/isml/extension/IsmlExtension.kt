@@ -50,8 +50,8 @@ open class IsmlExtension(project: Project) {
         const val ISML_GROUP_NAME = "ISML Template Compilation"
 
         // default versions
-        const val JSP_COMPILER_VERSION = "7.0.42"
-        const val ECLIPSE_COMPILER_VERSION = "4.2.2"
+        const val JSP_COMPILER_VERSION = "9.0.24"
+        const val ECLIPSE_COMPILER_VERSION = "3.18.0"
 
         //configuration names
         const val ECLIPSECOMPILER_CONFIGURATION_NAME = "ismlJavaCompiler"
@@ -125,8 +125,8 @@ open class IsmlExtension(project: Project) {
         eclipseCompilerVersionProperty.set(ECLIPSE_COMPILER_VERSION)
         sourceSetNameProperty.set(SourceSet.MAIN_SOURCE_SET_NAME)
         ismlConfigurationNameProperty.set("runtimeClasspath") //("compile") //
-        sourceCompatibilityProperty.set("1.6")
-        targetCompatibilityProperty.set("1.6")
+        sourceCompatibilityProperty.set("1.8")
+        targetCompatibilityProperty.set("1.8")
         encodingProperty.set(DEFAULT_FILEENCODING)
     }
 

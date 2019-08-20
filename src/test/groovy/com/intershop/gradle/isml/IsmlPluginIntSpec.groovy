@@ -117,9 +117,9 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 .withGradleVersion(gradleVersion)
                 .build()
 
-        File jspFile = new File(testProjectDir, 'build/generated/isml/main/pagecompile/default/support/test.jsp')
-        File javaFile =  new File(testProjectDir, 'build/generated/isml/main/pagecompile/ish/cartridges/testCartridge/default_/support/test_jsp.java')
-        File classFile = new File(testProjectDir, 'build/generated/isml/main/pagecompile/ish/cartridges/testCartridge/default_/support/test_jsp.class')
+        File jspFile = new File(testProjectDir, "build/generated/isml/main/org/apache/jsp/default/support/test.jsp")
+        File javaFile =  new File(testProjectDir, 'build/generated/isml/main/org/apache/jsp/ish/cartridges/testCartridge/default_/support/test_jsp.java')
+        File classFile = new File(testProjectDir, 'build/generated/isml/main/org/apache/jsp/ish/cartridges/testCartridge/default_/support/test_jsp.class')
 
 
         then:
@@ -296,7 +296,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         then:
         result.task(':isml').outcome == SUCCESS
-        (new File(testProjectDir, 'build/generated/isml/main/pagecompile/ish/cartridges/testCartridge/common/errorPages/error400_jsp.class')).exists()
+        (new File(testProjectDir, 'build/generated/isml/main/org/apache/jsp/ish/cartridges/testCartridge/common/errorPages/error400_jsp.class')).exists()
 
         where:
         gradleVersion << supportedGradleVersions
@@ -463,7 +463,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         tplFile2.delete()
 
         when:
-        List<String> args = ['isml', 'publish', '-s']
+        List<String> args = ['isml', 'publish', '-s', '-d']
 
         def result = getPreparedGradleRunner()
                 .withArguments(args)
