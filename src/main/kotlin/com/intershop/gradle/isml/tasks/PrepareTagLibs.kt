@@ -136,8 +136,6 @@ open class PrepareTagLibs : DefaultTask() {
         webinf.parentFile.mkdirs()
         webinf.writeText(IsmlExtension.WEB_XML_CONTENT)
 
-        val targetFile = File(webinf.parentFile, TAGLIB_FOLDER)
-
         project.logger.info("Copy {} project tag libs to project '{}'", taglibConfigurations.size, project.name)
         taglibConfigurations.forEach { taglibConf ->
             if(taglibConf is TagLibConfZip) {
@@ -148,12 +146,12 @@ open class PrepareTagLibs : DefaultTask() {
                         details.path = details.path.removePrefix(
                                 "${taglibConf.projectName}/$RELEASE_STATIC_FOLDER/$TAGLIB_FOLDER/")
                     }
-                    it.into(File(targetFile, taglibConf.projectName))
+                    it.into( webinf.parentFile )
                 }
             } else {
                 project.copy {
                     it.from(taglibConf.conffile)
-                    it.into(File(targetFile, taglibConf.projectName))
+                    it.into( webinf.parentFile )
                 }
             }
         }

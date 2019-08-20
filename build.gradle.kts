@@ -106,7 +106,7 @@ detekt {
 
 tasks {
     withType<Test>().configureEach {
-        systemProperty("intershop.gradle.versions", "5.4.1")
+        systemProperty("intershop.gradle.versions", "5.6")
         systemProperty("platform.intershop.versions", "11.1.1")
         systemProperty("servlet.version", "3.0.1")
         systemProperty("slf4j.version", "1.7.12")

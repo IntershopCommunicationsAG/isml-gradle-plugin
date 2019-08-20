@@ -34,6 +34,8 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.JavaForkOptions
+import org.gradle.work.Incremental
+import org.gradle.work.InputChanges
 import org.gradle.workers.ForkMode
 import org.gradle.workers.IsolationMode
 import org.gradle.workers.WorkerExecutor
@@ -53,10 +55,10 @@ operator fun <T> Property<T>.getValue(receiver: Any?, property: KProperty<*>): T
 /**
  * Task for compiling isml to class files.
  */
-open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExecutor) : DefaultTask(){
+open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) : DefaultTask(){
 
     companion object {
-        const val PAGECOMPILE_FOLDER = "pagecompile"
+        const val PAGECOMPILE_FOLDER = "org/apache/jsp"
         const val FILTER_JSP = "**/**/*.jsp"
     }
 
@@ -291,31 +293,28 @@ open class IsmlCompile @Inject constructor(private val workerExecutor: WorkerExe
             else -> Level.WARN
         }
 
-        // start compiler runner
-        workerExecutor.submit(IsmlCompileRunner::class.java, {
-            it.displayName = "Worker compiles ISML files to class files."
-            it.setParams(
-                    inputDir,
-                    pageCompileFolder,
-                    encoding,
-                    jspPackage,
-                    sourceCompatibility,
-                    targetCompatibility,
-                    File(temporaryDir, "eclipsecompiler.config"),
-                    File(temporaryDir, "compiler-out.log"),
-                    File(temporaryDir, "compiler-error.log"),
-                    classpathCollection.asPath,
-                    webinf.parentFile,
-                    runLoggerLevel)
-            it.classpath(classpathCollection)
-            it.isolationMode = IsolationMode.PROCESS
-            it.forkMode = ForkMode.AUTO
+        val workQueue = workerExecutor.processIsolation() {
+            it.classpath.setFrom(classpathCollection)
             if(internalForkOptionsAction != null) {
                 project.logger.debug("ISML compile runner Add configured JavaForkOptions.")
                 internalForkOptionsAction?.execute(it.forkOptions)
             }
+        }
 
-        })
+        workQueue.submit(IsmlCompileRunner::class.java) {
+            it.sourceDir.set(inputDir)
+            it.outputDir.set(pageCompileFolder)
+            it.encoding.set(encoding)
+            it.jspPackage.set(jspPackage)
+            it.sourceCompatibility.set(sourceCompatibility)
+            it.targetCompatibility.set(targetCompatibility)
+            it.eclipseConfFile.set(File(temporaryDir, "eclipsecompiler.config"))
+            it.compilerOut.set(File(temporaryDir, "compiler-out.log"))
+            it.compilerError.set(File(temporaryDir, "compiler-error.log"))
+            it.classpath.set(classpathCollection.asPath)
+            it.tempWebInfFolder.set(webinf.parentFile)
+            it.logLevel.set(runLoggerLevel)
+        }
 
         workerExecutor.await()
     }

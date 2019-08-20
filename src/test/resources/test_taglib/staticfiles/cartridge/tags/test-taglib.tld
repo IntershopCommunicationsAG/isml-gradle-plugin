@@ -1,10 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE taglib PUBLIC
+        "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN"
+        "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd">
+
 <taglib>
-  <tlib-version>1.0</tlib-version>
-  <jsp-version>2.0</jsp-version>
-  <short-name>Example TLD</short-name>
+  <tlibversion>1.0</tlibversion>
+  <jspversion>1.1</jspversion>
+  <shortname>example-tld</shortname>
+
   <tag>
     <name>Hello</name>
-    <tag-class>com.intershop.support.HelloTag</tag-class>
-    <body-content>empty</body-content>
+    <tagclass>com.intershop.support.HelloTag</tagclass>
+    <bodycontent>empty</bodycontent>
   </tag>
 </taglib>

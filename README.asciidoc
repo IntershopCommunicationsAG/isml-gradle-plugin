@@ -1,9 +1,9 @@
 = ISML Gradle Plugins
-:latestRevision: 2.0.0
+:latestRevision: 2.1.0
 :toc:
 :icons: font
 
-NOTE: Version 2 of this plugin will only work with Gradle 5 and JDK 8.
+NOTE: Version 2 of this plugin will only work with JDK 8 and Gradle 5.6.
 
 == Summary
 This package provides two plugins - one plugin for the ISML tag lib support and one for the compilation of ISML files.
