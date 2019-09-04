@@ -58,7 +58,7 @@ operator fun <T> Property<T>.getValue(receiver: Any?, property: KProperty<*>): T
 open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) : DefaultTask(){
 
     companion object {
-        const val PAGECOMPILE_FOLDER = "org/apache/jsp"
+        const val PAGECOMPILE_FOLDER = "pagecompile"
         const val FILTER_JSP = "**/**/*.jsp"
     }
 
