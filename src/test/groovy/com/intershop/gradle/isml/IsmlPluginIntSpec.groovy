@@ -118,8 +118,8 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 .build()
 
         File jspFile = new File(testProjectDir, "build/generated/isml/main/pagecompile/default/support/test.jsp")
-        File javaFile =  new File(testProjectDir, 'build/generated/isml/main/pagecompile/ish/cartridges/testCartridge/default_/support/test_jsp.java')
-        File classFile = new File(testProjectDir, 'build/generated/isml/main/pagecompile/ish/cartridges/testCartridge/default_/support/test_jsp.class')
+        File javaFile =  new File(testProjectDir, 'build/generated/isml/main/pagecompile/org/apache/jsp/testCartridge/default_/support/test_jsp.java')
+        File classFile = new File(testProjectDir, 'build/generated/isml/main/pagecompile/org/apache/jsp/testCartridge/default_/support/test_jsp.class')
 
 
         then:
@@ -296,7 +296,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         then:
         result.task(':isml').outcome == SUCCESS
-        (new File(testProjectDir, 'build/generated/isml/main/pagecompile/ish/cartridges/testCartridge/common/errorPages/error400_jsp.class')).exists()
+        (new File(testProjectDir, 'build/generated/isml/main/pagecompile/org/apache/jsp/testCartridge/common/errorPages/error400_jsp.class')).exists()
 
         where:
         gradleVersion << supportedGradleVersions

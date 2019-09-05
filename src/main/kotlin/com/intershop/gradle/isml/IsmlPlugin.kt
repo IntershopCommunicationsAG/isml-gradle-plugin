@@ -47,7 +47,7 @@ class IsmlPlugin : Plugin<Project> {
                 mainIsmlSourceSet.outputDir = layout.buildDirectory.dir(
                         "${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}"
                 ).get().asFile
-                mainIsmlSourceSet.jspPackage = "ish.cartridges.${project.name}"
+                mainIsmlSourceSet.jspPackage = "org.apache.jsp.${project.name}"
             }
 
             configureTask(this, extension)
