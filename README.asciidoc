@@ -3,7 +3,7 @@
 :toc:
 :icons: font
 
-NOTE: Version 2 of this plugin will only work with JDK 8 and Gradle 5.6.
+NOTE: Version 3 of this plugin will only work with JDK 8, Gradle 5.6 and an Intershop Commerce Management newer than 7.10.
 
 == Summary
 This package provides two plugins - one plugin for the ISML tag lib support and one for the compilation of ISML files.
