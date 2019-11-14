@@ -279,7 +279,7 @@ dependencies {
     compileOnly("org.jetbrains:annotations:15.0")
 
     compileOnly("org.eclipse.jdt.core.compiler:ecj:4.2.2")
-    compileOnly("org.apache.tomcat:tomcat-jasper:7.0.42")
+    compileOnly("org.apache.tomcat:tomcat-jasper:9.0.19")
     compileOnly("com.intershop.platform:isml:21.0.0")
 
     testCompile("commons-io:commons-io:2.2")
