@@ -296,12 +296,8 @@ open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) :
         println("-- tools: " + toolsclasspathfiles.asPath)
         println("-- classpath: " + classpathfiles.asPath)
 
-        val workQueue = workerExecutor.processIsolation() {
+        val workQueue = workerExecutor.classLoaderIsolation() {
             it.classpath.setFrom(classpathCollection)
-            if(internalForkOptionsAction != null) {
-                project.logger.debug("ISML compile runner Add configured JavaForkOptions.")
-                internalForkOptionsAction?.execute(it.forkOptions)
-            }
         }
 
         workQueue.submit(IsmlCompileRunner::class.java) {

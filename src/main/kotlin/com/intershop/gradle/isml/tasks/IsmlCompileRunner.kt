@@ -62,7 +62,6 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
                 "-javaEncoding", getParameters().encoding.get(),
                 "-source", getParameters().sourceCompatibility.get(),
                 "-target", getParameters().targetCompatibility.get()))
-
         jspc.execute()
 
         val eclipseConfFile = getParameters().eclipseConfFile.get()

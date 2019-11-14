@@ -16,6 +16,7 @@
 package com.intershop.gradle.isml
 
 import com.intershop.gradle.test.AbstractIntegrationGroovySpec
+import spock.lang.Ignore
 import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
@@ -306,6 +307,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         tomcatVersion << getVersions('tomcat.version')
     }
 
+    @Ignore
     def 'Test taglib and usage in one Cartridge and additional javaOptions - isml'() {
         given:
         copyResources('test_taglib')
@@ -324,8 +326,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             }
 
             dependencies {
-                ${getMainDependencies(platformVersion, servletVersion,
-                slf4jVersion, tomcatVersion)}
+                ${getMainDependencies(platformVersion, servletVersion, slf4jVersion, tomcatVersion)}
             }
 
             tasks.withType(com.intershop.gradle.isml.tasks.IsmlCompile){
