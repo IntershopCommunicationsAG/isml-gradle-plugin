@@ -50,8 +50,8 @@ open class IsmlExtension(project: Project) {
         const val ISML_GROUP_NAME = "ISML Template Compilation"
 
         // default versions
-        const val JSP_COMPILER_VERSION = "9.0.24"
-        const val ECLIPSE_COMPILER_VERSION = "3.18.0"
+        const val JSP_COMPILER_VERSION = "9.0.19"
+        const val ECLIPSE_COMPILER_VERSION = "4.6.1"
 
         //configuration names
         const val ECLIPSECOMPILER_CONFIGURATION_NAME = "ismlJavaCompiler"

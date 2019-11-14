@@ -293,6 +293,9 @@ open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) :
             else -> Level.WARN
         }
 
+        println("-- tools: " + toolsclasspathfiles.asPath)
+        println("-- classpath: " + classpathfiles.asPath)
+
         val workQueue = workerExecutor.processIsolation() {
             it.classpath.setFrom(classpathCollection)
             if(internalForkOptionsAction != null) {
