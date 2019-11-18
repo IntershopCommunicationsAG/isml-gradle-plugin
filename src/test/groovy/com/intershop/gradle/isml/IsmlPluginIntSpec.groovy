@@ -307,7 +307,6 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         tomcatVersion << getVersions('tomcat.version')
     }
 
-    @Ignore
     def 'Test taglib and usage in one Cartridge and additional javaOptions - isml'() {
         given:
         copyResources('test_taglib')
@@ -357,7 +356,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         then:
         result.task(':isml').outcome == SUCCESS
-        result.output.contains('ISML compile runner Add configured JavaForkOptions.')
+        result.output.contains('ISML runner adds configured JavaForkOptions.')
 
         where:
         gradleVersion << supportedGradleVersions

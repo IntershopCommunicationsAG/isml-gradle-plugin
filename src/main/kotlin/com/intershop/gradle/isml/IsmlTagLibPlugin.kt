@@ -41,7 +41,7 @@ class IsmlTagLibPlugin : Plugin<Project> {
                 group = IsmlExtension.ISML_GROUP_NAME
 
                 provideIsmlConfiguration(extension.ismlConfigurationNameProvider)
-                provideOutputDir(extension.taglibFolderProvider)
+                outputDir.set(extension.taglibFolderProvider.get())
             }
         }
     }

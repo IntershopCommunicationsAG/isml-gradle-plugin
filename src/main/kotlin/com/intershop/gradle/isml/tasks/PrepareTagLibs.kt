@@ -19,10 +19,8 @@ import com.intershop.gradle.isml.extension.IsmlExtension
 import com.intershop.gradle.isml.tasks.data.TagLibConf
 import com.intershop.gradle.isml.tasks.data.TagLibConfDir
 import com.intershop.gradle.isml.tasks.data.TagLibConfZip
-import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ProjectDependency
-import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
@@ -51,21 +49,13 @@ open class PrepareTagLibs : DefaultTask() {
         const val TAGLIB_FOLDER = "tags"
     }
 
-    val outputDirProperty: DirectoryProperty = project.objects.directoryProperty()
-
     /**
      * Output directory for prepared files.
      *
      * @property outputDir
      */
     @get:OutputDirectory
-    val outputDir: File
-        get() = outputDirProperty.get().asFile
-
-    /**
-     * Add provider for outputDir.
-     */
-    fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
+    val outputDir: DirectoryProperty = project.objects.directoryProperty()
 
     private val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
 
@@ -85,7 +75,7 @@ open class PrepareTagLibs : DefaultTask() {
     fun provideIsmlConfiguration(ismlConfiguration: Provider<String>) = ismlConfigurationProperty.set(ismlConfiguration)
 
     @get:Nested
-    private val taglibConfigurations: List<TagLibConf> by lazy {
+    val taglibConfigurations: List<TagLibConf> by lazy {
         val returnList = arrayListOf<TagLibConf>()
 
         with(project.file("$CARTRIDGE_STATIC_FOLDER/$TAGLIB_FOLDER")) {
@@ -132,7 +122,7 @@ open class PrepareTagLibs : DefaultTask() {
      */
     @TaskAction
     fun runTagLibPreparation() {
-        val webinf = File(outputDir, IsmlExtension.WEB_XML_PATH)
+        val webinf = File(outputDir.asFile.get(), IsmlExtension.WEB_XML_PATH)
         webinf.parentFile.mkdirs()
         webinf.writeText(IsmlExtension.WEB_XML_CONTENT)
 
