@@ -80,7 +80,7 @@ class IsmlPlugin : Plugin<Project> {
                     provideEncoding(extension.encodingProvider)
 
                     if(prepareTaglibs != null && prepareTaglibs is PrepareTagLibs) {
-                        tagLibsInputDirProperty.set(prepareTaglibs.outputDirProperty)
+                        tagLibsInputDir.set(prepareTaglibs.outputDir)
                         this.dependsOn(prepareTaglibs)
                     }
 

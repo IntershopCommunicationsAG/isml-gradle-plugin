@@ -15,6 +15,8 @@
  */
 package com.intershop.gradle.isml.tasks.data
 
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import java.io.File
 
 /**
@@ -25,10 +27,12 @@ interface TagLibConf {
     /**
      * Configuration file for tag configuration.
      */
+    @get:InputFile
     val conffile: File
 
     /**
      * Project name of this tag lib.
      */
+    @get:Input
     val projectName: String
 }

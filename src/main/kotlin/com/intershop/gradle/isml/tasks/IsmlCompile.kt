@@ -29,6 +29,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SkipWhenEmpty
@@ -55,7 +56,9 @@ operator fun <T> Property<T>.getValue(receiver: Any?, property: KProperty<*>): T
 /**
  * Task for compiling isml to class files.
  */
-open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) : DefaultTask(){
+open class IsmlCompile @Inject constructor(
+        @Internal
+        val workerExecutor: WorkerExecutor) : DefaultTask(){
 
     companion object {
         const val PAGECOMPILE_FOLDER = "pagecompile"
@@ -79,8 +82,6 @@ open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) :
      */
     fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
 
-    val tagLibsInputDirProperty: DirectoryProperty = project.objects.directoryProperty()
-
     /**
      * Input directory for TagLibs.
      *
@@ -88,19 +89,7 @@ open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) :
      */
     @get:Optional
     @get:InputDirectory
-    val tagLibsInputDir: File?
-        get() {
-            return if(tagLibsInputDirProperty.orNull != null) {
-                tagLibsInputDirProperty.get().asFile
-            } else {
-                null
-            }
-        }
-
-    /**
-     * Add provider for taglibs dir.
-     */
-    fun provideTagLibsInputDir(tagLibsInputDir: Provider<Directory>) = tagLibsInputDirProperty.set(tagLibsInputDir)
+    val tagLibsInputDir: DirectoryProperty = project.objects.directoryProperty()
 
     private val inputDirProperty: DirectoryProperty = project.objects.directoryProperty()
 
@@ -217,7 +206,7 @@ open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) :
 
     // internal properties
     @get:InputFiles
-    private val classpathfiles : FileCollection by lazy {
+    val classpathfiles : FileCollection by lazy {
         val returnFiles = project.files()
 
         // search all files for classpath
@@ -236,7 +225,7 @@ open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) :
     }
 
     @get:InputFiles
-    private val toolsclasspathfiles : FileCollection by lazy {
+    val toolsclasspathfiles : FileCollection by lazy {
         val returnFiles = project.files()
         // find files of original JASPER and Eclipse compiler
         returnFiles.from(project.configurations.findByName(IsmlExtension.JSPJASPERCOMPILER_CONFIGURATION_NAME))
@@ -263,7 +252,7 @@ open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) :
         val pageCompileFolder = File(outputDir, PAGECOMPILE_FOLDER)
         val webinf = File(pageCompileFolder, IsmlExtension.WEB_XML_PATH)
 
-        if(tagLibsInputDir != null) {
+        if(tagLibsInputDir.isPresent) {
             // copy taglib conf files with web-inf to the uriroot
             project.copy {
                 it.from(tagLibsInputDir)
@@ -293,11 +282,13 @@ open class IsmlCompile @Inject constructor(val workerExecutor: WorkerExecutor) :
             else -> Level.WARN
         }
 
-        println("-- tools: " + toolsclasspathfiles.asPath)
-        println("-- classpath: " + classpathfiles.asPath)
-
-        val workQueue = workerExecutor.classLoaderIsolation() {
+        val workQueue = workerExecutor.processIsolation() {
             it.classpath.setFrom(classpathCollection)
+
+            if(internalForkOptionsAction != null) {
+                project.logger.debug("ISML runner adds configured JavaForkOptions.")
+                internalForkOptionsAction?.execute(it.forkOptions)
+            }
         }
 
         workQueue.submit(IsmlCompileRunner::class.java) {
