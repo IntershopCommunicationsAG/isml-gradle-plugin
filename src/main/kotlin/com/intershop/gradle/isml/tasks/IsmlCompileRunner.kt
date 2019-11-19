@@ -54,11 +54,14 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
                 getParameters().encoding.get(), mutableMapOf("text/html" to getParameters().encoding.get()), log)
         ismlCompiler.execute()
 
+        println("--> " + getParameters().classpath.get())
+
         // run JSP compiler
         val jspc = JspC()
         jspc.setArgs(arrayOf("-p", makeJavaPackageFromPackage(getParameters().jspPackage.get()),
                 "-uriroot", getParameters().outputDir.get().absolutePath,
                 "-d", getParameters().outputDir.get().absolutePath,
+                "-classpath", getParameters().classpath.get(),
                 "-javaEncoding", getParameters().encoding.get(),
                 "-source", getParameters().sourceCompatibility.get(),
                 "-target", getParameters().targetCompatibility.get()))
