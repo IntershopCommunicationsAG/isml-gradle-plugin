@@ -285,6 +285,10 @@ open class IsmlCompile @Inject constructor(
             else -> Level.WARN
         }
 
+        classpathCollection.removeAll {
+            it.name.startsWith("jaxb-impl")
+        }
+
         val workQueue = workerExecutor.processIsolation() {
             it.classpath.setFrom(classpathCollection)
 
