@@ -77,6 +77,12 @@ open class IsmlExtension(project: Project) {
                                  |                             http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
                                  |         version="3.0">
                                  |</web-app>""".trimMargin()
+
+        const val META_INF_PATH = "META-INF/context.xml"
+        val CONTEXT_CONTENT = """|<?xml version="1.0" encoding="UTF-8"?>
+                                 |<Context>
+                                 |   <JarScanner scanClassPath="false" scanAllFiles="false" scanAllDirectories="false"/>
+                                 |</Context>""".trimMargin()
     }
 
     /**

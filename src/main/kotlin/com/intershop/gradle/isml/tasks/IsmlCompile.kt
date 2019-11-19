@@ -251,6 +251,7 @@ open class IsmlCompile @Inject constructor(
         prepareFolder(outputDir)
         val pageCompileFolder = File(outputDir, PAGECOMPILE_FOLDER)
         val webinf = File(pageCompileFolder, IsmlExtension.WEB_XML_PATH)
+        val metainf = File(pageCompileFolder, IsmlExtension.META_INF_PATH)
 
         if(tagLibsInputDir.isPresent) {
             // copy taglib conf files with web-inf to the uriroot
@@ -262,6 +263,8 @@ open class IsmlCompile @Inject constructor(
             // create web-inf in uriroot
             webinf.parentFile.mkdirs()
             webinf.writeText(IsmlExtension.WEB_XML_CONTENT)
+            metainf.parentFile.mkdirs()
+            metainf.writeText(IsmlExtension.CONTEXT_CONTENT)
         }
 
         // copy source jsp files
