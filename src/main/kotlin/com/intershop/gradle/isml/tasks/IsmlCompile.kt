@@ -285,7 +285,7 @@ open class IsmlCompile @Inject constructor(
             else -> Level.WARN
         }
 
-        println("-- input --> " + classpathCollection.asPath)
+        logger.info("-- input --> " + classpathCollection.asPath)
 
         val workQueue = workerExecutor.processIsolation() {
             it.classpath.setFrom(classpathCollection)
