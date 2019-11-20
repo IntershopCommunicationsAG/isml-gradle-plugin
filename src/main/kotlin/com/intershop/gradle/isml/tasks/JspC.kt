@@ -15,7 +15,7 @@ import java.io.IOException
 import java.io.PrintWriter
 import java.net.URL
 import java.net.URLClassLoader
-import java.util.ArrayList
+import java.util.*
 
 class JspC: org.apache.jasper.JspC() {
 
@@ -40,9 +40,9 @@ class JspC: org.apache.jasper.JspC() {
         initTldScanner(context, ucl)
 
         try {
+            scanner.setClassLoader(ucl)
             scanner.scan()
         } catch (e: SAXException) {
-            logger.info("---> " + e)
             throw JasperException(e)
         }
         tldCache = TldCache(context, scanner.uriTldResourcePathMap,
