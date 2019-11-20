@@ -19,8 +19,26 @@ import java.util.*
 
 class JspC: org.apache.jasper.JspC() {
 
+    private var ishScanner: TldScanner? = null
+
     companion object {
         val logger: Logger = LoggerFactory.getLogger("IntershopJspC")
+    }
+
+    var includeNames = listOf<String>()
+    var excludeNames = listOf<String>()
+
+    override fun initTldScanner(context: JspCServletContext?, classLoader: ClassLoader?) {
+        if (ishScanner != null) {
+            return
+        }
+        ishScanner = newTldScanner(context, true, isValidateTld, isBlockExternal)
+        ishScanner?.setClassLoader(classLoader)
+    }
+
+    override fun newTldScanner(context: JspCServletContext?, namespaceAware: Boolean,
+                               validate: Boolean, blockExternal: Boolean): TldScanner? {
+        return TldScanner(context, namespaceAware, validate, blockExternal)
     }
 
     @Throws(IOException::class, JasperException::class)
@@ -40,13 +58,14 @@ class JspC: org.apache.jasper.JspC() {
         initTldScanner(context, ucl)
 
         try {
-            scanner.setClassLoader(ucl)
-            scanner.scan()
+            ishScanner?.setClassLoader(ucl)
+            ishScanner?.excludeNames = listOf<String>()
+            ishScanner?.scan()
         } catch (e: SAXException) {
             throw JasperException(e)
         }
-        tldCache = TldCache(context, scanner.uriTldResourcePathMap,
-                scanner.tldResourcePathTaglibXmlMap)
+        tldCache = TldCache(context, ishScanner?.uriTldResourcePathMap,
+                ishScanner?.tldResourcePathTaglibXmlMap)
         context.setAttribute(TldCache.SERVLET_CONTEXT_ATTRIBUTE_NAME, tldCache)
         rctxt = JspRuntimeContext(context, this)
         jspConfig = JspConfig(context)

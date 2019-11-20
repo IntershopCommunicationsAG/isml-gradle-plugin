@@ -65,7 +65,7 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
         Thread.currentThread().setContextClassLoader(ucl)
 
         // run JSP compiler
-        val jspc = JspC()
+        val jspc = org.apache.jasper.JspC()
         jspc.classPath = getParameters().classpath.get()
         jspc.setUriroot(getParameters().outputDir.get().absolutePath)
         jspc.setPackage(makeJavaPackageFromPackage(getParameters().jspPackage.get()))

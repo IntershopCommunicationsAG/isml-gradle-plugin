@@ -280,9 +280,14 @@ dependencies {
 
     compileOnly("org.eclipse.jdt.core.compiler:ecj:4.2.2")
     compileOnly("org.apache.tomcat:tomcat-jasper:9.0.19")
-    compileOnly("com.intershop.platform:isml:21.0.0")
+    compileOnly("org.apache.tomcat:tomcat-api:9.0.19")
 
-    testCompile("commons-io:commons-io:2.2")
+    compileOnly("com.intershop.platform:isml:21.0.0") {
+        exclude( group = "org.apache.tomcat" )
+        exclude( module = "servletengine" )
+    }
+
+    testImplementation("commons-io:commons-io:2.2")
     testImplementation("com.intershop.gradle.test:test-gradle-plugin:3.4.0")
     testImplementation(gradleTestKit())
 }

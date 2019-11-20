@@ -78,7 +78,7 @@ open class IsmlExtension(project: Project) {
                                  |         version="3.0">
                                  |</web-app>""".trimMargin()
 
-        const val META_INF_PATH = "META-INF/context.xml"
+        const val META_INF_PATH = "classes/META-INF/context.xml"
         val CONTEXT_CONTENT = """|<?xml version="1.0" encoding="UTF-8"?>
                                  |<Context>
                                  |   <JarScanner scanClassPath="false" scanAllFiles="false" scanAllDirectories="false"/>
