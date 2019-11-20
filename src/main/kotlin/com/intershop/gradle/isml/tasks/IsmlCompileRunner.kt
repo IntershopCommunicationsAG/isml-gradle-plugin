@@ -15,7 +15,6 @@
  */
 package com.intershop.gradle.isml.tasks
 
-import org.apache.jasper.JspC
 import org.apache.log4j.Category
 import org.apache.log4j.LogManager
 import org.eclipse.jdt.internal.compiler.batch.Main
