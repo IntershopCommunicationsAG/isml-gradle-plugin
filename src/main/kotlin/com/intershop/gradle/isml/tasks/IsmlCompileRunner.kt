@@ -57,10 +57,9 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
                 getParameters().encoding.get(), mutableMapOf("text/html" to getParameters().encoding.get()), log)
         ismlCompiler.execute()
 
-        log.info("--> " + getParameters().classpath.get())
-
         // run JSP compiler
         val jspc = JspC()
+        jspc.internalClasspath = getParameters().classpath.get()
         jspc.classPath = getParameters().classpath.get()
         jspc.setUriroot(getParameters().outputDir.get().absolutePath)
         jspc.setPackage(makeJavaPackageFromPackage(getParameters().jspPackage.get()))

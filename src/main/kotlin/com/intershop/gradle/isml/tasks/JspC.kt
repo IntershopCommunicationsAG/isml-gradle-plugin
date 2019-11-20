@@ -25,8 +25,7 @@ class JspC: org.apache.jasper.JspC() {
         val logger: Logger = LoggerFactory.getLogger("IntershopJspC")
     }
 
-    var includeNames = listOf<String>()
-    var excludeNames = listOf<String>()
+    var internalClasspath: String = ""
 
     override fun initTldScanner(context: JspCServletContext?, classLoader: ClassLoader?) {
         if (ishScanner != null) {
@@ -59,12 +58,12 @@ class JspC: org.apache.jasper.JspC() {
 
         try {
             var fileList = mutableListOf<String>()
-            if(getClassPath() != null) {
-                var cpList = getClassPath().split(":")
+            if(internalClasspath.length > 0) {
+                var cpList = internalClasspath.split(":")
                 cpList.forEach {
                     if(! it.endsWith(File.pathSeparator)) {
                         fileList.add(File(it).name)
-                        logger.debug("Add filename --> {} <-- to list", File(it).name)
+                        logger.debug("Add list --> {} <-- to list", File(it).name)
                     }
                 }
             }
