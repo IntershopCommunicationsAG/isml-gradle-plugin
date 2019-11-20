@@ -58,8 +58,17 @@ class JspC: org.apache.jasper.JspC() {
         initTldScanner(context, ucl)
 
         try {
+            var fileList = mutableListOf<String>()
+            if(getClassPath() != null) {
+                var cpList = getClassPath().split(":")
+                cpList.forEach {
+                    if(! it.endsWith(File.pathSeparator)) {
+                        fileList.add(File(it).name)
+                    }
+                }
+            }
+            ishScanner?.includeNames = fileList
             ishScanner?.setClassLoader(ucl)
-            ishScanner?.excludeNames = listOf<String>()
             ishScanner?.scan()
         } catch (e: SAXException) {
             throw JasperException(e)

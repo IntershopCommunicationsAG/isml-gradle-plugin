@@ -31,8 +31,8 @@ class TldScanner : org.apache.jasper.servlet.TldScanner  {
     var context: ServletContext?
     var tldParser: TldParser
 
-    var includeNames = listOf<String>()
-    var excludeNames = listOf<String>()
+    var includeNames = mutableListOf<String>()
+    var excludeNames = mutableListOf<String>()
 
     constructor(context: ServletContext?, namespaceAware: Boolean, validation: Boolean, blockExternal: Boolean) : super(context, namespaceAware, validation, blockExternal) {
         this.context = context
@@ -42,7 +42,7 @@ class TldScanner : org.apache.jasper.servlet.TldScanner  {
     override fun scanJars() {
         val scanner = JarScannerFactory.getJarScanner(context)
         val callback = TldScannerCallback()
-        scanner.setJarScanFilter { _, jarName -> !excludeNames.contains(jarName) }
+        scanner.setJarScanFilter(ListJarScanFilter(includeNames, excludeNames))
         scanner.scan(JarScanType.TLD, context, callback)
         if (callback.scanFoundNoTLDs()) {
             log.info(Localizer.getMessage("jsp.tldCache.noTldSummary"))
