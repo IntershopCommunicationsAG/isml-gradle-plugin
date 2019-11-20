@@ -42,6 +42,8 @@ class TldScanner : org.apache.jasper.servlet.TldScanner  {
     override fun scanJars() {
         val scanner = JarScannerFactory.getJarScanner(context)
         val callback = TldScannerCallback()
+        log.debug("Init scan filter with {} and {}.", includeNames, excludeNames)
+
         scanner.setJarScanFilter(ListJarScanFilter(includeNames, excludeNames))
         scanner.scan(JarScanType.TLD, context, callback)
         if (callback.scanFoundNoTLDs()) {

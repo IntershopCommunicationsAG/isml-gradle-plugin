@@ -64,6 +64,7 @@ class JspC: org.apache.jasper.JspC() {
                 cpList.forEach {
                     if(! it.endsWith(File.pathSeparator)) {
                         fileList.add(File(it).name)
+                        logger.debug("Add filename --> {} <-- to list", File(it).name)
                     }
                 }
             }
