@@ -23,6 +23,10 @@ import org.gradle.workers.WorkAction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.net.URL
+import java.net.URLClassLoader
+import java.util.*
+
 
 /**
  * Work class for tasks to generate class files from ISML files.
@@ -56,15 +60,21 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
 
         log.info("--> " + getParameters().classpath.get())
 
+        val currentClassLoader = Thread.currentThread().contextClassLoader
+        val urls = setUpClassPath(getParameters().classpath.get())
+        val ucl = URLClassLoader(urls.toTypedArray<URL?>(), currentClassLoader)
+        Thread.currentThread().setContextClassLoader(ucl)
+
         // run JSP compiler
         val jspc = JspC()
-        jspc.setArgs(arrayOf("-p", makeJavaPackageFromPackage(getParameters().jspPackage.get()),
-                "-uriroot", getParameters().outputDir.get().absolutePath,
-                "-d", getParameters().outputDir.get().absolutePath,
-                "-classpath", getParameters().classpath.get(),
-                "-javaEncoding", getParameters().encoding.get(),
-                "-source", getParameters().sourceCompatibility.get(),
-                "-target", getParameters().targetCompatibility.get()))
+        jspc.classPath = getParameters().classpath.get()
+        jspc.setUriroot(getParameters().outputDir.get().absolutePath)
+        jspc.setPackage(makeJavaPackageFromPackage(getParameters().jspPackage.get()))
+        jspc.setOutputDir(getParameters().outputDir.get().absolutePath)
+        jspc.javaEncoding = getParameters().encoding.get()
+        jspc.compilerSourceVM = getParameters().sourceCompatibility.get()
+        jspc.compilerTargetVM = getParameters().targetCompatibility.get()
+
         jspc.execute()
 
         val eclipseConfFile = getParameters().eclipseConfFile.get()
@@ -86,6 +96,20 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
 
         // set same timestamp for all files
         unifyTimestamps(getParameters().outputDir.get())
+    }
+
+    private fun setUpClassPath(classpath: String) : List<URL> {
+        val urls = ArrayList<URL>()
+        val paths = classpath.split(":")
+
+        paths.forEach {
+            if(log.isDebugEnabled) {
+                log.debug("Adding to classpath {}" , it)
+            }
+            urls.add(File(it).toURI().toURL())
+        }
+
+        return urls
     }
 
     private fun makeJavaPackageFromPackage(packageName: String) : String {
