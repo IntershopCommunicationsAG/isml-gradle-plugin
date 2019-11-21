@@ -77,12 +77,6 @@ open class IsmlExtension(project: Project) {
                                  |                             http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
                                  |         version="3.0">
                                  |</web-app>""".trimMargin()
-
-        const val META_INF_PATH = "classes/META-INF/context.xml"
-        val CONTEXT_CONTENT = """|<?xml version="1.0" encoding="UTF-8"?>
-                                 |<Context>
-                                 |   <JarScanner scanClassPath="false" scanAllFiles="false" scanAllDirectories="false"/>
-                                 |</Context>""".trimMargin()
     }
 
     /**
@@ -124,16 +118,21 @@ open class IsmlExtension(project: Project) {
     // File encoding
     private val encodingProperty: Property<String> = project.objects.property(String::class.java)
 
+    // Enable TLD scanning by JspC
+    private val enableTldScanProperty: Property<Boolean> = project.objects.property(Boolean::class.java)
+
     init {
         taglibFolderProperty.set(project.layout.buildDirectory.dir(IsmlExtension.ISMLTAGLIB_OUTPUTPATH))
 
-        jspCompilerVersionProperty.set(JSP_COMPILER_VERSION)
-        eclipseCompilerVersionProperty.set(ECLIPSE_COMPILER_VERSION)
-        sourceSetNameProperty.set(SourceSet.MAIN_SOURCE_SET_NAME)
-        ismlConfigurationNameProperty.set("runtimeClasspath") //("compile") //
-        sourceCompatibilityProperty.set("1.8")
-        targetCompatibilityProperty.set("1.8")
+        jspCompilerVersionProperty.convention(JSP_COMPILER_VERSION)
+        eclipseCompilerVersionProperty.convention(ECLIPSE_COMPILER_VERSION)
+        sourceSetNameProperty.convention(SourceSet.MAIN_SOURCE_SET_NAME)
+        ismlConfigurationNameProperty.convention("runtimeClasspath") //("compile") //
+        sourceCompatibilityProperty.convention("1.8")
+        targetCompatibilityProperty.convention("1.8")
         encodingProperty.set(DEFAULT_FILEENCODING)
+
+        enableTldScanProperty.convention(false)
     }
 
     /**
@@ -243,4 +242,17 @@ open class IsmlExtension(project: Project) {
      * @property encoding
      */
     var encoding by encodingProperty
+
+    /**
+     * Provider for TLD enabling property.
+     */
+    val enableTldScanProvider: Provider<Boolean>
+        get() = enableTldScanProperty
+
+    /**
+     * TldScan will be enabled if this property set to true.
+     *
+     * @property enableTldScan
+     */
+    var enableTldScan by enableTldScanProperty
 }

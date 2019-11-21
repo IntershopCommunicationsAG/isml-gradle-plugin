@@ -23,7 +23,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.URL
-import java.net.URLClassLoader
 import java.util.*
 
 
@@ -33,7 +32,7 @@ import java.util.*
 abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
 
     companion object {
-        val log: Logger = LoggerFactory.getLogger("IsmlCompile")
+        val log: Logger = LoggerFactory.getLogger(this::class.java.name)
         // necessary for jsp path change made by Intershop
         val JAVA_KEYWORDS = arrayOf("abstract", "assert", "boolean", "break", "byte", "case", "catch",
                 "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final",
@@ -57,9 +56,26 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
                 getParameters().encoding.get(), mutableMapOf("text/html" to getParameters().encoding.get()), log)
         ismlCompiler.execute()
 
+        if(parameters.enableTldScan.get() == true) {
+            if (parameters.tldScanIncludes.get().size >= 0 || parameters.tldScanExcludes.get().size == 0) {
+                var fileList = mutableListOf<String>()
+                if (parameters.classpath.get().length > 0) {
+                    var cpList = parameters.classpath.get().split(":")
+                    cpList.forEach {
+                        if (!it.endsWith(File.pathSeparator)) {
+                            fileList.add(File(it).name)
+                            log.debug("Add file name {} to list", File(it).name)
+                        }
+                    }
+                }
+            }
+        }
+
         // run JSP compiler
         val jspc = JspC()
-        jspc.internalClasspath = getParameters().classpath.get()
+        jspc.setLogging(getParameters().logLevel.get())
+        jspc.enableTldScan = parameters.enableTldScan.get()
+
         jspc.classPath = getParameters().classpath.get()
         jspc.setUriroot(getParameters().outputDir.get().absolutePath)
         jspc.setPackage(makeJavaPackageFromPackage(getParameters().jspPackage.get()))
@@ -89,20 +105,6 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
 
         // set same timestamp for all files
         unifyTimestamps(getParameters().outputDir.get())
-    }
-
-    private fun setUpClassPath(classpath: String) : List<URL> {
-        val urls = ArrayList<URL>()
-        val paths = classpath.split(":")
-
-        paths.forEach {
-            if(log.isDebugEnabled) {
-                log.debug("Adding to classpath {}" , it)
-            }
-            urls.add(File(it).toURI().toURL())
-        }
-
-        return urls
     }
 
     private fun makeJavaPackageFromPackage(packageName: String) : String {

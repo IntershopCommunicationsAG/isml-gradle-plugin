@@ -126,10 +126,6 @@ open class PrepareTagLibs : DefaultTask() {
         webinf.parentFile.mkdirs()
         webinf.writeText(IsmlExtension.WEB_XML_CONTENT)
 
-        val metainf = File(outputDir.asFile.get(), IsmlExtension.META_INF_PATH)
-        metainf.parentFile.mkdirs()
-        metainf.writeText(IsmlExtension.CONTEXT_CONTENT)
-
         project.logger.info("Copy {} project tag libs to project '{}'", taglibConfigurations.size, project.name)
         taglibConfigurations.forEach { taglibConf ->
             if(taglibConf is TagLibConfZip) {

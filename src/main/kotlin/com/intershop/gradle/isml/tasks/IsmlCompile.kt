@@ -24,6 +24,7 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
@@ -52,6 +53,15 @@ operator fun <T> Property<T>.setValue(receiver: Any?, property: KProperty<*>, va
  * Add a get function to a String property.
  */
 operator fun <T> Property<T>.getValue(receiver: Any?, property: KProperty<*>): T = get()
+
+/**
+ * Provides 'set' functional extension for the ListProperty object.
+ */
+operator fun <T> ListProperty<T>.setValue(receiver: Any?, property: KProperty<*>, value: List<T>) = set(value)
+/**
+ * Provides 'get' functional extension for the ListProperty object.
+ */
+operator fun <T> ListProperty<T>.getValue(receiver: Any?, property: KProperty<*>): List<T> = get()
 
 /**
  * Task for compiling isml to class files.
@@ -242,6 +252,63 @@ open class IsmlCompile @Inject constructor(
         internalForkOptionsAction = forkOptionsAction
     }
 
+    private val tldScanExcludesListProperty: ListProperty<String> = project.objects.listProperty(String::class.java)
+
+    /**
+     * List of filenames, that should be excluded from the JspC file scan.
+     * The file name is check for the beginning of the name.
+     *
+     * @property tldScanExcludes
+     */
+    @get:Input
+    var tldScanExcludes by tldScanExcludesListProperty
+
+    /**
+     * Add provider for encoding.
+     */
+    fun provideTldScanExcludes(excludeList: Provider<List<String>>) =
+            tldScanExcludesListProperty.set(excludeList)
+
+    private val tldScanIncludesListProperty: ListProperty<String> = project.objects.listProperty(String::class.java)
+
+    /**
+     * List of filenames, that should be included in the JspC file scan.
+     * The file name is check for the beginning of the name.
+     *
+     * The default value will be generated from the classpath if exclude list is empty.
+     *
+     * @property tldScanIncludes
+     */
+    @get:Input
+    var tldScanIncludes by tldScanIncludesListProperty
+
+    /**
+     * Add provider for tldScanIncludes.
+     */
+    fun provideTldScanIncludes(includeList: Provider<List<String>>) =
+            tldScanExcludesListProperty.set(includeList)
+
+    private val enableTldScanProperty: Property<Boolean> = project.objects.property(Boolean::class.java)
+
+    /**
+     * This will enable the TLD file scan of Jsp Compiler. It is only necessary if
+     * TLDs are used and available.
+     * Default value is false.
+     *
+     * @property enableTldScan
+     */
+    @get:Input
+    var enableTldScan by enableTldScanProperty
+
+    /**
+     * Add provider for enable TLD scan.
+     */
+    fun provideEnableTldScan(enableTldScan: Provider<Boolean>) = enableTldScanProperty.set(enableTldScan)
+
+    init {
+        enableTldScanProperty.convention(false)
+    }
+
     /**
      * This is the task action and processes ISML files.
      */
@@ -251,7 +318,6 @@ open class IsmlCompile @Inject constructor(
         prepareFolder(outputDir)
         val pageCompileFolder = File(outputDir, PAGECOMPILE_FOLDER)
         val webinf = File(pageCompileFolder, IsmlExtension.WEB_XML_PATH)
-        val metainf = File(pageCompileFolder, IsmlExtension.META_INF_PATH)
 
         if(tagLibsInputDir.isPresent) {
             // copy taglib conf files with web-inf to the uriroot
@@ -263,8 +329,6 @@ open class IsmlCompile @Inject constructor(
             // create web-inf in uriroot
             webinf.parentFile.mkdirs()
             webinf.writeText(IsmlExtension.WEB_XML_CONTENT)
-            metainf.parentFile.mkdirs()
-            metainf.writeText(IsmlExtension.CONTEXT_CONTENT)
         }
 
         // copy source jsp files
@@ -306,6 +370,9 @@ open class IsmlCompile @Inject constructor(
             it.compilerError.set(File(temporaryDir, "compiler-error.log"))
             it.classpath.set(classpathCollection.asPath)
             it.tempWebInfFolder.set(webinf.parentFile)
+            it.tldScanIncludes.set(tldScanIncludes)
+            it.tldScanExcludes.set(tldScanExcludes)
+            it.enableTldScan.set(enableTldScan)
             it.logLevel.set(runLoggerLevel)
         }
 

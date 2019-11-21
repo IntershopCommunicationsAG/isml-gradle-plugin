@@ -1,6 +1,7 @@
 package com.intershop.gradle.isml.tasks
 
 import org.apache.log4j.Level
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.workers.WorkParameters
 import java.io.File
@@ -18,6 +19,12 @@ interface ISMLCompileParameters : WorkParameters {
     val sourceCompatibility: Property<String>
 
     val targetCompatibility: Property<String>
+
+    val tldScanIncludes: ListProperty<String>
+
+    val tldScanExcludes: ListProperty<String>
+
+    val enableTldScan: Property<Boolean>
 
     val eclipseConfFile: Property<File>
 

@@ -79,6 +79,8 @@ class IsmlPlugin : Plugin<Project> {
                     provideTargetCompatibility(extension.targetCompatibilityProvider)
                     provideEncoding(extension.encodingProvider)
 
+                    provideEnableTldScan(extension.enableTldScanProvider)
+
                     if(prepareTaglibs != null && prepareTaglibs is PrepareTagLibs) {
                         tagLibsInputDir.set(prepareTaglibs.outputDir)
                         this.dependsOn(prepareTaglibs)

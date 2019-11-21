@@ -7,8 +7,11 @@ import org.apache.jasper.compiler.JspRuntimeContext
 import org.apache.jasper.compiler.TagPluginManager
 import org.apache.jasper.compiler.TldCache
 import org.apache.jasper.servlet.JspCServletContext
+import org.apache.log4j.Category
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.apache.log4j.Level
+import org.apache.log4j.LogManager
 import org.xml.sax.SAXException
 import java.io.File
 import java.io.IOException
@@ -20,18 +23,31 @@ import java.util.*
 class JspC: org.apache.jasper.JspC() {
 
     private var ishScanner: TldScanner? = null
+    private var logLevel: Level = Level.ERROR
 
     companion object {
-        val logger: Logger = LoggerFactory.getLogger("IntershopJspC")
+        val logger: Logger = LoggerFactory.getLogger(this::class.java.name)
     }
 
-    var internalClasspath: String = ""
+    var enableTldScan = false
+    var tldScanIncludes = mutableListOf<String>()
+    var tldScanExcludes = mutableListOf<String>()
+
+    fun setLogging(level: Level) {
+        logLevel = level
+        LogManager.getCurrentLoggers().iterator().forEach {
+            if(it is Category) {
+                it.level = level
+            }
+        }
+    }
 
     override fun initTldScanner(context: JspCServletContext?, classLoader: ClassLoader?) {
         if (ishScanner != null) {
             return
         }
         ishScanner = newTldScanner(context, true, isValidateTld, isBlockExternal)
+        ishScanner!!.setLogging(logLevel)
         ishScanner?.setClassLoader(classLoader)
     }
 
@@ -50,31 +66,29 @@ class JspC: org.apache.jasper.JspC() {
         val log = PrintWriter(System.out)
         val resourceBase = File(uriRoot).canonicalFile.toURI().toURL()
         context = JspCServletContext(log, resourceBase, ucl, isValidateXml, isBlockExternal)
+
+
         if (isValidateTld) {
             context.setInitParameter(Constants.XML_VALIDATION_TLD_INIT_PARAM, "true")
         }
 
         initTldScanner(context, ucl)
 
-        try {
-            var fileList = mutableListOf<String>()
-            if(internalClasspath.length > 0) {
-                var cpList = internalClasspath.split(":")
-                cpList.forEach {
-                    if(! it.endsWith(File.pathSeparator)) {
-                        fileList.add(File(it).name)
-                        logger.debug("Add list --> {} <-- to list", File(it).name)
-                    }
-                }
+        if(enableTldScan) {
+            logger.info("TLD scan is enabled.")
+            try {
+                ishScanner?.includeNames = tldScanIncludes
+                ishScanner?.excludeNames = tldScanExcludes
+                ishScanner?.setClassLoader(ucl)
+                ishScanner?.scan()
+            } catch (e: SAXException) {
+                throw JasperException(e)
             }
-            ishScanner?.includeNames = fileList
-            ishScanner?.setClassLoader(ucl)
-            ishScanner?.scan()
-        } catch (e: SAXException) {
-            throw JasperException(e)
         }
+
         tldCache = TldCache(context, ishScanner?.uriTldResourcePathMap,
-                ishScanner?.tldResourcePathTaglibXmlMap)
+                    ishScanner?.tldResourcePathTaglibXmlMap)
+
         context.setAttribute(TldCache.SERVLET_CONTEXT_ATTRIBUTE_NAME, tldCache)
         rctxt = JspRuntimeContext(context, this)
         jspConfig = JspConfig(context)

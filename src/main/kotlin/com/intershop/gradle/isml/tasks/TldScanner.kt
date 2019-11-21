@@ -2,6 +2,9 @@ package com.intershop.gradle.isml.tasks
 
 import org.apache.jasper.compiler.JarScannerFactory
 import org.apache.jasper.compiler.Localizer
+import org.apache.log4j.Category
+import org.apache.log4j.Level
+import org.apache.log4j.LogManager
 import org.apache.tomcat.Jar
 import org.apache.tomcat.JarScanType
 import org.apache.tomcat.JarScannerCallback
@@ -23,7 +26,8 @@ import javax.servlet.ServletContext
 class TldScanner : org.apache.jasper.servlet.TldScanner  {
 
     companion object {
-        val log: Logger = LoggerFactory.getLogger("TldScanner")
+        val log: Logger = LoggerFactory.getLogger(this::class.java.name)
+
         private val TLD_EXT = ".tld"
         private val WEB_INF = "/WEB-INF/"
     }
@@ -37,6 +41,14 @@ class TldScanner : org.apache.jasper.servlet.TldScanner  {
     constructor(context: ServletContext?, namespaceAware: Boolean, validation: Boolean, blockExternal: Boolean) : super(context, namespaceAware, validation, blockExternal) {
         this.context = context
         tldParser = TldParser(namespaceAware, validation, blockExternal)
+    }
+
+    fun setLogging(level: Level) {
+        LogManager.getCurrentLoggers().iterator().forEach {
+            if(it is Category) {
+                it.level = level
+            }
+        }
     }
 
     override fun scanJars() {

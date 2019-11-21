@@ -42,6 +42,10 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 id 'com.intershop.gradle.isml'
             }
 
+            isml {
+                enableTldScan = true
+            }
+
             dependencies {
                 ${getMainDependencies(platformVersion, servletVersion,
                                 slf4jVersion, tomcatVersion)}
@@ -324,6 +328,10 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 id 'com.intershop.gradle.isml'
             }
 
+            isml {
+                enableTldScan = true
+            }
+
             dependencies {
                 ${getMainDependencies(platformVersion, servletVersion, slf4jVersion, tomcatVersion)}
             }
@@ -390,6 +398,10 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
                 version = '1.0.0'
                 group = 'com.test'
+
+                isml {
+                    enableTldScan = true
+                }
 
                 dependencies {
                     ${getMainDependencies(platformVersion, servletVersion,
@@ -500,6 +512,10 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 id 'java'
                 id 'com.intershop.gradle.ismltaglib'
                 id 'com.intershop.gradle.isml'
+            }
+
+            isml {
+                enableTldScan = true
             }
 
             dependencies {
