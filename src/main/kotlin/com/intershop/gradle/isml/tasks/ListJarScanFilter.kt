@@ -13,13 +13,16 @@ class ListJarScanFilter(var includeNames : MutableList<String>,
     }
 
     override fun check(jarScanType: JarScanType?, jarName: String?): Boolean {
-        var rv = false
+        var rv = true
         if(jarName != null) {
             logger.debug("Check name --> {} <-- against list {}.", jarName, includeNames)
-            rv = includeNames.size > 0 && includeNames.find { it.startsWith(jarName) } != null
-            if(rv == true) return rv
-
-            rv = excludeNames.find { it.startsWith(jarName) } == null
+            if(includeNames.size > 0) {
+                rv = includeNames.find { it.startsWith(jarName) } != null
+            } else {
+                if (excludeNames.size > 0) {
+                    rv = excludeNames.find { it.startsWith(jarName) } == null
+                }
+            }
         }
         return rv
     }
