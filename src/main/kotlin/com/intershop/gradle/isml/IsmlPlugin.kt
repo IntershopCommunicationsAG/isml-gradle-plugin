@@ -98,11 +98,11 @@ class IsmlPlugin : Plugin<Project> {
         configuration.setVisible(false)
                 .setTransitive(true)
                 .setDescription("Configuration for Eclipse compiler")
-                .defaultDependencies {
+                .defaultDependencies { ds ->
                     val dependencyHandler = project.dependencies
-                    it.add(dependencyHandler.create("org.eclipse.jdt.core.compiler:ecj:".
+                    ds.add(dependencyHandler.create("org.eclipse.jdt.core.compiler:ecj:".
                             plus(extension.eclipseCompilerVersion)))
-                    it.removeIf({it.group == "ch.qos.logback" && it.name == "logback-classic" })
+                    ds.removeIf {it.group == "ch.qos.logback" && it.name == "logback-classic" }
                 }
     }
 
@@ -111,11 +111,11 @@ class IsmlPlugin : Plugin<Project> {
         configuration.setVisible(false)
                 .setTransitive(true)
                 .setDescription("Configuration for JSP compiler")
-                .defaultDependencies {
+                .defaultDependencies { ds ->
                     val dependencyHandler = project.dependencies
-                    it.add(dependencyHandler.create("org.apache.tomcat:tomcat-jasper:".
+                    ds.add(dependencyHandler.create("org.apache.tomcat:tomcat-jasper:".
                             plus(extension.jspCompilerVersion)))
-                    it.removeIf({it.group == "ch.qos.logback" && it.name == "logback-classic" })
+                    ds.removeIf {it.group == "ch.qos.logback" && it.name == "logback-classic" }
                 }
     }
 }

@@ -26,7 +26,7 @@ import java.io.File
 /**
  * Configuration container for ISMl code complentation.
  */
-class IsmlSourceSet(project: Project, val srcname: String) : Named {
+class IsmlSourceSet(project: Project, private val srcname: String) : Named {
 
     override fun getName() : String {
         return srcname

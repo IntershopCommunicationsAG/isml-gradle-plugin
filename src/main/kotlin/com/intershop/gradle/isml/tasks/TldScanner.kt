@@ -23,25 +23,23 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import javax.servlet.ServletContext
 
-class TldScanner : org.apache.jasper.servlet.TldScanner  {
+class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validation: Boolean, blockExternal: Boolean)
+    : org.apache.jasper.servlet.TldScanner(context, namespaceAware, validation, blockExternal) {
 
     companion object {
         val log: Logger = LoggerFactory.getLogger(this::class.java.name)
 
-        private val TLD_EXT = ".tld"
-        private val WEB_INF = "/WEB-INF/"
+        private const val TLD_EXT = ".tld"
+        private const val WEB_INF = "/WEB-INF/"
     }
 
     private var logLevel: Level = Level.ERROR
-
-    var context: ServletContext?
-    var tldParser: TldParser
+    private var tldParser: TldParser
 
     var includeNames = mutableListOf<String>()
     var excludeNames = mutableListOf<String>()
 
-    constructor(context: ServletContext?, namespaceAware: Boolean, validation: Boolean, blockExternal: Boolean) : super(context, namespaceAware, validation, blockExternal) {
-        this.context = context
+    init {
         tldParser = TldParser(namespaceAware, validation, blockExternal)
     }
 
@@ -60,7 +58,7 @@ class TldScanner : org.apache.jasper.servlet.TldScanner  {
         val callback = TldScannerCallback()
         log.debug("Init scan filter with {} and {}.", includeNames, excludeNames)
 
-        scanner.setJarScanFilter(ListJarScanFilter(includeNames, excludeNames, logLevel))
+        scanner.jarScanFilter = ListJarScanFilter(includeNames, excludeNames, logLevel)
         scanner.scan(JarScanType.TLD, context, callback)
         if (callback.scanFoundNoTLDs()) {
             log.info(Localizer.getMessage("jsp.tldCache.noTldSummary"))
@@ -119,12 +117,12 @@ class TldScanner : org.apache.jasper.servlet.TldScanner  {
                 entryName = jar.entryName
             }
             if (found) {
-                if (log.isDebugEnabled()) {
+                if (log.isDebugEnabled) {
                     log.debug(Localizer.getMessage("jsp.tldCache.tldInJar", jarFileUrl.toString()))
                 }
             } else {
                 foundJarWithoutTld = true
-                if (log.isDebugEnabled()) {
+                if (log.isDebugEnabled) {
                     log.debug(Localizer.getMessage(
                             "jsp.tldCache.noTldInJar", jarFileUrl.toString()))
                 }
@@ -171,12 +169,12 @@ class TldScanner : org.apache.jasper.servlet.TldScanner  {
                 }
             })
             if (foundFileWithoutTld) {
-                if (log.isDebugEnabled()) {
+                if (log.isDebugEnabled) {
                     log.debug(Localizer.getMessage("jsp.tldCache.tldInDir",
                             file.absolutePath))
                 }
             } else {
-                if (log.isDebugEnabled()) {
+                if (log.isDebugEnabled) {
                     log.debug(Localizer.getMessage("jsp.tldCache.noTldInDir",
                             file.absolutePath))
                 }

@@ -122,7 +122,7 @@ open class IsmlExtension(project: Project) {
     private val enableTldScanProperty: Property<Boolean> = project.objects.property(Boolean::class.java)
 
     init {
-        taglibFolderProperty.set(project.layout.buildDirectory.dir(IsmlExtension.ISMLTAGLIB_OUTPUTPATH))
+        taglibFolderProperty.set(project.layout.buildDirectory.dir(ISMLTAGLIB_OUTPUTPATH))
 
         jspCompilerVersionProperty.convention(JSP_COMPILER_VERSION)
         eclipseCompilerVersionProperty.convention(ECLIPSE_COMPILER_VERSION)

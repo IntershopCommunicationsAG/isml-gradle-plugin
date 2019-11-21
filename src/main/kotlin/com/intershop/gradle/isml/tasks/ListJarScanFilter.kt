@@ -8,9 +8,9 @@ import org.apache.tomcat.JarScanType
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class ListJarScanFilter(var includeNames : MutableList<String>,
-                        var excludeNames : MutableList<String>,
-                        var logLevel : Level) : JarScanFilter {
+class ListJarScanFilter(private var includeNames : MutableList<String>,
+                        private var excludeNames : MutableList<String>,
+                        private var logLevel : Level) : JarScanFilter {
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(this::class.java.name)
@@ -33,7 +33,7 @@ class ListJarScanFilter(var includeNames : MutableList<String>,
                 rv = includeNames.find { it.startsWith(jarName) } != null
             }
             if (excludeNames.size > 0) {
-                rv = ! (excludeNames.find { it.startsWith(jarName) } != null)
+                rv = excludeNames.find { it.startsWith(jarName) } == null
             }
         }
         return rv

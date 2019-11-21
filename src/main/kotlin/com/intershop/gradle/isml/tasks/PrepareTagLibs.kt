@@ -84,8 +84,8 @@ open class PrepareTagLibs : DefaultTask() {
             }
         }
 
-        project.configurations.findByName(ismlConfiguration)?.let {
-            it.allDependencies.withType(ProjectDependency::class.java).forEach {
+        project.configurations.findByName(ismlConfiguration)?.let { configuration ->
+            configuration.allDependencies.withType(ProjectDependency::class.java).forEach {
                 project.logger.debug("Project dependency found: {}", it.dependencyProject.name)
                 with(it.dependencyProject.file("$CARTRIDGE_STATIC_FOLDER/$TAGLIB_FOLDER")) {
                     if(exists() && listFiles().isNotEmpty()) {
@@ -95,9 +95,9 @@ open class PrepareTagLibs : DefaultTask() {
             }
         }
 
-        project.configurations.findByName(ismlConfiguration)?.let {
-            if(it.isCanBeResolved) {
-                it.resolvedConfiguration.resolvedArtifacts.forEach { artifact ->
+        project.configurations.findByName(ismlConfiguration)?.let { configuration ->
+            if(configuration.isCanBeResolved) {
+                configuration.resolvedConfiguration.resolvedArtifacts.forEach { artifact ->
                     if (artifact.type == "cartridge") {
                         val zipFile = ZipFile(artifact.file)
                         val list = zipFile.stream().filter { zipEntry ->

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("UnstableApiUsage")
+
 package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
@@ -36,10 +38,6 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.JavaForkOptions
-import org.gradle.work.Incremental
-import org.gradle.work.InputChanges
-import org.gradle.workers.ForkMode
-import org.gradle.workers.IsolationMode
 import org.gradle.workers.WorkerExecutor
 import java.io.File
 import javax.inject.Inject
@@ -342,14 +340,14 @@ open class IsmlCompile @Inject constructor(
         // tool specific files must be in front of all other to override the server specific files
         val classpathCollection = project.files(toolsclasspathfiles, classpathfiles, pageCompileFolder)
 
-        var runLoggerLevel = when(project.logging.level) {
+        val runLoggerLevel = when(project.logging.level) {
             LogLevel.INFO -> Level.INFO
             LogLevel.DEBUG -> Level.DEBUG
             LogLevel.ERROR -> Level.ERROR
             else -> Level.WARN
         }
 
-        val workQueue = workerExecutor.processIsolation() {
+        val workQueue = workerExecutor.processIsolation {
             it.classpath.setFrom(classpathCollection)
 
             if(internalForkOptionsAction != null) {

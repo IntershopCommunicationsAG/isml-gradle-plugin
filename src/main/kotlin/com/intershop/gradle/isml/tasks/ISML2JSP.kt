@@ -30,7 +30,7 @@ class ISML2JSP(private val srcDir: File,
                private val destdir: File,
                val contentEncoding: String,
                val encodingMap : Map<String, String>,
-               val log : Logger) {
+               private val log : Logger) {
 
     /*
      * Creates the compiler configuration.
@@ -65,15 +65,15 @@ class ISML2JSP(private val srcDir: File,
         val files = dir.listFiles(ISMLTemplateConstants.ismlFilter)
 
         // iterate results, recurse dirs, add files to result
-        files.forEach {f ->
-            if(f.isDirectory) {
-                val sd = if (subDirPath == null) { "${f.name}/" } else { "$subDirPath${f.name}/" }
-                getAllTemplateFileNames(f, sd, result)
+        files.forEach {file ->
+            if(file.isDirectory) {
+                val sd = if (subDirPath == null) { "${file.name}/" } else { "$subDirPath${file.name}/" }
+                getAllTemplateFileNames(file, sd, result)
             } else {
                 if (subDirPath == null) {
-                    result.add(f.name)
+                    result.add(file.name)
                 } else {
-                    result.add(subDirPath.plus(f.name))
+                    result.add(subDirPath.plus(file.name))
                 }
             }
         }
