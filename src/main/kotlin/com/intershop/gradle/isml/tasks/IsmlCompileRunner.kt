@@ -56,9 +56,10 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
                 getParameters().encoding.get(), mutableMapOf("text/html" to getParameters().encoding.get()), log)
         ismlCompiler.execute()
 
+        var fileList = mutableListOf<String>()
+
         if(parameters.enableTldScan.get() == true) {
             if (parameters.tldScanIncludes.get().size >= 0 || parameters.tldScanExcludes.get().size == 0) {
-                var fileList = mutableListOf<String>()
                 if (parameters.classpath.get().length > 0) {
                     var cpList = parameters.classpath.get().split(":")
                     cpList.forEach {
@@ -74,7 +75,10 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
         // run JSP compiler
         val jspc = JspC()
         jspc.setLogging(getParameters().logLevel.get())
+
         jspc.enableTldScan = parameters.enableTldScan.get()
+        jspc.tldScanIncludes = fileList
+        jspc.tldScanExcludes = parameters.tldScanExcludes.get()
 
         jspc.classPath = getParameters().classpath.get()
         jspc.setUriroot(getParameters().outputDir.get().absolutePath)

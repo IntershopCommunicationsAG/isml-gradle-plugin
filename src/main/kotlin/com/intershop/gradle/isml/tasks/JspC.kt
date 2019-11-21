@@ -76,6 +76,8 @@ class JspC: org.apache.jasper.JspC() {
 
         if(enableTldScan) {
             logger.info("TLD scan is enabled.")
+            logger.info("TLD scan includes: {}", tldScanIncludes)
+            logger.info("TLD scan excludes: {}", tldScanExcludes)
             try {
                 ishScanner?.includeNames = tldScanIncludes
                 ishScanner?.excludeNames = tldScanExcludes
