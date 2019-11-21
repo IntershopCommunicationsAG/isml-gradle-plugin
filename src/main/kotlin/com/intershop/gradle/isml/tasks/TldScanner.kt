@@ -32,6 +32,8 @@ class TldScanner : org.apache.jasper.servlet.TldScanner  {
         private val WEB_INF = "/WEB-INF/"
     }
 
+    private var logLevel: Level = Level.ERROR
+
     var context: ServletContext?
     var tldParser: TldParser
 
@@ -44,6 +46,8 @@ class TldScanner : org.apache.jasper.servlet.TldScanner  {
     }
 
     fun setLogging(level: Level) {
+        logLevel = level
+
         LogManager.getCurrentLoggers().iterator().forEach {
             if(it is Category) {
                 it.level = level
@@ -56,7 +60,7 @@ class TldScanner : org.apache.jasper.servlet.TldScanner  {
         val callback = TldScannerCallback()
         log.debug("Init scan filter with {} and {}.", includeNames, excludeNames)
 
-        scanner.setJarScanFilter(ListJarScanFilter(includeNames, excludeNames))
+        scanner.setJarScanFilter(ListJarScanFilter(includeNames, excludeNames, logLevel))
         scanner.scan(JarScanType.TLD, context, callback)
         if (callback.scanFoundNoTLDs()) {
             log.info(Localizer.getMessage("jsp.tldCache.noTldSummary"))

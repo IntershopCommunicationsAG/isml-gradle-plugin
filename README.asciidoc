@@ -1,9 +1,9 @@
 = ISML Gradle Plugins
-:latestRevision: 2.1.0
+:latestRevision: 3.3.0
 :toc:
 :icons: font
 
-NOTE: Version 3 of this plugin will only work with JDK 8, Gradle 5.6 and an Intershop Commerce Management newer than 7.10.
+NOTE: Version 3 of this plugin will only work with JDK 8, Gradle 5.6 and an Intershop Commerce Management *newer* than 7.10.
 
 == Summary
 This package provides two plugins - one plugin for the ISML tag lib support and one for the compilation of ISML files.
@@ -40,6 +40,11 @@ The output of this task is directly used by the isml2class* tasks.
 |isml2class<source set name> | com.intershop.gradle.isml.tasks.IsmlCompile | This task compiles ISML files to class files.
 |===
 
+It is possible to configure the list of include or exclude files for TLD scanner on the isml2class. The property names are
+'`tldScanIncludes`', '`tldScanExcludes`'. If '`tldScanIncludes`' will be extended with all files from project dependencies.
+The list '`tldScanIncludes`' is used only if the list is not empty. The file names (only the name without path)
+will be checked with the entries from the list for the beginning of the name.
+
 == Project Extension 'isml'
 This plugin adds an extension *`isml`* to the project.
 
@@ -47,14 +52,16 @@ This plugin adds an extension *`isml`* to the project.
 [cols="17%,17%,17%,49%", width="90%, options="header"]
 |===
 |Property                 | Type    | Default value | Description
-|*jspCompilerVersion*     |`String` | '7.0.42'      | The version of JSP compiler.
-|*eclipseCompilerVersion* |`String` | '4.2.2'       | The version of Eclipse Java compiler. This version depends on the JSP compiler. Please check the used Tomcat version.
+|*jspCompilerVersion*     |`String` | '9.0.19'      | The version of JSP compiler.
+|*eclipseCompilerVersion* |`String` | '4.6.1'       | The version of Eclipse Java compiler. This version depends on the JSP compiler. Please check the used Tomcat version.
 |*encoding*       |`String` | 'UTF-8'       | Template encoding. This is also used for JSP and Java compilation.
 |*sourceSetName*      |`String` | 'main'        | Name of the Java source set, which can be used for ISML compilation.
 |*ismlConfigurationName*  |`String` | 'runtime'     | Name of the configuration, which is used for the classpath of ISML compilation.
 |*sourceCompatibility*  |`String` | '1.6' | This Java source compatibility is used for the compilation of java files.
 |*targetCompatibility*  |`String` | '1.6' | This Java target compatibility is used for the compilation of java files.
 |*taglibFolder*  | `File` | null | Folder with WEB-INF and TagLib configuration files.
+|*enableTldScan* | `boolean` | false | TldScan of the Jsp Compiler will be enabled if this property set to true. +
+*This must be configured if you use TagLibs!*
 
 |===
 
@@ -89,6 +96,11 @@ plugins {
     id 'com.intershop.gradle.isml' version '{latestRevision}'
 }
 
+isml {
+    // necessary for "'com.intershop.gradle.ismltaglib'"
+    enableTldScan = true
+}
+
 configurations {
     compile
     runtime.extendsFrom(compile)
@@ -105,7 +117,6 @@ dependencies {
 [source,groovy,subs="attributes"]
 ----
 plugins {
-    id 'com.intershop.gradle.ismltaglib' version '{latestRevision}'
     id 'com.intershop.gradle.isml' version '{latestRevision}'
 }
 
@@ -130,7 +141,7 @@ dependencies {
 
 == License
 
-Copyright 2014-2018 Intershop Communications.
+Copyright 2014-2019 Intershop Communications.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
 

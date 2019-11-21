@@ -59,7 +59,7 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
         var fileList = mutableListOf<String>()
 
         if(parameters.enableTldScan.get() == true) {
-            if (parameters.tldScanIncludes.get().size >= 0 || parameters.tldScanExcludes.get().size == 0) {
+            if (parameters.tldScanIncludes.get().size >= 0 && parameters.tldScanExcludes.get().size == 0) {
                 if (parameters.classpath.get().length > 0) {
                     var cpList = parameters.classpath.get().split(":")
                     cpList.forEach {
@@ -68,6 +68,8 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
                             log.debug("Add file name {} to list", File(it).name)
                         }
                     }
+
+                    fileList.addAll(parameters.tldScanIncludes.get())
                 }
             }
         }
