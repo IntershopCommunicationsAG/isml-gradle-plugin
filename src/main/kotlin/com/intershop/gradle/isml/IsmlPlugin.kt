@@ -25,10 +25,17 @@ import org.gradle.language.assembler.tasks.Assemble
 /**
  * Plugin Class implementation.
  */
-class IsmlPlugin : Plugin<Project> {
+open class IsmlPlugin : Plugin<Project> {
 
     companion object {
+        /**
+         * Task description of this task.
+         */
         const val TASKDESCRIPTION = "Compiles ISML template files to class files"
+
+        /**
+         * Task name of this task.
+         */
         const val TASKNAME = "isml"
     }
 
@@ -36,7 +43,7 @@ class IsmlPlugin : Plugin<Project> {
         with(project) {
             logger.info("Isml plugin adds extension {} to {}", IsmlExtension.ISML_EXTENSION_NAME, name)
             val extension = extensions.findByType(IsmlExtension::class.java) ?:
-                                extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java, this)
+                                extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java)
 
             addEclipseCompilerConfiguration(this, extension)
             addJSPJasperCompilerConfiguration(this, extension)

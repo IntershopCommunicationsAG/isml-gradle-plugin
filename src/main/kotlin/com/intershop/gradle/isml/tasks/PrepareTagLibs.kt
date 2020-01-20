@@ -39,13 +39,19 @@ open class PrepareTagLibs : DefaultTask() {
 
     companion object {
 
-        // static files of a cartridge
+        /**
+         * Folder with static files of a cartridge.
+         */
         const val CARTRIDGE_STATIC_FOLDER = "staticfiles/cartridge"
 
-        // released static files of a cartridge
+        /**
+         * Folder with released static files of a cartridge.
+         */
         const val RELEASE_STATIC_FOLDER = "release"
 
-        // folder with tag lib definitions of a cartridge
+        /**
+         * Folder with tag lib definitions of a cartridge.
+         */
         const val TAGLIB_FOLDER = "tags"
     }
 
@@ -74,6 +80,11 @@ open class PrepareTagLibs : DefaultTask() {
      */
     fun provideIsmlConfiguration(ismlConfiguration: Provider<String>) = ismlConfigurationProperty.set(ismlConfiguration)
 
+    /**
+     * List of tag Lib configurations.
+     *
+     * @property taglibConfigurations
+     */
     @get:Nested
     val taglibConfigurations: List<TagLibConf> by lazy {
         val returnList = arrayListOf<TagLibConf>()

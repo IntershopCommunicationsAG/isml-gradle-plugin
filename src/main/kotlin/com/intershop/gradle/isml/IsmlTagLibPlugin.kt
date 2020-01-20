@@ -26,7 +26,14 @@ import org.gradle.api.Project
 class IsmlTagLibPlugin : Plugin<Project> {
 
     companion object {
+        /**
+         * Task description of this task.
+         */
         const val TASKDESCRIPTION = "Prepare directory with tag libs for ISML compilation"
+
+        /**
+         * Task name of this task.
+         */
         const val TASKNAME = "prepareTagLibs"
     }
 
@@ -34,7 +41,7 @@ class IsmlTagLibPlugin : Plugin<Project> {
         with(project) {
             logger.info("ISML TagLib plugin adds extension {} to {}", IsmlExtension.ISML_EXTENSION_NAME, project.name)
             val extension = extensions.findByType(IsmlExtension::class.java) ?:
-                        project.extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java, project)
+                        project.extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java)
 
             tasks.maybeCreate(TASKNAME, PrepareTagLibs::class.java).apply {
                 description = TASKDESCRIPTION

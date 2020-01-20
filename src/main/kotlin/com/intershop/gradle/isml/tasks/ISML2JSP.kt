@@ -24,7 +24,8 @@ import java.io.IOException
 import javax.servlet.ServletException
 
 /**
- * This class is an offline ISML to JSP compiler. A running server is NOT required.
+ * This class is an offline ISML to JSP compiler. A running
+ * server is NOT required.
  */
 class ISML2JSP(private val srcDir: File,
                private val destdir: File,

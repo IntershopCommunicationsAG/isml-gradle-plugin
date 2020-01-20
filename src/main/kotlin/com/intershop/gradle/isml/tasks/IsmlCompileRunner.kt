@@ -30,8 +30,13 @@ import java.io.File
 abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
 
     companion object {
+        /**
+         * Logger instance for logging.
+         */
         val log: Logger = LoggerFactory.getLogger(this::class.java.name)
-        // necessary for jsp path change made by Intershop
+        /**
+         * These is necessary for jsp path change made by Intershop.
+         */
         val JAVA_KEYWORDS = arrayOf("abstract", "assert", "boolean", "break", "byte", "case", "catch",
                 "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final",
                 "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface",
@@ -101,7 +106,9 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
                 "-source ${parameters.sourceCompatibility.get()} " +
                 "-classpath ${parameters.classpath.get()}")
 
-        val compiler = Main( parameters.compilerOut.get().printWriter(), parameters.compilerError.get().printWriter(), false, null, null)
+        val compiler = Main( parameters.compilerOut.get().printWriter(),
+                parameters.compilerError.get().printWriter(),
+                false, null, null)
         compiler.compile(arrayOf("@${eclipseConfFile.absolutePath}",  parameters.outputDir.get().absolutePath))
 
         // remove WEB-INF folder

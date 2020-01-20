@@ -16,7 +16,6 @@
 package com.intershop.gradle.isml
 
 import com.intershop.gradle.test.AbstractIntegrationGroovySpec
-import spock.lang.Ignore
 import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
@@ -115,6 +114,13 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         File ismlFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/test.isml')
 
         when:
+        // change on input
+        ismlFile << '\n' << """
+        <%
+        PipelineDictionary dict = getPipelineDictionary();
+        %>
+        """.stripIndent()
+
         List<String> args = ['isml', '-s', '-i']
 
         def result = getPreparedGradleRunner()
@@ -152,7 +158,11 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         when:
         // change on input
-        ismlFile << '\n' << "<!---[Comment - change]--->"
+        ismlFile << '\n' << """
+        <%
+        String enablePreference = (String)dict.get("enablepreference");
+        %>
+        """.stripIndent()
 
         def result_step3 = getPreparedGradleRunner()
                 .withArguments(args)
@@ -162,9 +172,9 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         then:
         result_step3.task(':isml2classMain').outcome == SUCCESS
 
-        javaFile.lastModified() != lastmodified
-        classFile.lastModified() != lastmodified
-        jspFile.lastModified() != lastmodified
+        javaFile.lastModified() >= lastmodified
+        classFile.lastModified() >= lastmodified
+        jspFile.lastModified() >= lastmodified
         jspFile.lastModified() == javaFile.lastModified()
         jspFile.lastModified() == classFile.lastModified()
 
