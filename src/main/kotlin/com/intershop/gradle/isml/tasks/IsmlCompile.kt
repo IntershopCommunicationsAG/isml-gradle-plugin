@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 @file:Suppress("UnstableApiUsage")
-
 package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
+import com.intershop.gradle.isml.utils.getValue
+import com.intershop.gradle.isml.utils.setValue
 import org.apache.log4j.Level
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
+import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.logging.LogLevel
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
@@ -41,39 +44,42 @@ import org.gradle.process.JavaForkOptions
 import org.gradle.workers.WorkerExecutor
 import java.io.File
 import javax.inject.Inject
-import kotlin.reflect.KProperty
-
-/**
- * Add a set function to a String property.
- */
-operator fun <T> Property<T>.setValue(receiver: Any?, property: KProperty<*>, value: T) = set(value)
-/**
- * Add a get function to a String property.
- */
-operator fun <T> Property<T>.getValue(receiver: Any?, property: KProperty<*>): T = get()
-
-/**
- * Provides 'set' functional extension for the ListProperty object.
- */
-operator fun <T> ListProperty<T>.setValue(receiver: Any?, property: KProperty<*>, value: List<T>) = set(value)
-/**
- * Provides 'get' functional extension for the ListProperty object.
- */
-operator fun <T> ListProperty<T>.getValue(receiver: Any?, property: KProperty<*>): List<T> = get()
 
 /**
  * Task for compiling isml to class files.
+ *
+ * @constructor creates an instance with worker
+ * @param workerExecutor
  */
-open class IsmlCompile @Inject constructor(
+abstract class IsmlCompile @Inject constructor(
         @Internal
         val workerExecutor: WorkerExecutor) : DefaultTask(){
 
+    /**
+     * Inject service of ObjectFactory (See "Service injection" in Gradle documentation.
+     */
+    @get:Inject
+    abstract val objectFactory: ObjectFactory
+
+    /**
+     * Inject service of FileSystemOperations (See "Service injection" in Gradle documentation.
+     */
+    @get:Inject
+    abstract val fileSystemOperations: FileSystemOperations
+
     companion object {
+        /**
+         * Variable for default page compile folder name.
+         */
         const val PAGECOMPILE_FOLDER = "pagecompile"
+
+        /**
+         * Variable for default JSP filter string.
+         */
         const val FILTER_JSP = "**/**/*.jsp"
     }
 
-    private val outputDirProperty: DirectoryProperty = project.objects.directoryProperty()
+    private val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * Output directory for generated files.
@@ -97,9 +103,9 @@ open class IsmlCompile @Inject constructor(
      */
     @get:Optional
     @get:InputDirectory
-    val tagLibsInputDir: DirectoryProperty = project.objects.directoryProperty()
+    val tagLibsInputDir: DirectoryProperty = objectFactory.directoryProperty()
 
-    private val inputDirProperty: DirectoryProperty = project.objects.directoryProperty()
+    private val inputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * Input directory for ISML files.
@@ -118,7 +124,7 @@ open class IsmlCompile @Inject constructor(
     fun provideInputDir(inputDir: Provider<Directory>) = inputDirProperty.set(inputDir)
 
     // (java) configuration name for isml compilation
-    private val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
+    private val ismlConfigurationProperty: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * ISMl configuration property.
@@ -133,7 +139,7 @@ open class IsmlCompile @Inject constructor(
      */
     fun provideIsmlConfiguration(ismlConfiguration: Provider<String>) = ismlConfigurationProperty.set(ismlConfiguration)
 
-    private val jspPackageProperty: Property<String> = project.objects.property(String::class.java)
+    private val jspPackageProperty: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * JSP package configuration property.
@@ -149,7 +155,7 @@ open class IsmlCompile @Inject constructor(
     fun provideJspPackage(jspPackage: Provider<String>) = jspPackageProperty.set(jspPackage)
 
     // java source set name
-    private val soureSetNameProperty: Property<String> = project.objects.property(String::class.java)
+    private val soureSetNameProperty: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Java source set name.
@@ -165,7 +171,7 @@ open class IsmlCompile @Inject constructor(
      */
     fun provideSourceSetName(sourceSetName: Provider<String>) = soureSetNameProperty.set(sourceSetName)
 
-    private val sourceCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
+    private val sourceCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Source compatibility configuration for ISML processing.
@@ -181,7 +187,7 @@ open class IsmlCompile @Inject constructor(
     fun provideSourceCompatibility(sourceCompatibility: Provider<String>) =
             sourceCompatibilityProperty.set(sourceCompatibility)
 
-    private val targetCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
+    private val targetCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Target compatibility configuration for ISML processing.
@@ -197,7 +203,7 @@ open class IsmlCompile @Inject constructor(
     fun provideTargetCompatibility(targetCompatibility: Provider<String>) =
             targetCompatibilityProperty.set(targetCompatibility)
 
-    private val encodingProperty: Property<String> = project.objects.property(String::class.java)
+    private val encodingProperty: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Encoding configuration for ISML processing.
@@ -212,7 +218,11 @@ open class IsmlCompile @Inject constructor(
      */
     fun provideEncoding(encoding: Provider<String>) = encodingProperty.set(encoding)
 
-    // internal properties
+    /**
+     * Classpath files of the isml configuration.
+     *
+     * @property classpathfiles
+     */
     @get:InputFiles
     val classpathfiles : FileCollection by lazy {
         val returnFiles = project.files()
@@ -232,6 +242,11 @@ open class IsmlCompile @Inject constructor(
         returnFiles
     }
 
+    /**
+     * Classpath files of the tools configuration.
+     *
+     * @property classpathfiles
+     */
     @get:InputFiles
     val toolsclasspathfiles : FileCollection by lazy {
         val returnFiles = project.files()
@@ -250,7 +265,7 @@ open class IsmlCompile @Inject constructor(
         internalForkOptionsAction = forkOptionsAction
     }
 
-    private val tldScanExcludesListProperty: ListProperty<String> = project.objects.listProperty(String::class.java)
+    private val tldScanExcludesListProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
 
     /**
      * List of filenames, that should be excluded from the JspC file scan.
@@ -267,7 +282,7 @@ open class IsmlCompile @Inject constructor(
     fun provideTldScanExcludes(excludeList: Provider<List<String>>) =
             tldScanExcludesListProperty.set(excludeList)
 
-    private val tldScanIncludesListProperty: ListProperty<String> = project.objects.listProperty(String::class.java)
+    private val tldScanIncludesListProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
 
     /**
      * List of filenames, that should be included in the JspC file scan.
@@ -286,7 +301,7 @@ open class IsmlCompile @Inject constructor(
     fun provideTldScanIncludes(includeList: Provider<List<String>>) =
             tldScanExcludesListProperty.set(includeList)
 
-    private val enableTldScanProperty: Property<Boolean> = project.objects.property(Boolean::class.java)
+    private val enableTldScanProperty: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
     /**
      * This will enable the TLD file scan of Jsp Compiler. It is only necessary if
@@ -311,7 +326,7 @@ open class IsmlCompile @Inject constructor(
      * This is the task action and processes ISML files.
      */
     @TaskAction
-    fun ismlcompile() {
+    fun runIsmlCompile() {
         //prepare output director
         prepareFolder(outputDir)
         val pageCompileFolder = File(outputDir, PAGECOMPILE_FOLDER)
@@ -319,7 +334,7 @@ open class IsmlCompile @Inject constructor(
 
         if(tagLibsInputDir.isPresent) {
             // copy taglib conf files with web-inf to the uriroot
-            project.copy {
+            fileSystemOperations.copy {
                 it.from(tagLibsInputDir)
                 it.into(pageCompileFolder)
             }
@@ -330,10 +345,9 @@ open class IsmlCompile @Inject constructor(
         }
 
         // copy source jsp files
-        project.copy {
-            it.from(inputDir) {
-                it.include(FILTER_JSP)
-            }
+        fileSystemOperations.copy {
+            it.from(inputDir)
+            it.include(FILTER_JSP)
             it.into(pageCompileFolder)
         }
 

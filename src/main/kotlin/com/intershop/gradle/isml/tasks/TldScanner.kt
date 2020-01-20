@@ -23,26 +23,52 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import javax.servlet.ServletContext
 
+/**
+ * Project specific TldScanner for Jasper Compiler.
+ */
 class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validation: Boolean, blockExternal: Boolean)
     : org.apache.jasper.servlet.TldScanner(context, namespaceAware, validation, blockExternal) {
 
     companion object {
+        /**
+         * Logger instance for logging.
+         */
         val log: Logger = LoggerFactory.getLogger(this::class.java.name)
 
+        /**
+         * TLD file extension.
+         */
         private const val TLD_EXT = ".tld"
+
+        /**
+         * Default WEB_INF folder.
+         */
         private const val WEB_INF = "/WEB-INF/"
     }
 
     private var logLevel: Level = Level.ERROR
-    private var tldParser: TldParser
+    private var tldParser: TldParser = TldParser(namespaceAware, validation, blockExternal)
 
+    /**
+     * TldScan can be configured with this
+     * property. This extends the names for TLD files.
+     *
+     * @property includeNames
+     */
     var includeNames = mutableListOf<String>()
+
+    /**
+     * TldScan can be configured with this
+     * property. This reduces the names for TLD files.
+     *
+     * @property excludeNames
+     */
     var excludeNames = mutableListOf<String>()
 
-    init {
-        tldParser = TldParser(namespaceAware, validation, blockExternal)
-    }
-
+    /**
+     * Set log level for TLD scanner.
+     * @param level
+     */
     fun setLogging(level: Level) {
         logLevel = level
 
@@ -73,7 +99,8 @@ class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validati
 
     @Throws(IOException::class, SAXException::class)
     override fun parseTld(path: TldResourcePath?) {
-        if (tldResourcePathTaglibXmlMap.containsKey(path)) { // TLD has already been parsed as a result of processing web.xml
+        if (tldResourcePathTaglibXmlMap.containsKey(path)) {
+            // TLD has already been parsed as a result of processing web.xml
             return
         }
         val tld = tldParser.parse(path)
@@ -89,10 +116,19 @@ class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validati
         }
     }
 
+    /**
+     * Inner class for project specific TLDScanner.
+     */
     inner class TldScannerCallback : JarScannerCallback {
         private var foundJarWithoutTld = false
         private var foundFileWithoutTld = false
 
+        /**
+         * Scan for Tlds in ...
+         * @param jar
+         * @param webappPath
+         * @param isWebapp
+         */
         @Throws(IOException::class)
         override fun scan(jar: Jar, webappPath: String?, isWebapp: Boolean) {
             var found = false
@@ -129,6 +165,12 @@ class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validati
             }
         }
 
+        /**
+         * Scan for Tlds in ...
+         * @param file
+         * @param webappPath
+         * @param isWebapp
+         */
         @Throws(IOException::class)
         override fun scan(file: File, webappPath: String?, isWebapp: Boolean) {
             val metaInf = File(file, "META-INF")
@@ -181,6 +223,9 @@ class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validati
             }
         }
 
+        /**
+         * Scan for Tlds in WebInfClasses.
+         */
         @Throws(IOException::class)
         override fun scanWebInfClasses() { // This is used when scanAllDirectories is enabled and one or more
         // JARs have been unpacked into WEB-INF/classes as happens with some
@@ -197,6 +242,9 @@ class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validati
             }
         }
 
+        /**
+         * Return true or false if TLDs not found.
+         */
         fun scanFoundNoTLDs(): Boolean {
             return foundJarWithoutTld
         }

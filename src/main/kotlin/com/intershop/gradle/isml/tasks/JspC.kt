@@ -8,10 +8,10 @@ import org.apache.jasper.compiler.TagPluginManager
 import org.apache.jasper.compiler.TldCache
 import org.apache.jasper.servlet.JspCServletContext
 import org.apache.log4j.Category
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.apache.log4j.Level
 import org.apache.log4j.LogManager
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.xml.sax.SAXException
 import java.io.File
 import java.io.IOException
@@ -20,19 +20,49 @@ import java.net.URL
 import java.net.URLClassLoader
 import java.util.*
 
+/**
+ * Project specific jasper compiler.
+ * Overwrites original jasper compiler.
+ */
 class JspC: org.apache.jasper.JspC() {
 
     private var ishScanner: TldScanner? = null
     private var logLevel: Level = Level.ERROR
 
     companion object {
+        /**
+         * Logger instance for logging.
+         * @property logger
+         */
         val logger: Logger = LoggerFactory.getLogger(this::class.java.name)
     }
 
+    /**
+     * TldScan can be enabled with this property.
+     * @property enableTldScan
+     */
     var enableTldScan = false
+
+    /**
+     * TldScan can be configured with this
+     * property. This extends the search path for Tlds.
+     *
+     * @property tldScanIncludes
+     */
     var tldScanIncludes = mutableListOf<String>()
+
+    /**
+     * TldScan can be configured with this
+     * property. This reduces the search path for Tlds.
+     *
+     * @property tldScanIncludes
+     */
     var tldScanExcludes = mutableListOf<String>()
 
+    /**
+     * This configures the log level of the JspC.
+     * @param level log level for logging.
+     */
     fun setLogging(level: Level) {
         logLevel = level
         LogManager.getCurrentLoggers().iterator().forEach {

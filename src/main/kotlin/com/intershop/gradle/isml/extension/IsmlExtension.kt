@@ -13,63 +13,91 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intershop.gradle.isml.extension
 
-import groovy.lang.Closure
-import org.gradle.api.Action
+import com.intershop.gradle.isml.utils.getValue
+import com.intershop.gradle.isml.utils.setValue
 import org.gradle.api.NamedDomainObjectContainer
-import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.ProjectLayout
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.SourceSet
-import org.gradle.util.ConfigureUtil
 import java.io.File
-import kotlin.reflect.KProperty
+import javax.inject.Inject
 
 /**
- * Add a set function to a String property.
+ * Main configuration container for the ISML plugin.
  */
-operator fun <T> Property<T>.setValue(receiver: Any?, property: KProperty<*>, value: T) = set(value)
-/**
- * Add a get function to a String property.
- */
-operator fun <T> Property<T>.getValue(receiver: Any?, property: KProperty<*>): T = get()
-
-/**
- * Configuration container for the ISML plugin.
- */
-open class IsmlExtension(project: Project) {
+abstract class IsmlExtension {
 
     companion object {
 
-        // names for the plugin
+        /**
+         * Extension name of the main ISML extension.
+         */
         const val ISML_EXTENSION_NAME = "isml"
+
+        /**
+         * Task group name for ISML compilation tasks.
+         */
         const val ISML_GROUP_NAME = "ISML Template Compilation"
 
-        // default versions
+        /**
+         * Default JSP compiler version.
+         */
         const val JSP_COMPILER_VERSION = "9.0.19"
+
+        /**
+         * Default Eclipse compiler version.
+         */
         const val ECLIPSE_COMPILER_VERSION = "4.6.1"
 
-        //configuration names
+        /**
+         * Gradle configuration for eclipse compiler.
+         */
         const val ECLIPSECOMPILER_CONFIGURATION_NAME = "ismlJavaCompiler"
+
+        /**
+         * Gradle configuration for jsp compiler.
+         */
         const val JSPJASPERCOMPILER_CONFIGURATION_NAME = "ismlJspCompiler"
 
-        //'main' ISML template configuration
+        /**
+         * Default source set name of ISML files.
+         */
         const val ISML_MAIN_SOURCESET = "main"
+
+        /**
+         * Default path of ISML files.
+         */
         const val MAIN_TEMPLATE_PATH = "staticfiles/cartridge/templates"
 
-        // output folder path
+        /**
+         * Default target path of ISML compilation.
+         */
         const val ISML_OUTPUTPATH = "generated/isml"
+
+        /**
+         * Default target path of ISML taglibs.
+         */
         const val ISMLTAGLIB_OUTPUTPATH = "generated/isml-taglibs"
 
-        //file encoding
+        /**
+         * Default file encoding for ISML and JSP compilation.
+         */
         const val DEFAULT_FILEENCODING = "UTF-8"
 
-        // WEB-INF for jasper
+        /**
+         * Default web.xml path.
+         */
         const val WEB_XML_PATH = "WEB-INF/web.xml"
+
+        /**
+         * Default web.xml content.
+         */
         val WEB_XML_CONTENT = """|<?xml version="1.0" encoding="ISO-8859-1"?>
                                  |<web-app xmlns="http://java.sun.com/xml/ns/javaee"
                                  |         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -80,49 +108,47 @@ open class IsmlExtension(project: Project) {
     }
 
     /**
+     * Inject service of ObjectFactory (See "Service injection" in Gradle documentation.
+     */
+    @get:Inject
+    abstract val objectFactory: ObjectFactory
+
+    /**
      * SourceSet container with ISML files source sets.
      */
     val sourceSets: NamedDomainObjectContainer<IsmlSourceSet> =
-            project.container(IsmlSourceSet::class.java, IsmlSourceSetFactory(project))
+            objectFactory.domainObjectContainer(IsmlSourceSet::class.java)
 
     /**
-     * Add source sets to the configuration with an action.
+     * Inject service of ProjectLayout (See "Service injection" in Gradle documentation.
      */
-    fun sourceSets(configureAction: Action<in NamedDomainObjectContainer<IsmlSourceSet>>) {
-        configureAction.execute(sourceSets)
-    }
-
-    /**
-     * Add source sets to the configuration with a closure.
-     */
-    fun sourceSets(closure: Closure<NamedDomainObjectContainer<IsmlSourceSet>>) {
-        ConfigureUtil.configure(closure, sourceSets)
-    }
+    @get:Inject
+    abstract val layout: ProjectLayout
 
     // Taglib folder
-    private val taglibFolderProperty: DirectoryProperty = project.objects.directoryProperty()
+    private val taglibFolderProperty: DirectoryProperty = objectFactory.directoryProperty()
 
     // JSP compiler version / Tomcat version
-    private val jspCompilerVersionProperty: Property<String> = project.objects.property(String::class.java)
+    private val jspCompilerVersionProperty: Property<String> = objectFactory.property(String::class.java)
     // Eclipse compiler version depends on the Tomcat version
-    private val eclipseCompilerVersionProperty: Property<String> = project.objects.property(String::class.java)
+    private val eclipseCompilerVersionProperty: Property<String> = objectFactory.property(String::class.java)
     // Java SourceSet name which is used for template compilation
-    private val sourceSetNameProperty: Property<String> = project.objects.property(String::class.java)
+    private val sourceSetNameProperty: Property<String> = objectFactory.property(String::class.java)
     // Configuration name which is used for template compilation
-    private val ismlConfigurationNameProperty: Property<String> = project.objects.property(String::class.java)
+    private val ismlConfigurationNameProperty: Property<String> = objectFactory.property(String::class.java)
 
     // Source compatibility of java files (result of Jsp2Java)
-    private val sourceCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
+    private val sourceCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
     // Target compatibility of java files (result of Jsp2Java)
-    private val targetCompatibilityProperty: Property<String> = project.objects.property(String::class.java)
+    private val targetCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
     // File encoding
-    private val encodingProperty: Property<String> = project.objects.property(String::class.java)
+    private val encodingProperty: Property<String> = objectFactory.property(String::class.java)
 
     // Enable TLD scanning by JspC
-    private val enableTldScanProperty: Property<Boolean> = project.objects.property(Boolean::class.java)
+    private val enableTldScanProperty: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
     init {
-        taglibFolderProperty.set(project.layout.buildDirectory.dir(ISMLTAGLIB_OUTPUTPATH))
+        taglibFolderProperty.set(layout.buildDirectory.dir(ISMLTAGLIB_OUTPUTPATH))
 
         jspCompilerVersionProperty.convention(JSP_COMPILER_VERSION)
         eclipseCompilerVersionProperty.convention(ECLIPSE_COMPILER_VERSION)

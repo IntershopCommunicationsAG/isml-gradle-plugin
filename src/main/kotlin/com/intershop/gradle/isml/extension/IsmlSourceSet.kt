@@ -15,31 +15,41 @@
  */
 package com.intershop.gradle.isml.extension
 
-import org.gradle.api.Named
-import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.ProjectLayout
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import java.io.File
+import javax.inject.Inject
 
 /**
- * Configuration container for ISMl code complentation.
+ * Configuration container for a special ISMl
+ * source set to compile isml included files.
  */
-class IsmlSourceSet(project: Project, private val srcname: String) : Named {
+abstract class IsmlSourceSet(val name: String) {
 
-    override fun getName() : String {
-        return srcname
-    }
+    /**
+     * Inject service of ObjectFactory (See "Service injection" in Gradle documentation.
+     */
+    @get:Inject
+    abstract val objectFactory: ObjectFactory
 
-    private val srcDirectoryProperty: DirectoryProperty = project.objects.directoryProperty()
-    private val outputDirProperty: DirectoryProperty = project.objects.directoryProperty()
+    /**
+     * Inject service of ProjectLayout (See "Service injection" in Gradle documentation.
+     */
+    @get:Inject
+    abstract val layout: ProjectLayout
+
+    private val srcDirectoryProperty: DirectoryProperty = objectFactory.directoryProperty()
+    private val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
 
     // Jsp Package name
-    private val jspPackageProperty: Property<String> = project.objects.property(String::class.java)
+    private val jspPackageProperty: Property<String> = objectFactory.property(String::class.java)
 
     init {
-        outputDirProperty.set(project.layout.buildDirectory.dir(IsmlExtension.ISML_OUTPUTPATH))
+        outputDirProperty.set(layout.buildDirectory.dir(IsmlExtension.ISML_OUTPUTPATH))
     }
 
     /**
@@ -90,7 +100,7 @@ class IsmlSourceSet(project: Project, private val srcname: String) : Named {
      * @return task name for configuration
      */
     fun getIsmlTaskName(): String {
-        return "isml2class${srcname.toCamelCase()}"
+        return "isml2class${name.toCamelCase()}"
     }
 
     private fun String.toCamelCase() : String {

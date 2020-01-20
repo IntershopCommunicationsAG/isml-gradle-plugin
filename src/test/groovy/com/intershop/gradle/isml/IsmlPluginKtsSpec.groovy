@@ -15,14 +15,14 @@
  */
 package com.intershop.gradle.isml
 
-import com.intershop.gradle.test.AbstractIntegrationGroovySpec
+import com.intershop.gradle.test.AbstractIntegrationKotlinSpec
 import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 
 @Unroll
-class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
+class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
 
     def 'Test taglib and usage in one Cartridge - isml'() {
         given:
@@ -36,9 +36,9 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.ismltaglib'
-                id 'com.intershop.gradle.isml'
+                `java`
+                id("com.intershop.gradle.ismltaglib")
+                id("com.intershop.gradle.isml")
             }
 
             isml {
@@ -56,9 +56,8 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             }
         """.stripIndent()
 
-        File settingsGradle = new File(testProjectDir, 'settings.gradle')
-        settingsGradle << """
-        rootProject.name='testCartridge'
+        settingsFile << """
+        rootProject.name="testCartridge"
         """.stripIndent()
 
         when:
@@ -86,13 +85,16 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'com.intershop.gradle.isml'
+                id("com.intershop.gradle.isml")
             }
 
-            configurations {
-                compile
-                runtime.extendsFrom(compile)
-                runtimeClasspath.extendsFrom(compile)
+            configurations.create("implementation")
+
+            val runtime by configurations.creating {
+                extendsFrom(configurations["implementation"])
+            }
+            val runtimeClasspath by configurations.creating {
+                extendsFrom(configurations["implementation"])
             }
 
             dependencies {
@@ -106,9 +108,8 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             }
         """.stripIndent()
 
-        File settingsGradle = new File(testProjectDir, 'settings.gradle')
-        settingsGradle << """
-        rootProject.name='testCartridge'
+        settingsFile << """
+        rootProject.name="testCartridge"
         """.stripIndent()
 
         File ismlFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/test.isml')
@@ -193,22 +194,27 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'com.intershop.gradle.isml'
+                id("com.intershop.gradle.isml")
             }
 
-            configurations {
-                compile
-                runtime.extendsFrom(compile)
-                runtimeClasspath.extendsFrom(compile)
+            val adddep: String by project
+
+            configurations.create("implementation")
+
+            val runtime by configurations.creating {
+                extendsFrom(configurations["implementation"])
+            }
+            val runtimeClasspath by configurations.creating {
+                extendsFrom(configurations["implementation"])
             }
 
             dependencies {
                 ${getMainDependencies(platformVersion, servletVersion,
                 slf4jVersion, tomcatVersion)}
-                if(project.adddep == 'add') {
-                    println "Additional dependency ..."
-                    compile('com.test:testCartridge1:1.0.0') {
-                        transitive = false
+                if(adddep == "add") {
+                    println("Additional dependency ...")
+                    "implementation"("com.test:testCartridge1:1.0.0") {
+                        isTransitive = false
                     }
                 }
             }
@@ -217,18 +223,17 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 jcenter()
                 ${getMainRepositories()}
                 ivy {
-                    url "\${project.projectDir.absolutePath.replaceAll('\\\\\\\\', '/')}/repo".toString()
-                    layout('pattern') {
-                        ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
-                        artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
+                    url = uri("\${project.projectDir.absolutePath.replace("\\\\", "/")}/repo".toString())
+                    patternLayout {
+                        ivy("[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml")
+                        artifact("[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]")
                     }
                 }
             }
         """.stripIndent()
 
-        File settingsGradle = new File(testProjectDir, 'settings.gradle')
-        settingsGradle << """
-        rootProject.name='testCartridge'
+        settingsFile << """
+        rootProject.name="testCartridge"
         """.stripIndent()
 
         when:
@@ -276,13 +281,16 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'com.intershop.gradle.isml'
+                id("com.intershop.gradle.isml")
             }
 
-            configurations {
-                compile
-                runtime.extendsFrom(compile)
-                runtimeClasspath.extendsFrom(compile)
+            configurations.create("implementation")
+
+            val runtime by configurations.creating {
+                extendsFrom(configurations["implementation"])
+            }
+            val runtimeClasspath by configurations.creating {
+                extendsFrom(configurations["implementation"])
             }
 
             dependencies {
@@ -296,9 +304,8 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             }
         """.stripIndent()
 
-        File settingsGradle = new File(testProjectDir, 'settings.gradle')
-        settingsGradle << """
-        rootProject.name='testCartridge'
+        settingsFile << """
+        rootProject.name="testCartridge"
         """.stripIndent()
 
         when:
@@ -333,9 +340,9 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.ismltaglib'
-                id 'com.intershop.gradle.isml'
+                `java`
+                id("com.intershop.gradle.ismltaglib")
+                id("com.intershop.gradle.isml")
             }
 
             isml {
@@ -346,10 +353,10 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 ${getMainDependencies(platformVersion, servletVersion, slf4jVersion, tomcatVersion)}
             }
 
-            tasks.withType(com.intershop.gradle.isml.tasks.IsmlCompile){
-                forkOptions { JavaForkOptions options ->
-                    options.setMaxHeapSize('64m')
-                    options.jvmArgs += ['-Dhttp.proxyHost=10.0.0.100', '-Dhttp.proxyPort=8800']
+            tasks.withType(com.intershop.gradle.isml.tasks.IsmlCompile::class.java){
+                forkOptions {
+                    maxHeapSize = "64m"
+                    jvmArgs = listOf("-Dhttp.proxyHost=10.0.0.100", "-Dhttp.proxyPort=8800")
                 }
             }
             
@@ -359,9 +366,8 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             }
         """.stripIndent()
 
-        File settingsGradle = new File(testProjectDir, 'settings.gradle')
-        settingsGradle << """
-        rootProject.name='testCartridge'
+        settingsFile << """
+        rootProject.name="testCartridge"
         """.stripIndent()
 
         when:
@@ -387,35 +393,34 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
     def 'Test taglib and usage with project dependencies - isml'() {
 
         given:
-        File settingsGradle = new File(testProjectDir, 'settings.gradle')
 
-        settingsGradle << """
-        rootProject.name='testProject'
+        settingsFile << """
+        rootProject.name="testProject"
         """.stripIndent()
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.ismltaglib'
-                id 'com.intershop.gradle.isml'
+                `java`
+                `ivy-publish`
+                id("com.intershop.gradle.ismltaglib")
+                id("com.intershop.gradle.isml")
             }
 
             subprojects {
-                apply plugin: 'java'
-                apply plugin: 'ivy-publish'
-                apply plugin: 'com.intershop.gradle.ismltaglib'
-                apply plugin: 'com.intershop.gradle.isml'
+                apply(plugin = "java")
+                apply(plugin = "ivy-publish")
+                apply(plugin = "com.intershop.gradle.ismltaglib")
+                apply(plugin = "com.intershop.gradle.isml")
 
-                version = '1.0.0'
-                group = 'com.test'
+                version = "1.0.0"
+                group = "com.test"
 
                 isml {
                     enableTldScan = true
                 }
 
                 dependencies {
-                    ${getMainDependencies(platformVersion, servletVersion,
-                    slf4jVersion, tomcatVersion)}
+                    ${getMainDependencies(platformVersion, servletVersion, slf4jVersion, tomcatVersion)}
                 }
 
                 repositories {
@@ -424,43 +429,43 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 }
             }
 
-            project(':testCartridge1') {
+            project(":testCartridge1") {
+                apply(plugin = "ivy-publish")
 
-                task createCartridge(type: Zip) {
-                    from 'staticfiles/cartridge'
-                    from isml2classMain
-                    into "\${project.name}/release"
+                tasks {
+                    val createCartridge = register<Zip>("createCartridge") {
+                        dependsOn(project.tasks["isml"])
+
+                        from("staticfiles/cartridge")
+                        from(isml2classMain.get().outputs)
+                        into("\${project.name}/release")
+                    }
                 }
-
-                afterEvaluate { project ->
-                    createCartridge.dependsOn project.tasks.isml
-                }
-
 
                 publishing {
                     publications {
-                        ivy(IvyPublication) {
-                            artifact(createCartridge) {
-                                type = 'cartridge'
+                        create("ivy", IvyPublication::class.java) {
+                            artifact(tasks.getByName("createCartridge")) {
+                                type = "cartridge"
                             }
-                            artifact(jar)
+                            artifact(tasks.getByName("jar"))
                         }
                     }
                     repositories {
                         ivy {
-                            url "\${project.buildDir.absolutePath.replaceAll('\\\\\\\\', '/')}/repo".toString()
-                            layout('pattern') {
-                                ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
-                                artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
+                            url = uri("\${project.buildDir.absolutePath.replace("\\\\", "/")}/repo".toString())
+                            patternLayout {
+                                ivy("[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml")
+                                artifact("[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]")
                             }
                         }
                     }
                 }
             }
-
-            project(':testCartridge2') {
+            
+            project(":testCartridge2") {
                 dependencies {
-                    compile project(':testCartridge1')
+                    implementation(project(":testCartridge1"))
                 }
             }
         """.stripIndent()
@@ -519,9 +524,9 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.ismltaglib'
-                id 'com.intershop.gradle.isml'
+                `java`
+                id("com.intershop.gradle.ismltaglib")
+                id("com.intershop.gradle.isml")
             }
 
             isml {
@@ -531,27 +536,26 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             dependencies {
                 ${getMainDependencies(platformVersion, servletVersion,
                 slf4jVersion, tomcatVersion)}
-                compile('com.test:testCartridge1:1.0.0') {
-                    transitive = false
+                "implementation"("com.test:testCartridge1:1.0.0") {
+                    isTransitive = false
                 }
             }
 
             repositories {
                 jcenter()
                 ivy {
-                    url "\${project.projectDir.absolutePath.replaceAll('\\\\\\\\', '/')}/repo".toString()
-                    layout('pattern') {
-                        ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
-                        artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
+                    url = uri("\${project.projectDir.absolutePath.replace("\\\\", "/")}/repo".toString())
+                    patternLayout {
+                        ivy("[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml")
+                        artifact("[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]")
                     }
                 }
                 ${getMainRepositories()}
             }
         """.stripIndent()
 
-        File settingsGradle = new File(testProjectDir, 'settings.gradle')
-        settingsGradle << """
-        rootProject.name='testCartridge2'
+        settingsFile << """
+        rootProject.name="testCartridge2"
         """.stripIndent()
 
         when:
@@ -582,44 +586,44 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
     String getMainDependencies(String platformVersion, String servletVersion,
                                String slf4jVersion, String tomcatVersion) {
         return """
-            compile("com.intershop.platform:core:${platformVersion}") {
-                transitive = false
+            "implementation"("com.intershop.platform:core:${platformVersion}") {
+                isTransitive = false
             }
-            compile("com.intershop.platform:servletengine:${platformVersion}") {
-                transitive = false
+            "implementation"("com.intershop.platform:servletengine:${platformVersion}") {
+                isTransitive = false
             }
-            compile("com.intershop.platform:isml:${platformVersion}") {
-                transitive = false
+            "implementation"("com.intershop.platform:isml:${platformVersion}") {
+                isTransitive = false
             }
-            compile("javax.servlet:javax.servlet-api:${servletVersion}") {
-                transitive = false
+            "implementation"("javax.servlet:javax.servlet-api:${servletVersion}") {
+                isTransitive = false
             }
-            compile("org.slf4j:slf4j-api:${slf4jVersion}") {
-                transitive = false
+            "implementation"("org.slf4j:slf4j-api:${slf4jVersion}") {
+                isTransitive = false
             }
-            compile("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
-                transitive = false
+            "implementation"("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
+                isTransitive = false
             }""".stripIndent()
     }
 
     String getMainRepositories() {
         return """
             ivy {
-                url '${System.properties['intershop.host.url']}'
-                layout('pattern') {
-                    ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
-                    artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
+                url = uri("${System.properties['intershop.host.url']}")
+                patternLayout {
+                    ivy("[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml")
+                    artifact("[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]")
                 }
                 credentials {
-                    username '${System.properties['intershop.host.username']}'
-                    password '${System.properties['intershop.host.userpassword']}'
+                    username = "${System.properties['intershop.host.username']}"
+                    password = "${System.properties['intershop.host.userpassword']}"
                 }
             }
             maven {
-                url '${System.properties['intershop.host.url']}'
+                url = uri("${System.properties['intershop.host.url']}")
                 credentials {
-                    username '${System.properties['intershop.host.username']}'
-                    password '${System.properties['intershop.host.userpassword']}'
+                    username = "${System.properties['intershop.host.username']}"
+                    password = "${System.properties['intershop.host.userpassword']}"
                 }
             }""".stripIndent()
     }
