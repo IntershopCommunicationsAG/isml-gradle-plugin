@@ -1,9 +1,9 @@
 = ISML Gradle Plugins
-:latestRevision: 3.3.0
+:latestRevision: 4.0.0
 :toc:
 :icons: font
 
-NOTE: Version 3 of this plugin will only work with JDK 8, Gradle 5.6 and an Intershop Commerce Management *newer* than 7.10.
+NOTE: Version 4 of this plugin will only work with JDK 8, Gradle 6 and an Intershop Commerce Management *newer* than 7.10.
 
 == Summary
 This package provides two plugins - one plugin for the ISML tag lib support and one for the compilation of ISML files.
@@ -12,6 +12,11 @@ All files of the output have the same time stamp.
 
 == Usage
 To apply the ISML Gradle Plugins to your projects, add the following in your build script:
+
+++++
+<details open>
+<summary>Groovy</summary>
+++++
 
 [source,groovy]
 [subs=+attributes]
@@ -24,6 +29,31 @@ plugins {
     id 'com.intershop.gradle.isml' version '{latestRevision}'
 }
 ----
+
+++++
+</details>
+++++
+
+++++
+<details>
+<summary>Kotlin</summary>
+++++
+
+[source,kotlin]
+[subs=+attributes]
+.build.gradle.kts
+----
+plugins {
+    // only necessary to use additonal TagLibs
+    id("com.intershop.gradle.ismltaglib") version "{latestRevision}"
+    // necessary for the compilation of ISML files
+    id("com.intershop.gradle.isml") version "{latestRevision}"
+}
+----
+
+++++
+</details>
+++++
 
 The compiler plugin will create a default configuration for ISML templates of an Intershop project. The plugin uses the project
 dependencies for the ISML task and the compilation of the files.
@@ -102,13 +132,13 @@ isml {
 }
 
 configurations {
-    compile
-    runtime.extendsFrom(compile)
+    implementation
+    runtime.extendsFrom(implementation)
 }
 
 dependencies {
-    compile "com.intershop.platform:core:&lt;ICM platform version&gt;"
-    compile "com.intershop.platform:isml:&lt;ICM platform version&gt;"
+    implementation "com.intershop.platform:core:&lt;ICM platform version&gt;"
+    implementation "com.intershop.platform:isml:&lt;ICM platform version&gt;"
     ...
 }
 ----
@@ -121,8 +151,8 @@ plugins {
 }
 
 configurations {
-    compile
-    runtime.extendsFrom(compile)
+    implementation
+    runtime.extendsFrom(implementation)
 }
 
 tasks.withType(com.intershop.gradle.isml.tasks.IsmlCompile) {
@@ -133,8 +163,8 @@ tasks.withType(com.intershop.gradle.isml.tasks.IsmlCompile) {
 }
 
 dependencies {
-    compile "com.intershop.platform:core:&lt;ICM platform version&gt;"
-    compile "com.intershop.platform:isml:&lt;ICM platform version&gt;"
+    implementation "com.intershop.platform:core:&lt;ICM platform version&gt;"
+    implementation "com.intershop.platform:isml:&lt;ICM platform version&gt;"
     ...
 }
 ----
