@@ -104,11 +104,11 @@ detekt {
 
 tasks {
     withType<Test>().configureEach {
-        systemProperty("intershop.gradle.versions", "6.0, 6.1")
-        systemProperty("platform.intershop.versions", "11.1.1, 11.1.1")
-        systemProperty("servlet.version", "3.0.1, 3.0.1")
-        systemProperty("slf4j.version", "1.7.12, 1.7.12")
-        systemProperty("tomcat.version", "7.0.42, 7.0.42")
+        systemProperty("intershop.gradle.versions", "6.0, 6.1, 6.2")
+        systemProperty("platform.intershop.versions", "11.1.1, 11.1.1, 11.1.1")
+        systemProperty("servlet.version", "3.0.1, 3.0.1, 3.0.1")
+        systemProperty("slf4j.version", "1.7.12, 1.7.12, 1.7.12")
+        systemProperty("tomcat.version", "7.0.42, 7.0.42, 7.0.42")
         systemProperty("intershop.host.url", "https://repository.intershop.de/releases/")
         systemProperty("intershop.host.username", System.getenv("ISHUSERNAME") ?: System.getProperty("ISHUSERNAME"))
         systemProperty("intershop.host.userpassword", System.getenv("ISHKEY") ?: System.getProperty("ISHKEY"))
