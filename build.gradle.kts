@@ -1,6 +1,8 @@
 
 import com.jfrog.bintray.gradle.BintrayExtension
 import org.asciidoctor.gradle.jvm.AsciidoctorTask
+import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 
 /*
@@ -22,7 +24,7 @@ plugins {
     // project plugins
     `java-gradle-plugin`
     groovy
-    id("nebula.kotlin") version "1.3.61"
+    kotlin("jvm") version "1.3.72"
 
     // test coverage
     jacoco
@@ -37,19 +39,19 @@ plugins {
     id("com.intershop.gradle.scmversion") version "6.1.0"
 
     // plugin for documentation
-    id("org.asciidoctor.jvm.convert") version "2.4.0"
+    id("org.asciidoctor.jvm.convert") version "3.2.0"
 
     // documentation
-    id("org.jetbrains.dokka") version "0.10.0"
+    id("org.jetbrains.dokka") version "0.10.1"
 
     // code analysis for kotlin
-    id("io.gitlab.arturbosch.detekt") version "1.4.0"
+    id("io.gitlab.arturbosch.detekt") version "1.11.0"
 
     // plugin for publishing to Gradle Portal
-    id("com.gradle.plugin-publish") version "0.10.1"
+    id("com.gradle.plugin-publish") version "0.12.0"
 
     // plugin for publishing to jcenter
-    id("com.jfrog.bintray") version "1.8.4"
+    id("com.jfrog.bintray") version "1.8.5"
 }
 
 scm {
@@ -103,12 +105,18 @@ detekt {
 }
 
 tasks {
+    withType<KotlinCompile>().configureEach {
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
+    }
+
     withType<Test>().configureEach {
-        systemProperty("intershop.gradle.versions", "6.0, 6.1, 6.2")
-        systemProperty("platform.intershop.versions", "11.1.1, 11.1.1, 11.1.1")
-        systemProperty("servlet.version", "3.0.1, 3.0.1, 3.0.1")
-        systemProperty("slf4j.version", "1.7.12, 1.7.12, 1.7.12")
-        systemProperty("tomcat.version", "7.0.42, 7.0.42, 7.0.42")
+        systemProperty("intershop.gradle.versions", "6.5, 6.6")
+        systemProperty("platform.intershop.versions", "11.1.1, 11.1.1")
+        systemProperty("servlet.version", "3.0.1, 3.0.1")
+        systemProperty("slf4j.version", "1.7.12, 1.7.12")
+        systemProperty("tomcat.version", "7.0.42, 7.0.42")
         systemProperty("intershop.host.url", "https://repository.intershop.de/releases/")
         systemProperty("intershop.host.username", System.getenv("ISHUSERNAME") ?: System.getProperty("ISHUSERNAME"))
         systemProperty("intershop.host.userpassword", System.getenv("ISHKEY") ?: System.getProperty("ISHKEY"))
@@ -177,11 +185,11 @@ tasks {
     getByName("bintrayUpload")?.dependsOn("asciidoctor")
     getByName("jar")?.dependsOn("asciidoctor")
 
-    val compileKotlin by getting(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class) {
-        kotlinOptions.jvmTarget = "1.8"
+    val compileKotlin by getting(KotlinCompile::class) {
+        kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 
-    val dokka by existing(org.jetbrains.dokka.gradle.DokkaTask::class) {
+    val dokka by existing(DokkaTask::class) {
         outputFormat = "javadoc"
         outputDirectory = "$buildDir/javadoc"
 
