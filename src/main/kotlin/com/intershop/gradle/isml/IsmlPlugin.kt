@@ -122,7 +122,6 @@ open class IsmlPlugin : Plugin<Project> {
                     val dependencyHandler = project.dependencies
                     ds.add(dependencyHandler.create("org.apache.tomcat:tomcat-jasper:".
                             plus(extension.jspCompilerVersion)))
-                    ds.add(dependencyHandler.create("javax.el:javax.el-api:3.0.0"))
                     ds.removeIf {it.group == "ch.qos.logback" && it.name == "logback-classic" }
                 }
     }
