@@ -107,7 +107,7 @@ open class IsmlPlugin : Plugin<Project> {
                 .setDescription("Configuration for Eclipse compiler")
                 .defaultDependencies { ds ->
                     val dependencyHandler = project.dependencies
-                    ds.add(dependencyHandler.create("org.eclipse.jdt.core.compiler:ecj:".
+                    ds.add(dependencyHandler.create("org.eclipse.jdt:ecj:".
                             plus(extension.eclipseCompilerVersion)))
                     ds.removeIf {it.group == "ch.qos.logback" && it.name == "logback-classic" }
                 }

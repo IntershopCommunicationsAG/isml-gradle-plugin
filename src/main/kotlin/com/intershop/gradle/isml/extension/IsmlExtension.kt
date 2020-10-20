@@ -48,12 +48,12 @@ abstract class IsmlExtension {
         /**
          * Default JSP compiler version.
          */
-        const val JSP_COMPILER_VERSION = "9.0.19"
+        const val JSP_COMPILER_VERSION = "9.0.39"
 
         /**
          * Default Eclipse compiler version.
          */
-        const val ECLIPSE_COMPILER_VERSION = "4.6.1"
+        const val ECLIPSE_COMPILER_VERSION = "3.21.0"
 
         /**
          * Gradle configuration for eclipse compiler.
