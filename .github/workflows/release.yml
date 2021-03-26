@@ -49,6 +49,8 @@ jobs:
         run: echo -e "gradle.publish.key=$APIKEY\ngradle.publish.secret=$APISECRET\nsigning.keyId=$SIGNINGKEYID\nsigning.password=$SIGNINGPASSWORD\nsigning.secretKeyRingFile=$HOME/.gradle/secrets.gpg\nsonatypeUsername=$SONATYPEUSER\nsonatypePassword=$SONATYPEPASSWORD" > $HOME/.gradle/gradle.properties
       - name: Run gradle release
         env:
+          ISHUSERNAME: ${{ secrets.ISHUSERNAME }}
+          ISHKEY: ${{ secrets.ISHKEY }}
           JAVA_OPTS: "-Xmx1024M -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512M"
           GRADLE_OPTS: "-Dorg.gradle.daemon=true"
         run: ./gradlew -PrunOnCI=true test build :publishIntershopMvnPublicationToMavenRepository :publishPlugins -s --scan
