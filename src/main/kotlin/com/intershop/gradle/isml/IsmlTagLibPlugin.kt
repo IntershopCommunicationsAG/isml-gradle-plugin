@@ -43,12 +43,12 @@ class IsmlTagLibPlugin : Plugin<Project> {
             val extension = extensions.findByType(IsmlExtension::class.java) ?:
                         project.extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java)
 
-            tasks.maybeCreate(TASKNAME, PrepareTagLibs::class.java).apply {
-                description = TASKDESCRIPTION
-                group = IsmlExtension.ISML_GROUP_NAME
+            tasks.register(TASKNAME, PrepareTagLibs::class.java) {
+                it.description = TASKDESCRIPTION
+                it.group = IsmlExtension.ISML_GROUP_NAME
 
-                provideIsmlConfiguration(extension.ismlConfigurationNameProvider)
-                outputDir.set(extension.taglibFolderProvider.get())
+                it.provideIsmlConfiguration(extension.ismlConfigurationNameProvider)
+                it.outputDir.set(extension.taglibFolderProvider.get())
             }
         }
     }

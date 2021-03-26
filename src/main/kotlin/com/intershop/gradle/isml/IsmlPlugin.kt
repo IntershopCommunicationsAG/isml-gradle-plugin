@@ -20,7 +20,8 @@ import com.intershop.gradle.isml.tasks.IsmlCompile
 import com.intershop.gradle.isml.tasks.PrepareTagLibs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.language.assembler.tasks.Assemble
+import org.gradle.api.plugins.BasePlugin
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Plugin Class implementation.
@@ -42,17 +43,19 @@ open class IsmlPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
             logger.info("Isml plugin adds extension {} to {}", IsmlExtension.ISML_EXTENSION_NAME, name)
-            val extension = extensions.findByType(IsmlExtension::class.java) ?:
-                                extensions.create(IsmlExtension.ISML_EXTENSION_NAME, IsmlExtension::class.java)
+            val extension = extensions.findByType(IsmlExtension::class.java) ?: extensions.create(
+                IsmlExtension.ISML_EXTENSION_NAME,
+                IsmlExtension::class.java
+            )
 
             addEclipseCompilerConfiguration(this, extension)
             addJSPJasperCompilerConfiguration(this, extension)
 
-            if(extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
+            if (extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
                 mainIsmlSourceSet.srcDir = layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH).asFile
                 mainIsmlSourceSet.outputDir = layout.buildDirectory.dir(
-                        "${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}"
+                    "${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}"
                 ).get().asFile
                 mainIsmlSourceSet.jspPackage = "org.apache.jsp.${project.name}"
             }
@@ -63,38 +66,46 @@ open class IsmlPlugin : Plugin<Project> {
 
     private fun configureTask(project: Project, extension: IsmlExtension) {
         with(project) {
-            val ismlMain = tasks.maybeCreate(TASKNAME).apply {
+            val ismlMain = tasks.register(TASKNAME) {
                 description = TASKDESCRIPTION
                 group = IsmlExtension.ISML_GROUP_NAME
             }
-            val assemble = tasks.findByName(Assemble.TASK_NAME)
-            val prepareTaglibs = tasks.findByName(IsmlTagLibPlugin.TASKNAME)
 
+            extension.sourceSets.all { ismlSourceSet ->
+                val isml = tasks.register(ismlSourceSet.getIsmlTaskName(), IsmlCompile::class.java) { ismlc ->
+                    ismlc.group = IsmlExtension.ISML_GROUP_NAME
 
-            extension.sourceSets.all {ismlSourceSet ->
-                tasks.maybeCreate(ismlSourceSet.getIsmlTaskName(), IsmlCompile::class.java).apply {
-                    group = IsmlExtension.ISML_GROUP_NAME
+                    ismlc.provideIsmlConfiguration(extension.ismlConfigurationNameProvider)
+                    ismlc.provideOutputDir(ismlSourceSet.outputDirProvider)
+                    ismlc.provideInputDir(ismlSourceSet.srcDirectoryProvider)
+                    ismlc.provideJspPackage(ismlSourceSet.jspPackageProvider)
 
-                    provideIsmlConfiguration(extension.ismlConfigurationNameProvider)
-                    provideOutputDir(ismlSourceSet.outputDirProvider)
-                    provideInputDir(ismlSourceSet.srcDirectoryProvider)
-                    provideJspPackage(ismlSourceSet.jspPackageProvider)
+                    ismlc.provideSourceSetName(extension.sourceSetNameProvider)
 
-                    provideSourceSetName(extension.sourceSetNameProvider)
+                    ismlc.provideSourceCompatibility(extension.sourceCompatibilityProvider)
+                    ismlc.provideTargetCompatibility(extension.targetCompatibilityProvider)
+                    ismlc.provideEncoding(extension.encodingProvider)
 
-                    provideSourceCompatibility(extension.sourceCompatibilityProvider)
-                    provideTargetCompatibility(extension.targetCompatibilityProvider)
-                    provideEncoding(extension.encodingProvider)
+                    ismlc.provideEnableTldScan(extension.enableTldScanProvider)
+                }
 
-                    provideEnableTldScan(extension.enableTldScanProvider)
-
-                    if(prepareTaglibs != null && prepareTaglibs is PrepareTagLibs) {
-                        tagLibsInputDir.set(prepareTaglibs.outputDir)
-                        this.dependsOn(prepareTaglibs)
+                project.plugins.withType(IsmlTagLibPlugin::class.java) {
+                    val ismlTagLib = tasks.named(IsmlTagLibPlugin.TASKNAME, PrepareTagLibs::class.java)
+                    isml.configure {
+                        it.tagLibsInputDir.value(project.provider { ismlTagLib.get().outputDir.get() })
+                        it.dependsOn(ismlTagLib)
                     }
+                }
 
-                    ismlMain.dependsOn(this)
-                    assemble?.dependsOn(this)
+                ismlMain.configure {
+                    it.dependsOn(isml)
+                }
+
+                project.plugins.withType(BasePlugin::class.java) {
+                    val assemble = tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
+                    assemble.configure {
+                        it.dependsOn(isml)
+                    }
                 }
             }
         }
