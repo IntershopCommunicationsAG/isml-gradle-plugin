@@ -100,12 +100,12 @@ open class IsmlPlugin : Plugin<Project> {
                 ismlMain.configure {
                     it.dependsOn(isml)
                 }
+            }
 
-                project.plugins.withType(BasePlugin::class.java) {
-                    val assemble = tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
-                    assemble.configure {
-                        it.dependsOn(isml)
-                    }
+            project.plugins.withType(BasePlugin::class.java) {
+                val assemble = tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
+                assemble.configure {
+                    it.dependsOn(ismlMain)
                 }
             }
         }
