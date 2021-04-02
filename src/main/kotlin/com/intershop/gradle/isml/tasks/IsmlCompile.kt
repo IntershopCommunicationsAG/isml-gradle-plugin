@@ -32,6 +32,7 @@ import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
@@ -223,7 +224,7 @@ abstract class IsmlCompile @Inject constructor(
      *
      * @property classpathfiles
      */
-    @get:InputFiles
+    @get:Classpath
     val classpathfiles : FileCollection by lazy {
         val returnFiles = project.files()
 
@@ -247,7 +248,7 @@ abstract class IsmlCompile @Inject constructor(
      *
      * @property classpathfiles
      */
-    @get:InputFiles
+    @get:Classpath
     val toolsclasspathfiles : FileCollection by lazy {
         val returnFiles = project.files()
         // find files of original JASPER and Eclipse compiler
