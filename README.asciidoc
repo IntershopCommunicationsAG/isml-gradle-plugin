@@ -143,32 +143,6 @@ dependencies {
 }
 ----
 
-==== Configuration with additional Java VM settings for process runner
-[source,groovy,subs="attributes"]
-----
-plugins {
-    id 'com.intershop.gradle.isml' version '{latestRevision}'
-}
-
-configurations {
-    implementation
-    runtime.extendsFrom(implementation)
-}
-
-tasks.withType(com.intershop.gradle.isml.tasks.IsmlCompile) {
-    forkOptions { JavaForkOptions options ->
-        options.setMaxHeapSize('64m')
-        options.jvmArgs += ['-Dhttp.proxyHost=10.0.0.100', '-Dhttp.proxyPort=8800']
-    }
-}
-
-dependencies {
-    implementation "com.intershop.platform:core:&lt;ICM platform version&gt;"
-    implementation "com.intershop.platform:isml:&lt;ICM platform version&gt;"
-    ...
-}
-----
-
 == License
 
 Copyright 2014-2019 Intershop Communications.

@@ -257,15 +257,6 @@ abstract class IsmlCompile @Inject constructor(
         returnFiles
     }
 
-    private var internalForkOptionsAction: Action<in JavaForkOptions>? = null
-
-    /**
-     * Adds additional fork options.
-     */
-    fun forkOptions(forkOptionsAction: Action<in JavaForkOptions>) {
-        internalForkOptionsAction = forkOptionsAction
-    }
-
     private val tldScanExcludesListProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
 
     /**
@@ -362,13 +353,8 @@ abstract class IsmlCompile @Inject constructor(
             else -> Level.WARN
         }
 
-        val workQueue = workerExecutor.processIsolation {
+        val workQueue = workerExecutor.classLoaderIsolation {
             it.classpath.setFrom(classpathCollection)
-
-            if(internalForkOptionsAction != null) {
-                project.logger.debug("ISML runner adds configured JavaForkOptions.")
-                internalForkOptionsAction?.execute(it.forkOptions)
-            }
         }
 
         workQueue.submit(IsmlCompileRunner::class.java) {
