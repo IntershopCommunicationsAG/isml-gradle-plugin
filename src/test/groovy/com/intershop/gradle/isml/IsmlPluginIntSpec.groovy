@@ -321,69 +321,6 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         tomcatVersion << getVersions('tomcat.version')
     }
 
-    def 'Test taglib and usage in one Cartridge and additional javaOptions - isml'() {
-        given:
-        copyResources('test_taglib')
-
-        File tplFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/taglibTest.isml.tpl')
-        File testFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/taglibTest.isml')
-
-        testFile << tplFile.text.replaceAll('@cartridge@', 'testCartridge')
-        tplFile.delete()
-
-        buildFile << """
-            plugins {
-                id 'java'
-                id 'com.intershop.gradle.ismltaglib'
-                id 'com.intershop.gradle.isml'
-            }
-
-            isml {
-                enableTldScan = true
-            }
-
-            dependencies {
-                ${getMainDependencies(platformVersion, servletVersion, slf4jVersion, tomcatVersion)}
-            }
-
-            tasks.withType(com.intershop.gradle.isml.tasks.IsmlCompile){
-                forkOptions { JavaForkOptions options ->
-                    options.setMaxHeapSize('64m')
-                    options.jvmArgs += ['-Dhttp.proxyHost=10.0.0.100', '-Dhttp.proxyPort=8800']
-                }
-            }
-            
-            repositories {
-                jcenter()
-                ${getMainRepositories()}
-            }
-        """.stripIndent()
-
-        File settingsGradle = new File(testProjectDir, 'settings.gradle')
-        settingsGradle << """
-        rootProject.name='testCartridge'
-        """.stripIndent()
-
-        when:
-        List<String> args = ['clean', 'isml', '-s', '-d']
-
-        def result = getPreparedGradleRunner()
-                .withArguments(args)
-                .withGradleVersion(gradleVersion)
-                .build()
-
-        then:
-        result.task(':isml').outcome == SUCCESS
-        result.output.contains('ISML runner adds configured JavaForkOptions.')
-
-        where:
-        gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
-    }
-
     def 'Test taglib and usage with project dependencies - isml'() {
 
         given:
