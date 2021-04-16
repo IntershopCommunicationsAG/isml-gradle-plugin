@@ -52,21 +52,10 @@ import javax.inject.Inject
  * @constructor creates an instance with worker
  * @param workerExecutor
  */
-abstract class IsmlCompile @Inject constructor(
-        @Internal
-        val workerExecutor: WorkerExecutor) : DefaultTask(){
-
-    /**
-     * Inject service of ObjectFactory (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val objectFactory: ObjectFactory
-
-    /**
-     * Inject service of FileSystemOperations (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val fileSystemOperations: FileSystemOperations
+open class IsmlCompile @Inject constructor(
+        objectFactory: ObjectFactory,
+        @Internal val fileSystemOperations: FileSystemOperations,
+        @Internal val workerExecutor: WorkerExecutor) : DefaultTask(){
 
     companion object {
         /**

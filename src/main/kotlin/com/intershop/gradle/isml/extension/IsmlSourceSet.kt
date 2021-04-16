@@ -21,6 +21,7 @@ import org.gradle.api.file.ProjectLayout
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.Internal
 import java.io.File
 import javax.inject.Inject
 
@@ -28,19 +29,8 @@ import javax.inject.Inject
  * Configuration container for a special ISMl
  * source set to compile isml included files.
  */
-abstract class IsmlSourceSet(val name: String) {
-
-    /**
-     * Inject service of ObjectFactory (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val objectFactory: ObjectFactory
-
-    /**
-     * Inject service of ProjectLayout (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val layout: ProjectLayout
+open class IsmlSourceSet(objectFactory: ObjectFactory,
+                         projectLayout: ProjectLayout, @Internal val name: String) {
 
     private val srcDirectoryProperty: DirectoryProperty = objectFactory.directoryProperty()
     private val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
@@ -49,7 +39,7 @@ abstract class IsmlSourceSet(val name: String) {
     private val jspPackageProperty: Property<String> = objectFactory.property(String::class.java)
 
     init {
-        outputDirProperty.set(layout.buildDirectory.dir(IsmlExtension.ISML_OUTPUTPATH))
+        outputDirProperty.set(projectLayout.buildDirectory.dir(IsmlExtension.ISML_OUTPUTPATH))
     }
 
     /**

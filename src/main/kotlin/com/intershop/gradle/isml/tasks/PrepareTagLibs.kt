@@ -22,6 +22,7 @@ import com.intershop.gradle.isml.tasks.data.TagLibConfZip
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
@@ -31,11 +32,12 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.stream.Collectors
 import java.util.zip.ZipFile
+import javax.inject.Inject
 
 /**
  * This task prepares the tag libs for ISML procecessing.
  */
-open class PrepareTagLibs : DefaultTask() {
+open class PrepareTagLibs @Inject constructor(objectFactory: ObjectFactory) : DefaultTask() {
 
     companion object {
 
@@ -61,9 +63,9 @@ open class PrepareTagLibs : DefaultTask() {
      * @property outputDir
      */
     @get:OutputDirectory
-    val outputDir: DirectoryProperty = project.objects.directoryProperty()
+    val outputDir: DirectoryProperty = objectFactory.directoryProperty()
 
-    private val ismlConfigurationProperty: Property<String> = project.objects.property(String::class.java)
+    private val ismlConfigurationProperty: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * ISMl configuration property.

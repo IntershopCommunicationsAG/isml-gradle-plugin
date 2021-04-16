@@ -31,7 +31,7 @@ import javax.inject.Inject
 /**
  * Main configuration container for the ISML plugin.
  */
-abstract class IsmlExtension {
+open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, projectLayout: ProjectLayout) {
 
     companion object {
 
@@ -108,22 +108,10 @@ abstract class IsmlExtension {
     }
 
     /**
-     * Inject service of ObjectFactory (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val objectFactory: ObjectFactory
-
-    /**
      * SourceSet container with ISML files source sets.
      */
     val sourceSets: NamedDomainObjectContainer<IsmlSourceSet> =
             objectFactory.domainObjectContainer(IsmlSourceSet::class.java)
-
-    /**
-     * Inject service of ProjectLayout (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val layout: ProjectLayout
 
     // Taglib folder
     private val taglibFolderProperty: DirectoryProperty = objectFactory.directoryProperty()
@@ -148,7 +136,7 @@ abstract class IsmlExtension {
     private val enableTldScanProperty: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
     init {
-        taglibFolderProperty.set(layout.buildDirectory.dir(ISMLTAGLIB_OUTPUTPATH))
+        taglibFolderProperty.set(projectLayout.buildDirectory.dir(ISMLTAGLIB_OUTPUTPATH))
 
         jspCompilerVersionProperty.convention(JSP_COMPILER_VERSION)
         eclipseCompilerVersionProperty.convention(ECLIPSE_COMPILER_VERSION)

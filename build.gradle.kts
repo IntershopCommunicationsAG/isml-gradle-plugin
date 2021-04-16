@@ -2,7 +2,6 @@
 import org.asciidoctor.gradle.jvm.AsciidoctorTask
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.util.*
 
 /*
  * Copyright 2021 Intershop Communications AG.
@@ -41,7 +40,7 @@ plugins {
     id("com.intershop.gradle.scmversion") version "6.2.0"
 
     // plugin for documentation
-    id("org.asciidoctor.jvm.convert") version "3.2.0"
+    id("org.asciidoctor.jvm.convert") version "3.3.0"
 
     // documentation
     id("org.jetbrains.dokka") version "0.10.1"
