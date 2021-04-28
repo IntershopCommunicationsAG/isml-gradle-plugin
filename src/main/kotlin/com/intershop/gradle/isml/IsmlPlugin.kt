@@ -67,8 +67,8 @@ open class IsmlPlugin : Plugin<Project> {
     private fun configureTask(project: Project, extension: IsmlExtension) {
         with(project) {
             val ismlMain = tasks.register(TASKNAME) {
-                description = TASKDESCRIPTION
-                group = IsmlExtension.ISML_GROUP_NAME
+                it.description = TASKDESCRIPTION
+                it.group = IsmlExtension.ISML_GROUP_NAME
             }
 
             extension.sourceSets.all { ismlSourceSet ->
