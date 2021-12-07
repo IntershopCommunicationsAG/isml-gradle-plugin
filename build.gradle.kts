@@ -60,20 +60,29 @@ group = "com.intershop.gradle.isml"
 description = "ISML plugin for Intershop"
 version = scm.version.version
 
-val sonatypeUsername: String by project
+// used for publishing
+val repoUser: String by project
+val repoPassword: String by project
+
+val sonatypeUsername: String? by project
 val sonatypePassword: String? by project
 
 repositories {
+    mavenLocal()
+
     ivy {
-        url = uri("https://repository.intershop.de/releases/")
+        //url = uri("https://repository.intershop.de/releases/")
+        url = uri("https://repo.rnd.intershop.de:443//ivy-update-icm-7x-b2c/")
         patternLayout {
             ivy("[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml")
             artifact("[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]")
         }
+        /*
         credentials {
             username = System.getenv("ISHUSERNAME") ?: System.getProperty("ISHUSERNAME")
             password = System.getenv("ISHKEY") ?: System.getProperty("ISHKEY")
         }
+         */
     }
 
     mavenCentral()
@@ -108,8 +117,8 @@ pluginBundle {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 // set correct project status
@@ -125,7 +134,7 @@ detekt {
 tasks {
     withType<KotlinCompile>().configureEach {
         kotlinOptions {
-            jvmTarget = "1.8"
+            jvmTarget = "11"
         }
     }
 
@@ -134,7 +143,7 @@ tasks {
         systemProperty("platform.intershop.versions", "11.1.1")
         systemProperty("servlet.version", "3.0.1")
         systemProperty("slf4j.version", "1.7.12")
-        systemProperty("tomcat.version", "7.0.42")
+        systemProperty("tomcat.version", "9.0.55")
         systemProperty("intershop.host.url", "https://repository.intershop.de/releases/")
         systemProperty("intershop.host.username", System.getenv("ISHUSERNAME") ?: System.getProperty("ISHUSERNAME"))
         systemProperty("intershop.host.userpassword", System.getenv("ISHKEY") ?: System.getProperty("ISHKEY"))
@@ -203,7 +212,7 @@ tasks {
     getByName("jar").dependsOn("asciidoctor")
 
     val compileKotlin by getting(KotlinCompile::class) {
-        kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
+        kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
     val dokka by existing(DokkaTask::class) {
@@ -297,14 +306,24 @@ dependencies {
 
     compileOnly("org.jetbrains:annotations:18.0.0")
 
-    compileOnly("org.eclipse.jdt.core.compiler:ecj:4.2.2")
-    compileOnly("org.apache.tomcat:tomcat-jasper:9.0.39")
-    compileOnly("org.apache.tomcat:tomcat-api:9.0.39")
+    compileOnly("org.apache.tomcat:tomcat-jasper:9.0.55")
+    compileOnly("org.apache.tomcat:tomcat-api:9.0.55")
 
+    /*
+    compileOnly("com.intershop.platform:isml:7.11.0.0-dev60") {
+        exclude( group = "org.apache.tomcat" )
+        exclude( module = "servletengine" )
+    }
+     */
+
+    /*
     compileOnly("com.intershop.platform:isml:21.0.0") {
         exclude( group = "org.apache.tomcat" )
         exclude( module = "servletengine" )
     }
+     */
+
+    compileOnly("com.intershop.icm:isml-parser:11.0.0-local-SNAPSHOT")
 
     testImplementation("com.intershop.gradle.test:test-gradle-plugin:3.7.0")
     testImplementation(gradleTestKit())

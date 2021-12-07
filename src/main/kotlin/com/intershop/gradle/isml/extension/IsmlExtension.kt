@@ -51,16 +51,6 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
         const val JSP_COMPILER_VERSION = "9.0.39"
 
         /**
-         * Default Eclipse compiler version.
-         */
-        const val ECLIPSE_COMPILER_VERSION = "3.21.0"
-
-        /**
-         * Gradle configuration for eclipse compiler.
-         */
-        const val ECLIPSECOMPILER_CONFIGURATION_NAME = "ismlJavaCompiler"
-
-        /**
          * Gradle configuration for jsp compiler.
          */
         const val JSPJASPERCOMPILER_CONFIGURATION_NAME = "ismlJspCompiler"
@@ -118,8 +108,6 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
 
     // JSP compiler version / Tomcat version
     private val jspCompilerVersionProperty: Property<String> = objectFactory.property(String::class.java)
-    // Eclipse compiler version depends on the Tomcat version
-    private val eclipseCompilerVersionProperty: Property<String> = objectFactory.property(String::class.java)
     // Java SourceSet name which is used for template compilation
     private val sourceSetNameProperty: Property<String> = objectFactory.property(String::class.java)
     // Configuration name which is used for template compilation
@@ -139,11 +127,10 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
         taglibFolderProperty.set(projectLayout.buildDirectory.dir(ISMLTAGLIB_OUTPUTPATH))
 
         jspCompilerVersionProperty.convention(JSP_COMPILER_VERSION)
-        eclipseCompilerVersionProperty.convention(ECLIPSE_COMPILER_VERSION)
         sourceSetNameProperty.convention(SourceSet.MAIN_SOURCE_SET_NAME)
         ismlConfigurationNameProperty.convention("runtimeClasspath") //("compile") //
-        sourceCompatibilityProperty.convention("1.8")
-        targetCompatibilityProperty.convention("1.8")
+        sourceCompatibilityProperty.convention("11")
+        targetCompatibilityProperty.convention("11")
         encodingProperty.set(DEFAULT_FILEENCODING)
 
         enableTldScanProperty.convention(false)
@@ -176,19 +163,6 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
      * @property jspCompilerVersion
      */
     var jspCompilerVersion by jspCompilerVersionProperty
-
-    /**
-     * Provider for eclipseCompilerVersion property.
-     */
-    val eclipseCompilerVersionProvider: Provider<String>
-        get() = eclipseCompilerVersionProperty
-
-    /**
-     * Eclipse compiler version depends on the Tomcat version.
-     *
-     * @property eclipseCompilerVersion
-     */
-    var eclipseCompilerVersion by eclipseCompilerVersionProperty
 
     /**
      * Provider for sourceSetName property.

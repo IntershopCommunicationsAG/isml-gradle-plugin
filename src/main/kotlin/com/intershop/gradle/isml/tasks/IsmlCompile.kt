@@ -218,12 +218,14 @@ open class IsmlCompile @Inject constructor(
         val returnFiles = project.files()
 
         // search all files for classpath
+        /*
         if(project.convention.findPlugin(JavaPluginConvention::class.java) != null) {
             val javaConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
             val mainSourceSet = javaConvention.sourceSets.getByName(sourceSetName)
 
             returnFiles.from(mainSourceSet.output.classesDirs, mainSourceSet.output.resourcesDir)
         }
+         */
 
         returnFiles.from(project.configurations.findByName(ismlConfiguration)?.filter {
             it.name.endsWith(".jar") && ! (it.name.startsWith("logback-classic") && ! it.path.contains("wrapper"))
@@ -242,7 +244,6 @@ open class IsmlCompile @Inject constructor(
         val returnFiles = project.files()
         // find files of original JASPER and Eclipse compiler
         returnFiles.from(project.configurations.findByName(IsmlExtension.JSPJASPERCOMPILER_CONFIGURATION_NAME))
-        returnFiles.from(project.configurations.findByName(IsmlExtension.ECLIPSECOMPILER_CONFIGURATION_NAME))
         returnFiles
     }
 
@@ -353,9 +354,6 @@ open class IsmlCompile @Inject constructor(
             it.jspPackage.set(jspPackage)
             it.sourceCompatibility.set(sourceCompatibility)
             it.targetCompatibility.set(targetCompatibility)
-            it.eclipseConfFile.set(File(temporaryDir, "eclipsecompiler.config"))
-            it.compilerOut.set(File(temporaryDir, "compiler-out.log"))
-            it.compilerError.set(File(temporaryDir, "compiler-error.log"))
             it.classpath.set(classpathCollection.asPath)
             it.tempWebInfFolder.set(webinf.parentFile)
             it.tldScanIncludes.set(tldScanIncludes)

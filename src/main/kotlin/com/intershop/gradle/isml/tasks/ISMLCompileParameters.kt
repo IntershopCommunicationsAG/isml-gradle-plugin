@@ -68,27 +68,6 @@ interface ISMLCompileParameters : WorkParameters {
     val enableTldScan: Property<Boolean>
 
     /**
-     * Configuration file for eclipse compiler.
-     *
-     * @property eclipseConfFile
-     */
-    val eclipseConfFile: Property<File>
-
-    /**
-     * Standard output for eclipse compiler.
-     *
-     * @property compilerOut
-     */
-    val compilerOut: Property<File>
-
-    /**
-     * Error output for eclipse compiler.
-     *
-     * @property compilerError
-     */
-    val compilerError: Property<File>
-
-    /**
      * Classpath for ISML and JSP compilation.
      *
      * @property classpath

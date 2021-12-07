@@ -59,6 +59,12 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
                 parameters.encoding.get(), mutableMapOf("text/html" to parameters.encoding.get()), log)
         ismlCompiler.execute()
 
+        // run JSP compiler
+        val jspc = JspC()
+        jspc.setLogging(parameters.logLevel.get())
+
+        jspc.enableTldScan = parameters.enableTldScan.get()
+
         val fileList = mutableListOf<String>()
 
         if(parameters.enableTldScan.get() == true) {
@@ -77,11 +83,6 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
             }
         }
 
-        // run JSP compiler
-        val jspc = JspC()
-        jspc.setLogging(parameters.logLevel.get())
-
-        jspc.enableTldScan = parameters.enableTldScan.get()
         jspc.tldScanIncludes = fileList
         jspc.tldScanExcludes = parameters.tldScanExcludes.get()
 
@@ -94,22 +95,6 @@ abstract class IsmlCompileRunner : WorkAction<ISMLCompileParameters> {
         jspc.compilerTargetVM = parameters.targetCompatibility.get()
 
         jspc.execute()
-
-        val eclipseConfFile = parameters.eclipseConfFile.get()
-        // run eclipse compiler
-        if(eclipseConfFile.exists()) {
-            eclipseConfFile.delete()
-        }
-
-        eclipseConfFile.writeText("-g -nowarn -encoding ${parameters.encoding.get()} " +
-                "-target ${parameters.targetCompatibility.get()} " +
-                "-source ${parameters.sourceCompatibility.get()} " +
-                "-classpath ${parameters.classpath.get()}")
-
-        val compiler = Main( parameters.compilerOut.get().printWriter(),
-                parameters.compilerError.get().printWriter(),
-                false, null, null)
-        compiler.compile(arrayOf("@${eclipseConfFile.absolutePath}",  parameters.outputDir.get().absolutePath))
 
         // remove WEB-INF folder
         parameters.tempWebInfFolder.get().deleteRecursively()

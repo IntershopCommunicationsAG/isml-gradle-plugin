@@ -22,6 +22,9 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.SourceSet
 
 /**
  * Plugin Class implementation.
@@ -32,7 +35,7 @@ open class IsmlPlugin : Plugin<Project> {
         /**
          * Task description of this task.
          */
-        const val TASKDESCRIPTION = "Compiles ISML template files to class files"
+        const val TASKDESCRIPTION = "Compiles ISML template files to java files"
 
         /**
          * Task name of this task.
@@ -48,7 +51,6 @@ open class IsmlPlugin : Plugin<Project> {
                 IsmlExtension::class.java
             )
 
-            addEclipseCompilerConfiguration(this, extension)
             addJSPJasperCompilerConfiguration(this, extension)
 
             if (extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
@@ -87,6 +89,15 @@ open class IsmlPlugin : Plugin<Project> {
                     ismlc.provideEncoding(extension.encodingProvider)
 
                     ismlc.provideEnableTldScan(extension.enableTldScanProvider)
+
+                    project.plugins.withType(JavaBasePlugin::class.java) {
+                        val javaPluginConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
+                        javaPluginConvention.sourceSets.matching {
+                            it.name == SourceSet.MAIN_SOURCE_SET_NAME
+                        }.forEach {
+                            it.java.srcDir(ismlc.outputs)
+                        }
+                    }
                 }
 
                 project.plugins.withType(IsmlTagLibPlugin::class.java) {
@@ -101,27 +112,7 @@ open class IsmlPlugin : Plugin<Project> {
                     it.dependsOn(isml)
                 }
             }
-
-            project.plugins.withType(BasePlugin::class.java) {
-                val assemble = tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
-                assemble.configure {
-                    it.dependsOn(ismlMain)
-                }
-            }
         }
-    }
-
-    private fun addEclipseCompilerConfiguration(project: Project, extension: IsmlExtension) {
-        val configuration = project.configurations.maybeCreate(IsmlExtension.ECLIPSECOMPILER_CONFIGURATION_NAME)
-        configuration.setVisible(false)
-                .setTransitive(true)
-                .setDescription("Configuration for Eclipse compiler")
-                .defaultDependencies { ds ->
-                    val dependencyHandler = project.dependencies
-                    ds.add(dependencyHandler.create("org.eclipse.jdt:ecj:".
-                            plus(extension.eclipseCompilerVersion)))
-                    ds.removeIf {it.group == "ch.qos.logback" && it.name == "logback-classic" }
-                }
     }
 
     private fun addJSPJasperCompilerConfiguration(project: Project, extension: IsmlExtension) {
