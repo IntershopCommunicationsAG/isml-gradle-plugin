@@ -25,6 +25,10 @@ import javax.servlet.ServletContext
 
 /**
  * Project specific TldScanner for Jasper Compiler.
+ * @param context
+ * @param namespaceAware
+ * @param validation
+ * @param blockExternal
  */
 class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validation: Boolean, blockExternal: Boolean)
     : org.apache.jasper.servlet.TldScanner(context, namespaceAware, validation, blockExternal) {

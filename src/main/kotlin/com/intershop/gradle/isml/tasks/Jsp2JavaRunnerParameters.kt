@@ -6,6 +6,9 @@ import org.gradle.workers.WorkParameters
 import java.io.File
 import org.apache.log4j.Level
 
+/**
+ * Parameter interface for Isml2Jsp Runner.
+ */
 interface Jsp2JavaRunnerParameters  : WorkParameters {
 
     /**
@@ -63,13 +66,6 @@ interface Jsp2JavaRunnerParameters  : WorkParameters {
      * @property outputDir
      */
     val outputDir: Property<File>
-
-    /**
-     * Temporary webinf folder for JSP compilation.
-     *
-     * @property tempWebInfFolder
-     */
-    val tempWebInfFolder: Property<File>
 
     /**
      * Loglevel for JSP and Java compilation.

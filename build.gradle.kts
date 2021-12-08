@@ -40,13 +40,13 @@ plugins {
     id("com.intershop.gradle.scmversion") version "6.2.0"
 
     // plugin for documentation
-    id("org.asciidoctor.jvm.convert") version "3.3.0"
+    id("org.asciidoctor.jvm.convert") version "3.3.2"
 
     // documentation
     id("org.jetbrains.dokka") version "0.10.1"
 
     // code analysis for kotlin
-    id("io.gitlab.arturbosch.detekt") version "1.15.0"
+    id("io.gitlab.arturbosch.detekt") version "1.19.0"
 
     // plugin for publishing to Gradle Portal
     id("com.gradle.plugin-publish") version "0.13.0"

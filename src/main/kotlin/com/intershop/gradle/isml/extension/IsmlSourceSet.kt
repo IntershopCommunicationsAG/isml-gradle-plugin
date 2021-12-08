@@ -15,75 +15,53 @@
  */
 package com.intershop.gradle.isml.extension
 
-import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Internal
-import java.io.File
-import java.util.*
+import java.util.Locale
 
 /**
  * Configuration container for a special ISMl
  * source set to compile isml included files.
+ * @param objectFactory
+ * @param projectLayout
+ * @param name  Name of the sourceset with isml files.
  */
 open class IsmlSourceSet(objectFactory: ObjectFactory,
                          projectLayout: ProjectLayout, @Internal val name: String) {
-
-    private val srcDirectoryProperty: DirectoryProperty = objectFactory.directoryProperty()
-    private val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
-
-    // Jsp Package name
-    private val jspPackageProperty: Property<String> = objectFactory.property(String::class.java)
-
-    init {
-        outputDirProperty.set(projectLayout.buildDirectory.dir(IsmlExtension.ISML_OUTPUTPATH))
-    }
-
-    /**
-     * Provider for srcDir property.
-     */
-    val srcDirectoryProvider: Provider<Directory>
-        get() = srcDirectoryProperty
 
     /**
      * Source directory with ISM files.
      *
      * @property srcDir
      */
-    var srcDir: File
-        get() = srcDirectoryProperty.get().asFile
-        set(value) = srcDirectoryProperty.set(value)
+    val srcDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
-     * Provider for output directory property.
-     */
-    val outputDirProvider: Provider<Directory>
-        get() = outputDirProperty
-
-    /**
-     * Output directory with class and jsp files.
+     * Output directory with jsp files.
      *
-     * @property outputDir
+     * @property ismlOutputDir
      */
-    var outputDir: File
-        get() = outputDirProperty.get().asFile
-        set(value) = outputDirProperty.set(value)
+    val ismlOutputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
-     * Jsp Package name provider.
+     * Output directory with jsp files.
+     *
+     * @property jspOutputDir
      */
-    val jspPackageProvider: Provider<String>
-        get() = jspPackageProperty
+    val jspOutputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * Jsp Package name property.
      */
-    var jspPackage: String
-        get() = jspPackageProperty.get()
-        set(value) = jspPackageProperty.set(value)
+    val jspPackage: Property<String> = objectFactory.property(String::class.java)
+
+    init {
+        ismlOutputDir.set(projectLayout.buildDirectory.dir(IsmlExtension.ISML_OUTPUTPATH))
+        jspOutputDir.set(projectLayout.buildDirectory.dir(IsmlExtension.JSP_OUTPUTPATH))
+    }
 
     /**
      * Calculate the task name for the isml task.

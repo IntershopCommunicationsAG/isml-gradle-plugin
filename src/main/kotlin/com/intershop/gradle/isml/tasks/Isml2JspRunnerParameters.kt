@@ -15,21 +15,36 @@
  */
 package com.intershop.gradle.isml.tasks
 
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.workers.WorkParameters
-import java.io.File
 
+/**
+ * Parameter interface for Isml2Jsp Runner.
+ */
 interface Isml2JspRunnerParameters : WorkParameters {
 
     /**
      * Property outputDir for code generation.
      * @property outputDir
      */
-    val outputDir: Property<File>
+    val outputDir: DirectoryProperty
 
     /**
      * Property outputDir for code generation.
      * @property inputDir
      */
-    val inputDir: Property<File>
+    val inputDir: DirectoryProperty
+
+    /**
+     * Property for content encoding.
+     * @property encoding
+     */
+    val encoding: Property<String>
+
+    /**
+     * Property with jsp encoding map.
+     */
+    val jspEncoding: MapProperty<String, String>
 }

@@ -15,17 +15,12 @@
  */
 package com.intershop.gradle.isml.extension
 
-import com.intershop.gradle.isml.utils.getValue
-import com.intershop.gradle.isml.utils.setValue
 import org.gradle.api.NamedDomainObjectContainer
-import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.SourceSet
-import java.io.File
 import javax.inject.Inject
 
 /**
@@ -48,12 +43,22 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
         /**
          * Default JSP compiler version.
          */
-        const val JSP_COMPILER_VERSION = "9.0.39"
+        const val JSP_COMPILER_VERSION = "9.0.41"
+
+        /**
+         * Default ISML compiler version.
+         */
+        const val ISML_COMPILER_VERSION = "11.0.0"
 
         /**
          * Gradle configuration for jsp compiler.
          */
-        const val JSPJASPERCOMPILER_CONFIGURATION_NAME = "ismlJspCompiler"
+        const val JASPERCOMPILER_CONFIGURATION_NAME = "jspCompiler"
+
+        /**
+         * Gradle configuration for jsp compiler.
+         */
+        const val ISMLCOMPILER_CONFIGURATION_NAME = "ismlCompiler"
 
         /**
          * Default source set name of ISML files.
@@ -69,6 +74,11 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
          * Default target path of ISML compilation.
          */
         const val ISML_OUTPUTPATH = "generated/isml"
+
+        /**
+         * Default target path of Jsp compilation.
+         */
+        const val JSP_OUTPUTPATH = "generated/jsp"
 
         /**
          * Default target path of ISML taglibs.
@@ -103,72 +113,20 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
     val sourceSets: NamedDomainObjectContainer<IsmlSourceSet> =
             objectFactory.domainObjectContainer(IsmlSourceSet::class.java)
 
-    // Taglib folder
-    private val taglibFolderProperty: DirectoryProperty = objectFactory.directoryProperty()
-
-    // JSP compiler version / Tomcat version
-    private val jspCompilerVersionProperty: Property<String> = objectFactory.property(String::class.java)
-    // Java SourceSet name which is used for template compilation
-    private val sourceSetNameProperty: Property<String> = objectFactory.property(String::class.java)
-    // Configuration name which is used for template compilation
-    private val ismlConfigurationNameProperty: Property<String> = objectFactory.property(String::class.java)
-
-    // Source compatibility of java files (result of Jsp2Java)
-    private val sourceCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
-    // Target compatibility of java files (result of Jsp2Java)
-    private val targetCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
-    // File encoding
-    private val encodingProperty: Property<String> = objectFactory.property(String::class.java)
-
-    // Enable TLD scanning by JspC
-    private val enableTldScanProperty: Property<Boolean> = objectFactory.property(Boolean::class.java)
-
-    init {
-        taglibFolderProperty.set(projectLayout.buildDirectory.dir(ISMLTAGLIB_OUTPUTPATH))
-
-        jspCompilerVersionProperty.convention(JSP_COMPILER_VERSION)
-        sourceSetNameProperty.convention(SourceSet.MAIN_SOURCE_SET_NAME)
-        ismlConfigurationNameProperty.convention("runtimeClasspath") //("compile") //
-        sourceCompatibilityProperty.convention("11")
-        targetCompatibilityProperty.convention("11")
-        encodingProperty.set(DEFAULT_FILEENCODING)
-
-        enableTldScanProperty.convention(false)
-    }
-
     /**
      * Provider for taglibFolder property.
      */
-    val taglibFolderProvider: Provider<Directory>
-        get() = taglibFolderProperty
-
-    /**
-     * Folder with tag lib configurations.
-     *
-     * @property taglibFolder
-     */
-    var taglibFolder: File
-        get() = taglibFolderProperty.get().asFile
-        set(value) = taglibFolderProperty.set(value)
+    val taglibFolder: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * Provider for jspCompilerVersion property.
      */
-    val jspCompilerVersionProvider: Provider<String>
-        get() = jspCompilerVersionProperty
+    val jspCompilerVersion: Property<String> = objectFactory.property(String::class.java)
 
     /**
-     * JSP compiler version / Tomcat version.
-     *
-     * @property jspCompilerVersion
+     * Provider for ismlCompilerVersion property.
      */
-    var jspCompilerVersion by jspCompilerVersionProperty
-
-    /**
-     * Provider for sourceSetName property.
-     */
-    val sourceSetNameProvider: Provider<String>
-        get() = sourceSetNameProperty
+    val ismlCompilerVersion: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Java SourceSet name which is used for template compilation.
@@ -176,13 +134,7 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
      *
      * @property sourceSetName
      */
-    var sourceSetName by sourceSetNameProperty
-
-    /**
-     * Provider for ismlConfigurationName property.
-     */
-    val ismlConfigurationNameProvider: Provider<String>
-        get() = ismlConfigurationNameProperty
+    val sourceSetName: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Configuration name which is used for template compilation.
@@ -190,57 +142,51 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
      *
      * @property ismlConfigurationName
      */
-    var ismlConfigurationName by ismlConfigurationNameProperty
-
-    /**
-     * Provider for sourceCompatibility property.
-     */
-    val sourceCompatibilityProvider: Provider<String>
-        get() = sourceCompatibilityProperty
+    val ismlConfigurationName: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Source compatibility of java files (result of Jsp2Java).
      *
      * @property sourceCompatibility
      */
-    var sourceCompatibility by sourceCompatibilityProperty
-
-    /**
-     * Provider for targetCompatibility property.
-     */
-    val targetCompatibilityProvider: Provider<String>
-        get() = targetCompatibilityProperty
+    val sourceCompatibility: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Target compatibility of java files (result of Jsp2Java).
      *
      * @property targetCompatibility
      */
-    var targetCompatibility by targetCompatibilityProperty
-
-    /**
-     * Provider for encoding property.
-     */
-    val encodingProvider: Provider<String>
-        get() = encodingProperty
+    val targetCompatibility: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * File encoding for JSP code generation.
      *
      * @property encoding
      */
-    var encoding by encodingProperty
-
-    /**
-     * Provider for TLD enabling property.
-     */
-    val enableTldScanProvider: Provider<Boolean>
-        get() = enableTldScanProperty
+    val encoding: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * TldScan will be enabled if this property set to true.
      *
      * @property enableTldScan
      */
-    var enableTldScan by enableTldScanProperty
+    val enableTldScan: Property<Boolean> = objectFactory.property(Boolean::class.java)
+
+    init {
+        taglibFolder.convention(projectLayout.buildDirectory.dir(ISMLTAGLIB_OUTPUTPATH))
+
+        jspCompilerVersion.convention(JSP_COMPILER_VERSION)
+        ismlCompilerVersion.convention(ISML_COMPILER_VERSION)
+
+        sourceSetName.convention(SourceSet.MAIN_SOURCE_SET_NAME)
+
+        ismlConfigurationName.convention("runtimeClasspath") //("compile") //
+
+        sourceCompatibility.convention("11")
+        targetCompatibility.convention("11")
+
+        encoding.set(DEFAULT_FILEENCODING)
+
+        enableTldScan.convention(false)
+    }
 }

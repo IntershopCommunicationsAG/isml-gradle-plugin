@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 Intershop Communications AG.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
@@ -27,7 +42,12 @@ import org.apache.log4j.Level
 import org.gradle.api.plugins.JavaPluginExtension
 import javax.inject.Inject
 
-class Jsp2Java  @Inject constructor(
+/**
+ * Jsp2Java task class.
+ * @param fileSystemOperations
+ * @param workerExecutor
+ */
+open class Jsp2Java  @Inject constructor(
     objectFactory: ObjectFactory,
     @Internal val fileSystemOperations: FileSystemOperations,
     @Internal val workerExecutor: WorkerExecutor ) : DefaultTask() {
@@ -37,14 +57,7 @@ class Jsp2Java  @Inject constructor(
          * Variable for default page compile folder name.
          */
         const val PAGECOMPILE_FOLDER = "pagecompile"
-
-        /**
-         * Variable for default JSP filter string.
-         */
-        const val FILTER_JSP = "**/**/*.jsp"
     }
-
-    private val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * Output directory for generated files.
@@ -52,14 +65,7 @@ class Jsp2Java  @Inject constructor(
      * @property outputDir
      */
     @get:OutputDirectory
-    var outputDir: File
-        get() = outputDirProperty.get().asFile
-        set(value)= outputDirProperty.set(value)
-
-    /**
-     * Add provider for outputDir.
-     */
-    fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
+    val outputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     private val sourceCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
 
@@ -262,9 +268,10 @@ class Jsp2Java  @Inject constructor(
     @TaskAction
     fun runJsp2Java() {
         //prepare output director
-        prepareFolder(outputDir)
-        val pageCompileFolder = File(outputDir, PAGECOMPILE_FOLDER)
+        val pageCompileFolder = outputDir.dir(PAGECOMPILE_FOLDER).get().asFile
         val webinf = File(pageCompileFolder, IsmlExtension.WEB_XML_PATH)
+
+        prepareFolder(pageCompileFolder.parentFile)
 
         if(tagLibsInputDir.isPresent) {
             // copy taglib conf files with web-inf to the uriroot
@@ -278,12 +285,7 @@ class Jsp2Java  @Inject constructor(
             webinf.writeText(IsmlExtension.WEB_XML_CONTENT)
         }
 
-        // copy source jsp files
-        fileSystemOperations.copy {
-            it.from(inputDir)
-            it.include(FILTER_JSP)
-            it.into(pageCompileFolder)
-        }
+        val classpathCollection = project.files(classpathfiles, pageCompileFolder)
 
         val runLoggerLevel = when(project.logging.level) {
             LogLevel.INFO -> Level.INFO
@@ -298,7 +300,7 @@ class Jsp2Java  @Inject constructor(
 
         // start runner
         workQueue.submit(Jsp2JavaRunner::class.java) {
-            it.outputDir.set(outputDir)
+            it.outputDir.set(pageCompileFolder)
             it.inputDir.set(inputDir)
 
             it.encoding.set(encoding)
@@ -306,15 +308,18 @@ class Jsp2Java  @Inject constructor(
             it.sourceCompatibility.set(sourceCompatibility)
             it.targetCompatibility.set(targetCompatibility)
 
-            it.tempWebInfFolder.set(webinf.parentFile)
             it.tldScanIncludes.set(tldScanIncludes)
             it.tldScanExcludes.set(tldScanExcludes)
             it.enableTldScan.set(enableTldScan)
             it.logLevel.set(runLoggerLevel)
+            it.classpath.set(classpathCollection.asPath)
         }
 
         workerExecutor.await()
 
+        fileSystemOperations.delete {
+            it.delete(webinf.parentFile)
+        }
     }
 
     private fun prepareFolder(folder: File) {

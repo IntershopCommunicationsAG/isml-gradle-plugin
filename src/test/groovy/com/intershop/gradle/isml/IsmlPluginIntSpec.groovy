@@ -16,6 +16,7 @@
 package com.intershop.gradle.isml
 
 import com.intershop.gradle.test.AbstractIntegrationGroovySpec
+import spock.lang.Ignore
 import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
@@ -24,6 +25,7 @@ import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 @Unroll
 class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
+    @Ignore
     def 'Test taglib and usage in one Cartridge - isml'() {
         given:
         copyResources('test_taglib')
@@ -80,6 +82,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         tomcatVersion << getVersions('tomcat.version')
     }
 
+    @Ignore
     def 'Test isml incemental build with a changed file'() {
         given:
         copyResources('test_isml')
@@ -186,6 +189,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         tomcatVersion << getVersions('tomcat.version')
     }
 
+    @Ignore
     def 'Test isml incemental build with a changed classpath'() {
         given:
         copyResources('test_isml')
@@ -285,14 +289,9 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 runtimeClasspath.extendsFrom(compile)
             }
 
-            dependencies {
-                ${getMainDependencies(platformVersion, servletVersion,
-                slf4jVersion, tomcatVersion)}
-            }
-
             repositories {
-                jcenter()
-                ${getMainRepositories()}
+                mavenCentral()
+                mavenLocal()
             }
         """.stripIndent()
 
@@ -302,7 +301,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         """.stripIndent()
 
         when:
-        List<String> args = ['isml', '-s', '-d']
+        List<String> args = ['isml', '-s' ]
 
         def result = getPreparedGradleRunner()
                 .withArguments(args)
@@ -315,12 +314,9 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         where:
         gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
     }
 
+    @Ignore
     def 'Test taglib and usage with project dependencies - isml'() {
 
         given:
@@ -441,6 +437,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         tomcatVersion << getVersions('tomcat.version')
     }
 
+    @Ignore
     def 'Test taglib and usage with dependencies - isml'() {
 
         given:

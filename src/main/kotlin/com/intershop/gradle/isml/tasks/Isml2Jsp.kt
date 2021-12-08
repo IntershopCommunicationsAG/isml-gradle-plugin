@@ -15,12 +15,11 @@
  */
 package com.intershop.gradle.isml.tasks
 
-import com.intershop.gradle.isml.utils.getValue
-import com.intershop.gradle.isml.utils.setValue
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
+import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
@@ -40,29 +39,29 @@ import javax.inject.Inject
  * Task for compiling isml to jsp files.
  *
  * @constructor creates an instance with worker
+ * @param fileSystemOperations
  * @param workerExecutor    run the workload of this task
  * @param objectFactory     creates all configurations of this task
  */
 open class Isml2Jsp @Inject constructor(
     objectFactory: ObjectFactory,
+    @Internal val fileSystemOperations: FileSystemOperations,
     @Internal val workerExecutor: WorkerExecutor) : DefaultTask() {
 
-    private val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
+    companion object {
+        /**
+         * Variable for default JSP filter string.
+         */
+        const val FILTER_JSP = "**/**/*.jsp"
+    }
 
     /**
-     * Output directory for generated files.
+     * Output directory for this task.
      *
      * @property outputDir
      */
     @get:OutputDirectory
-    var outputDir: File
-        get() = outputDirProperty.get().asFile
-        set(value) = outputDirProperty.set(value)
-
-    /**
-     * Add provider for outputDir.
-     */
-    fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
+    val outputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * Input directory for TagLibs.
@@ -73,8 +72,6 @@ open class Isml2Jsp @Inject constructor(
     @get:InputDirectory
     val tagLibsInputDir: DirectoryProperty = objectFactory.directoryProperty()
 
-    private val inputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
-
     /**
      * Input directory for ISML files.
      *
@@ -82,16 +79,7 @@ open class Isml2Jsp @Inject constructor(
      */
     @get:SkipWhenEmpty
     @get:InputDirectory
-    var inputDir: File
-        get() = inputDirProperty.get().asFile
-        set(value) = inputDirProperty.set(value)
-
-    /**
-     * Add provider for inputDir.
-     */
-    fun provideInputDir(inputDir: Provider<Directory>) = inputDirProperty.set(inputDir)
-
-    private val encodingProperty: Property<String> = objectFactory.property(String::class.java)
+    var inputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * Encoding configuration for ISML processing.
@@ -99,12 +87,7 @@ open class Isml2Jsp @Inject constructor(
      * @property encodingProperty
      */
     @get:Input
-    var encoding by encodingProperty
-
-    /**
-     * Add provider for encoding.
-     */
-    fun provideEncoding(encoding: Provider<String>) = encodingProperty.set(encoding)
+    val encoding: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Classpath files for Java code generation (see ISML configuration).
@@ -123,16 +106,24 @@ open class Isml2Jsp @Inject constructor(
      */
     @TaskAction
     fun runIsml2Jsp() {
+        val pageCompileFolder = outputDir.dir(Jsp2Java.PAGECOMPILE_FOLDER).get().asFile
         //prepare output director
-        prepareFolder(outputDir)
+        prepareFolder(pageCompileFolder.parentFile)
 
         val workQueue = workerExecutor.classLoaderIsolation {
             it.classpath.setFrom(ismlClasspathfiles)
         }
 
+        // copy source jsp files
+        fileSystemOperations.copy {
+            it.from(inputDir)
+            it.include(FILTER_JSP)
+            it.into(pageCompileFolder)
+        }
+
         // start runner
         workQueue.submit(Isml2JspRunner::class.java) {
-            it.outputDir.set(outputDir)
+            it.outputDir.set(pageCompileFolder)
             it.inputDir.set(inputDir)
         }
 
