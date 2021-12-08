@@ -16,14 +16,13 @@
 package com.intershop.gradle.isml
 
 import com.intershop.gradle.isml.extension.IsmlExtension
-import com.intershop.gradle.isml.tasks.IsmlCompile
+import com.intershop.gradle.isml.tasks.Isml2Jsp
+import com.intershop.gradle.isml.tasks.Jsp2Java
 import com.intershop.gradle.isml.tasks.PrepareTagLibs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.BasePlugin
-import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 
 /**
@@ -73,46 +72,68 @@ open class IsmlPlugin : Plugin<Project> {
                 it.group = IsmlExtension.ISML_GROUP_NAME
             }
 
+            addIsmlConfiguration(this)
+            addJSPJasperCompilerConfiguration(this, extension)
             extension.sourceSets.all { ismlSourceSet ->
-                val isml = tasks.register(ismlSourceSet.getIsmlTaskName(), IsmlCompile::class.java) { ismlc ->
-                    ismlc.group = IsmlExtension.ISML_GROUP_NAME
+                tasks.register(ismlSourceSet.getIsmlTaskName(), Isml2Jsp::class.java) { ismltask ->
+                    ismltask.group = IsmlExtension.ISML_GROUP_NAME
 
-                    ismlc.provideIsmlConfiguration(extension.ismlConfigurationNameProvider)
-                    ismlc.provideOutputDir(ismlSourceSet.outputDirProvider)
-                    ismlc.provideInputDir(ismlSourceSet.srcDirectoryProvider)
-                    ismlc.provideJspPackage(ismlSourceSet.jspPackageProvider)
+                    ismltask.provideInputDir(ismlSourceSet.srcDirectoryProvider)
+                    ismltask.provideEncoding(extension.encodingProvider)
 
-                    ismlc.provideSourceSetName(extension.sourceSetNameProvider)
+                    tasks.register(ismlSourceSet.getJspTaskName(), Jsp2Java::class.java) { jspTask ->
+                        jspTask.group = IsmlExtension.ISML_GROUP_NAME
 
-                    ismlc.provideSourceCompatibility(extension.sourceCompatibilityProvider)
-                    ismlc.provideTargetCompatibility(extension.targetCompatibilityProvider)
-                    ismlc.provideEncoding(extension.encodingProvider)
+                        jspTask.inputDir = ismltask.outputDir
+                        jspTask.provideOutputDir(ismlSourceSet.outputDirProvider)
+                        jspTask.provideJspPackage(ismlSourceSet.jspPackageProvider)
 
-                    ismlc.provideEnableTldScan(extension.enableTldScanProvider)
+                        jspTask.provideSourceCompatibility(extension.sourceCompatibilityProvider)
+                        jspTask.provideTargetCompatibility(extension.targetCompatibilityProvider)
+                        jspTask.provideEncoding(extension.encodingProvider)
 
-                    project.plugins.withType(JavaBasePlugin::class.java) {
-                        val javaPluginConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
-                        javaPluginConvention.sourceSets.matching {
-                            it.name == SourceSet.MAIN_SOURCE_SET_NAME
-                        }.forEach {
-                            it.java.srcDir(ismlc.outputs)
+                        jspTask.provideEnableTldScan(extension.enableTldScanProvider)
+                        jspTask.provideEncoding(extension.encodingProvider)
+
+                        jspTask.provideSourceCompatibility(extension.sourceCompatibilityProvider)
+                        jspTask.provideTargetCompatibility(extension.targetCompatibilityProvider)
+
+                        jspTask.provideSourceSetName(extension.sourceSetNameProvider)
+
+                        project.plugins.withType(JavaBasePlugin::class.java) {
+                            project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                                it.name == SourceSet.MAIN_SOURCE_SET_NAME
+                            }.forEach {
+                                it.java.srcDir(jspTask.outputs)
+                            }
                         }
-                    }
-                }
+                        project.plugins.withType(IsmlTagLibPlugin::class.java) {
+                            val ismlTagLib = tasks.named(IsmlTagLibPlugin.TASKNAME, PrepareTagLibs::class.java)
+                            jspTask.tagLibsInputDir.set(project.provider { ismlTagLib.get().outputDir.get() })
+                            jspTask.dependsOn(ismlTagLib)
+                        }
 
-                project.plugins.withType(IsmlTagLibPlugin::class.java) {
-                    val ismlTagLib = tasks.named(IsmlTagLibPlugin.TASKNAME, PrepareTagLibs::class.java)
-                    isml.configure {
-                        it.tagLibsInputDir.value(project.provider { ismlTagLib.get().outputDir.get() })
-                        it.dependsOn(ismlTagLib)
                     }
-                }
 
-                ismlMain.configure {
-                    it.dependsOn(isml)
+                    ismlMain.configure {
+                        it.dependsOn(ismltask)
+                    }
                 }
             }
         }
+    }
+
+    private fun addIsmlConfiguration(project: Project) {
+        val configuration = project.configurations.maybeCreate("isml")
+        configuration
+            .setVisible(false)
+            .setTransitive(true)
+            .setDescription("ISML parser configuration is used for jsp generation")
+            .defaultDependencies { ds ->
+                // this will be executed if configuration is empty
+                val dependencyHandler = project.dependencies
+                ds.add(dependencyHandler.create("com.intershop.icm:isml-parser:1.0.0-SNAPSHOT"))
+            }
     }
 
     private fun addJSPJasperCompilerConfiguration(project: Project, extension: IsmlExtension) {

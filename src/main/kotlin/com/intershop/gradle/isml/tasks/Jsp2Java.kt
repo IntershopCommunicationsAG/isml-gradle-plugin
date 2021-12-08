@@ -1,26 +1,8 @@
-/*
- * Copyright 2018 Intershop Communications AG.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-@file:Suppress("UnstableApiUsage")
 package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
 import com.intershop.gradle.isml.utils.getValue
 import com.intershop.gradle.isml.utils.setValue
-import org.apache.log4j.Level
-import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
@@ -28,34 +10,27 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
-import org.gradle.process.JavaForkOptions
 import org.gradle.workers.WorkerExecutor
 import java.io.File
+import org.apache.log4j.Level
+import org.gradle.api.plugins.JavaPluginExtension
 import javax.inject.Inject
 
-/**
- * Task for compiling isml to class files.
- *
- * @constructor creates an instance with worker
- * @param workerExecutor
- */
-open class IsmlCompile @Inject constructor(
-        objectFactory: ObjectFactory,
-        @Internal val fileSystemOperations: FileSystemOperations,
-        @Internal val workerExecutor: WorkerExecutor) : DefaultTask(){
+class Jsp2Java  @Inject constructor(
+    objectFactory: ObjectFactory,
+    @Internal val fileSystemOperations: FileSystemOperations,
+    @Internal val workerExecutor: WorkerExecutor ) : DefaultTask() {
 
     companion object {
         /**
@@ -86,6 +61,53 @@ open class IsmlCompile @Inject constructor(
      */
     fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
 
+    private val sourceCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
+
+    /**
+     * Source compatibility configuration for ISML processing.
+     *
+     * @property sourceCompatibility
+     */
+    @get:Input
+    var sourceCompatibility by sourceCompatibilityProperty
+
+    /**
+     * Add provider for sourceCompatibility.
+     */
+    fun provideSourceCompatibility(sourceCompatibility: Provider<String>) =
+        sourceCompatibilityProperty.set(sourceCompatibility)
+
+    private val targetCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
+
+    /**
+     * Target compatibility configuration for ISML processing.
+     *
+     * @property targetCompatibility
+     */
+    @get:Input
+    var targetCompatibility by targetCompatibilityProperty
+
+    /**
+     * Add provider for targetCompatibility.
+     */
+    fun provideTargetCompatibility(targetCompatibility: Provider<String>) =
+        targetCompatibilityProperty.set(targetCompatibility)
+
+    private val encodingProperty: Property<String> = objectFactory.property(String::class.java)
+
+    /**
+     * Encoding configuration for ISML processing.
+     *
+     * @property encodingProperty
+     */
+    @get:Input
+    var encoding by encodingProperty
+
+    /**
+     * Add provider for encoding.
+     */
+    fun provideEncoding(encoding: Provider<String>) = encodingProperty.set(encoding)
+
     /**
      * Input directory for TagLibs.
      *
@@ -112,22 +134,6 @@ open class IsmlCompile @Inject constructor(
      * Add provider for inputDir.
      */
     fun provideInputDir(inputDir: Provider<Directory>) = inputDirProperty.set(inputDir)
-
-    // (java) configuration name for isml compilation
-    private val ismlConfigurationProperty: Property<String> = objectFactory.property(String::class.java)
-
-    /**
-     * ISMl configuration property.
-     *
-     * @property ismlConfiguration
-     */
-    @get:Input
-    var ismlConfiguration by ismlConfigurationProperty
-
-    /**
-     * Add provider for ismlConfiguration.
-     */
-    fun provideIsmlConfiguration(ismlConfiguration: Provider<String>) = ismlConfigurationProperty.set(ismlConfiguration)
 
     private val jspPackageProperty: Property<String> = objectFactory.property(String::class.java)
 
@@ -161,86 +167,13 @@ open class IsmlCompile @Inject constructor(
      */
     fun provideSourceSetName(sourceSetName: Provider<String>) = soureSetNameProperty.set(sourceSetName)
 
-    private val sourceCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
-
-    /**
-     * Source compatibility configuration for ISML processing.
-     *
-     * @property sourceCompatibility
-     */
-    @get:Input
-    var sourceCompatibility by sourceCompatibilityProperty
-
-    /**
-     * Add provider for sourceCompatibility.
-     */
-    fun provideSourceCompatibility(sourceCompatibility: Provider<String>) =
-            sourceCompatibilityProperty.set(sourceCompatibility)
-
-    private val targetCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
-
-    /**
-     * Target compatibility configuration for ISML processing.
-     *
-     * @property targetCompatibility
-     */
-    @get:Input
-    var targetCompatibility by targetCompatibilityProperty
-
-    /**
-     * Add provider for targetCompatibility.
-     */
-    fun provideTargetCompatibility(targetCompatibility: Provider<String>) =
-            targetCompatibilityProperty.set(targetCompatibility)
-
-    private val encodingProperty: Property<String> = objectFactory.property(String::class.java)
-
-    /**
-     * Encoding configuration for ISML processing.
-     *
-     * @property encodingProperty
-     */
-    @get:Input
-    var encoding by encodingProperty
-
-    /**
-     * Add provider for encoding.
-     */
-    fun provideEncoding(encoding: Provider<String>) = encodingProperty.set(encoding)
-
-    /**
-     * Classpath files of the isml configuration.
-     *
-     * @property classpathfiles
-     */
-    @get:Classpath
-    val classpathfiles : FileCollection by lazy {
-        val returnFiles = project.files()
-
-        // search all files for classpath
-        /*
-        if(project.convention.findPlugin(JavaPluginConvention::class.java) != null) {
-            val javaConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
-            val mainSourceSet = javaConvention.sourceSets.getByName(sourceSetName)
-
-            returnFiles.from(mainSourceSet.output.classesDirs, mainSourceSet.output.resourcesDir)
-        }
-         */
-
-        returnFiles.from(project.configurations.findByName(ismlConfiguration)?.filter {
-            it.name.endsWith(".jar") && ! (it.name.startsWith("logback-classic") && ! it.path.contains("wrapper"))
-        })
-
-        returnFiles
-    }
-
     /**
      * Classpath files of the tools configuration.
      *
      * @property classpathfiles
      */
     @get:Classpath
-    val toolsclasspathfiles : FileCollection by lazy {
+    val jspClasspathfiles : FileCollection by lazy {
         val returnFiles = project.files()
         // find files of original JASPER and Eclipse compiler
         returnFiles.from(project.configurations.findByName(IsmlExtension.JSPJASPERCOMPILER_CONFIGURATION_NAME))
@@ -262,7 +195,7 @@ open class IsmlCompile @Inject constructor(
      * Add provider for encoding.
      */
     fun provideTldScanExcludes(excludeList: Provider<List<String>>) =
-            tldScanExcludesListProperty.set(excludeList)
+        tldScanExcludesListProperty.set(excludeList)
 
     private val tldScanIncludesListProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
 
@@ -281,7 +214,7 @@ open class IsmlCompile @Inject constructor(
      * Add provider for tldScanIncludes.
      */
     fun provideTldScanIncludes(includeList: Provider<List<String>>) =
-            tldScanExcludesListProperty.set(includeList)
+        tldScanExcludesListProperty.set(includeList)
 
     private val enableTldScanProperty: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
@@ -300,6 +233,25 @@ open class IsmlCompile @Inject constructor(
      */
     fun provideEnableTldScan(enableTldScan: Provider<Boolean>) = enableTldScanProperty.set(enableTldScan)
 
+    /**
+     * Classpath files of the isml configuration.
+     *
+     * @property classpathfiles
+     */
+    @get:Classpath
+    val classpathfiles : FileCollection by lazy {
+        val returnFiles = project.files()
+
+        // search all files for classpath
+        if(project.extensions.findByType(JavaPluginExtension::class.java) != null) {
+            val javaConvention = project.extensions.findByType(JavaPluginExtension::class.java)
+            val mainSourceSet = javaConvention?.sourceSets?.getByName(sourceSetName)
+
+            returnFiles.from(mainSourceSet?.output?.classesDirs, mainSourceSet?.output?.resourcesDir)
+        }
+        returnFiles
+    }
+
     init {
         enableTldScanProperty.convention(false)
     }
@@ -308,7 +260,7 @@ open class IsmlCompile @Inject constructor(
      * This is the task action and processes ISML files.
      */
     @TaskAction
-    fun runIsmlCompile() {
+    fun runJsp2Java() {
         //prepare output director
         prepareFolder(outputDir)
         val pageCompileFolder = File(outputDir, PAGECOMPILE_FOLDER)
@@ -333,9 +285,6 @@ open class IsmlCompile @Inject constructor(
             it.into(pageCompileFolder)
         }
 
-        // tool specific files must be in front of all other to override the server specific files
-        val classpathCollection = project.files(toolsclasspathfiles, classpathfiles, pageCompileFolder)
-
         val runLoggerLevel = when(project.logging.level) {
             LogLevel.INFO -> Level.INFO
             LogLevel.DEBUG -> Level.DEBUG
@@ -344,17 +293,19 @@ open class IsmlCompile @Inject constructor(
         }
 
         val workQueue = workerExecutor.classLoaderIsolation {
-            it.classpath.setFrom(classpathCollection)
+            it.classpath.setFrom(jspClasspathfiles)
         }
 
-        workQueue.submit(IsmlCompileRunner::class.java) {
-            it.sourceDir.set(inputDir)
-            it.outputDir.set(pageCompileFolder)
+        // start runner
+        workQueue.submit(Jsp2JavaRunner::class.java) {
+            it.outputDir.set(outputDir)
+            it.inputDir.set(inputDir)
+
             it.encoding.set(encoding)
             it.jspPackage.set(jspPackage)
             it.sourceCompatibility.set(sourceCompatibility)
             it.targetCompatibility.set(targetCompatibility)
-            it.classpath.set(classpathCollection.asPath)
+
             it.tempWebInfFolder.set(webinf.parentFile)
             it.tldScanIncludes.set(tldScanIncludes)
             it.tldScanExcludes.set(tldScanExcludes)
@@ -363,6 +314,7 @@ open class IsmlCompile @Inject constructor(
         }
 
         workerExecutor.await()
+
     }
 
     private fun prepareFolder(folder: File) {

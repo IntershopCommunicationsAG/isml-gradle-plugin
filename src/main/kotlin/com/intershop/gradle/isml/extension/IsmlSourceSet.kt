@@ -23,7 +23,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Internal
 import java.io.File
-import javax.inject.Inject
+import java.util.*
 
 /**
  * Configuration container for a special ISMl
@@ -86,14 +86,26 @@ open class IsmlSourceSet(objectFactory: ObjectFactory,
         set(value) = jspPackageProperty.set(value)
 
     /**
-     * Calculate the task name for the task.
+     * Calculate the task name for the isml task.
      * @return task name for configuration
      */
     fun getIsmlTaskName(): String {
-        return "isml2class${name.toCamelCase()}"
+        return "isml2jsp${name.toCamelCase()}"
+    }
+
+    /**
+     * Calculate the task name for the jsp task.
+     * @return task name for configuration
+     */
+    fun getJspTaskName(): String {
+        return "jsp2java${name.toCamelCase()}"
     }
 
     private fun String.toCamelCase() : String {
-        return split(" ").joinToString("") { it.capitalize() }
+        return split(" ").joinToString("") {
+            it.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+            }
+        }
     }
 }

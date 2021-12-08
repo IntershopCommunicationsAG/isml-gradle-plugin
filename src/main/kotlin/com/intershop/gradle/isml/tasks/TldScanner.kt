@@ -105,10 +105,8 @@ class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validati
         }
         val tld = tldParser.parse(path)
         val uri = tld.uri
-        if (uri != null) {
-            if (!uriTldResourcePathMap.containsKey(uri)) {
-                uriTldResourcePathMap[uri] = path
-            }
+        if (uri != null && !uriTldResourcePathMap.containsKey(uri)) {
+            uriTldResourcePathMap[uri] = path
         }
         tldResourcePathTaglibXmlMap[path] = tld
         if (tld.listeners != null) {
@@ -184,8 +182,7 @@ class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validati
                 override fun visitFile(file: Path,
                                        attrs: BasicFileAttributes): FileVisitResult {
                     val fileName = file.fileName
-                    if (fileName == null || !fileName.toString().toLowerCase(
-                                    Locale.ENGLISH).endsWith(TLD_EXT)) {
+                    if (fileName == null || !fileName.toString().lowercase(Locale.ENGLISH).endsWith(TLD_EXT)) {
                         return FileVisitResult.CONTINUE
                     }
                     foundFileWithoutTld = true

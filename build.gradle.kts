@@ -22,7 +22,7 @@ plugins {
     // project plugins
     `java-gradle-plugin`
     groovy
-    kotlin("jvm") version "1.4.20"
+    kotlin("jvm") version "1.5.31"
 
     // test coverage
     jacoco
@@ -139,14 +139,10 @@ tasks {
     }
 
     withType<Test>().configureEach {
-        systemProperty("intershop.gradle.versions", "6.8")
-        systemProperty("platform.intershop.versions", "11.1.1")
-        systemProperty("servlet.version", "3.0.1")
-        systemProperty("slf4j.version", "1.7.12")
-        systemProperty("tomcat.version", "9.0.55")
-        systemProperty("intershop.host.url", "https://repository.intershop.de/releases/")
-        systemProperty("intershop.host.username", System.getenv("ISHUSERNAME") ?: System.getProperty("ISHUSERNAME"))
-        systemProperty("intershop.host.userpassword", System.getenv("ISHKEY") ?: System.getProperty("ISHKEY"))
+        testLogging.showStandardStreams = false
+
+        systemProperty("intershop.gradle.versions", "7.3")
+        useJUnitPlatform()
 
         dependsOn("jar")
     }
@@ -309,22 +305,9 @@ dependencies {
     compileOnly("org.apache.tomcat:tomcat-jasper:9.0.55")
     compileOnly("org.apache.tomcat:tomcat-api:9.0.55")
 
-    /*
-    compileOnly("com.intershop.platform:isml:7.11.0.0-dev60") {
-        exclude( group = "org.apache.tomcat" )
-        exclude( module = "servletengine" )
-    }
-     */
 
-    /*
-    compileOnly("com.intershop.platform:isml:21.0.0") {
-        exclude( group = "org.apache.tomcat" )
-        exclude( module = "servletengine" )
-    }
-     */
+    compileOnly("com.intershop.icm:isml-parser:1.0.0-SNAPSHOT")
 
-    compileOnly("com.intershop.icm:isml-parser:11.0.0-local-SNAPSHOT")
-
-    testImplementation("com.intershop.gradle.test:test-gradle-plugin:3.7.0")
+    testImplementation("com.intershop.gradle.test:test-gradle-plugin:4.1.1")
     testImplementation(gradleTestKit())
 }
