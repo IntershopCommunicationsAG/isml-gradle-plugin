@@ -107,7 +107,6 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
                 id 'com.intershop.gradle.isml'
             }
 
