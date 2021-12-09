@@ -58,7 +58,10 @@ open class IsmlPlugin : Plugin<Project> {
 
             addJSPJasperCompilerConfiguration(this, extension)
             addIsmlConfiguration(this, extension)
-            addJavaDependencies(this)
+
+            project.plugins.withType(JavaBasePlugin::class.java) {
+                addJavaDependencies(this)
+            }
 
             if (extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
