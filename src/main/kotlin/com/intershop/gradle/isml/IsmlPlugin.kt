@@ -58,6 +58,7 @@ open class IsmlPlugin : Plugin<Project> {
 
             addJSPJasperCompilerConfiguration(this, extension)
             addIsmlConfiguration(this, extension)
+            addJavaDependencies(this)
 
             if (extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
@@ -161,5 +162,10 @@ open class IsmlPlugin : Plugin<Project> {
                             "org.apache.tomcat:tomcat-jasper:${extension.jspCompilerVersion.get()}"))
                     ds.removeIf {it.group == "ch.qos.logback" && it.name == "logback-classic" }
                 }
+    }
+
+    private fun addJavaDependencies(project: Project) {
+        project.dependencies.add("implementation", "org.apache.tomcat:tomcat-jasper")
+        project.dependencies.add("implementation", "org.slf4j:slf4j-api")
     }
 }
