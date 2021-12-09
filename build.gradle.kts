@@ -68,25 +68,7 @@ val sonatypeUsername: String? by project
 val sonatypePassword: String? by project
 
 repositories {
-    mavenLocal()
-
-    ivy {
-        //url = uri("https://repository.intershop.de/releases/")
-        url = uri("https://repo.rnd.intershop.de:443//ivy-update-icm-7x-b2c/")
-        patternLayout {
-            ivy("[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml")
-            artifact("[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]")
-        }
-        /*
-        credentials {
-            username = System.getenv("ISHUSERNAME") ?: System.getProperty("ISHUSERNAME")
-            password = System.getenv("ISHKEY") ?: System.getProperty("ISHKEY")
-        }
-         */
-    }
-
     mavenCentral()
-    jcenter()
 }
 
 val ismlPluginId = "com.intershop.gradle.isml"
@@ -300,13 +282,11 @@ signing {
 dependencies {
     implementation(gradleKotlinDsl())
 
-    compileOnly("org.jetbrains:annotations:18.0.0")
-
     compileOnly("org.apache.tomcat:tomcat-jasper:9.0.55")
     compileOnly("org.apache.tomcat:tomcat-api:9.0.55")
 
 
-    compileOnly("com.intershop.icm:isml-parser:1.0.0-SNAPSHOT")
+    compileOnly("com.intershop.icm:isml-parser:11.0.0")
 
     testImplementation("com.intershop.gradle.test:test-gradle-plugin:4.1.1")
     testImplementation(gradleTestKit())

@@ -43,7 +43,7 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
         /**
          * Default JSP compiler version.
          */
-        const val JSP_COMPILER_VERSION = "9.0.41"
+        const val JSP_COMPILER_VERSION = "9.0.55"
 
         /**
          * Default ISML compiler version.
@@ -103,7 +103,7 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
                                  |         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                  |         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
                                  |                             http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
-                                 |         version="3.0">
+                                 |         version="3.0">        
                                  |</web-app>""".trimMargin()
     }
 
@@ -138,11 +138,11 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
 
     /**
      * Configuration name which is used for template compilation.
-     * Default value is 'runtimeElements'.
+     * Default value is 'runtimeClasspath'.
      *
-     * @property ismlConfigurationName
+     * @property jspConfigurationName
      */
-    val ismlConfigurationName: Property<String> = objectFactory.property(String::class.java)
+    val jspConfigurationName: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Source compatibility of java files (result of Jsp2Java).
@@ -180,7 +180,7 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
 
         sourceSetName.convention(SourceSet.MAIN_SOURCE_SET_NAME)
 
-        ismlConfigurationName.convention("runtimeClasspath") //("compile") //
+        jspConfigurationName.convention("runtimeClasspath")
 
         sourceCompatibility.convention("11")
         targetCompatibility.convention("11")

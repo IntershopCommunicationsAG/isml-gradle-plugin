@@ -15,19 +15,17 @@
  */
 package com.intershop.gradle.isml.tasks
 
+import com.intershop.gradle.isml.extension.IsmlExtension
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
@@ -64,22 +62,13 @@ open class Isml2Jsp @Inject constructor(
     val outputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
-     * Input directory for TagLibs.
-     *
-     * @property tagLibsInputDir
-     */
-    @get:Optional
-    @get:InputDirectory
-    val tagLibsInputDir: DirectoryProperty = objectFactory.directoryProperty()
-
-    /**
      * Input directory for ISML files.
      *
      * @property inputDir
      */
     @get:SkipWhenEmpty
     @get:InputDirectory
-    var inputDir: DirectoryProperty = objectFactory.directoryProperty()
+    val inputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * Encoding configuration for ISML processing.
@@ -97,7 +86,7 @@ open class Isml2Jsp @Inject constructor(
     @get:Classpath
     val ismlClasspathfiles: FileCollection by lazy {
         val returnFiles = project.files()
-        returnFiles.from(project.configurations.findByName("isml"))
+        returnFiles.from(project.configurations.findByName(IsmlExtension.ISMLCOMPILER_CONFIGURATION_NAME))
         returnFiles
     }
 
@@ -106,9 +95,9 @@ open class Isml2Jsp @Inject constructor(
      */
     @TaskAction
     fun runIsml2Jsp() {
-        val pageCompileFolder = outputDir.dir(Jsp2Java.PAGECOMPILE_FOLDER).get().asFile
+        val outputFolder = outputDir.get().asFile
         //prepare output director
-        prepareFolder(pageCompileFolder.parentFile)
+        prepareFolder(outputFolder)
 
         val workQueue = workerExecutor.classLoaderIsolation {
             it.classpath.setFrom(ismlClasspathfiles)
@@ -118,13 +107,17 @@ open class Isml2Jsp @Inject constructor(
         fileSystemOperations.copy {
             it.from(inputDir)
             it.include(FILTER_JSP)
-            it.into(pageCompileFolder)
+            it.into(outputFolder)
         }
+
+        val jspEncoding = mutableMapOf("text/html" to encoding.get())
 
         // start runner
         workQueue.submit(Isml2JspRunner::class.java) {
-            it.outputDir.set(pageCompileFolder)
+            it.outputDir.set(outputDir)
             it.inputDir.set(inputDir)
+            it.encoding.set(encoding)
+            it.jspEncoding.putAll(jspEncoding)
         }
 
         workerExecutor.await()

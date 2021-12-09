@@ -24,7 +24,6 @@ import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
@@ -65,22 +64,13 @@ open class PrepareTagLibs @Inject constructor(objectFactory: ObjectFactory) : De
     @get:OutputDirectory
     val outputDir: DirectoryProperty = objectFactory.directoryProperty()
 
-    private val ismlConfigurationProperty: Property<String> = objectFactory.property(String::class.java)
-
     /**
      * ISMl configuration property.
      *
-     * @property ismlConfiguration
+     * @property jspConfiguration
      */
     @get:Input
-    var ismlConfiguration: String
-        get() = ismlConfigurationProperty.get()
-        set(value) = ismlConfigurationProperty.set(value)
-
-    /**
-     * Add provider for ismlConfiguration.
-     */
-    fun provideIsmlConfiguration(ismlConfiguration: Provider<String>) = ismlConfigurationProperty.set(ismlConfiguration)
+    val jspConfiguration: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * List of tag Lib configurations.
@@ -97,7 +87,7 @@ open class PrepareTagLibs @Inject constructor(objectFactory: ObjectFactory) : De
             }
         }
 
-        project.configurations.findByName(ismlConfiguration)?.let { configuration ->
+        project.configurations.findByName(jspConfiguration.get())?.let { configuration ->
             configuration.allDependencies.withType(ProjectDependency::class.java).forEach {
                 project.logger.debug("Project dependency found: {}", it.dependencyProject.name)
                 with(it.dependencyProject.file("$CARTRIDGE_STATIC_FOLDER/$TAGLIB_FOLDER")) {
@@ -108,7 +98,7 @@ open class PrepareTagLibs @Inject constructor(objectFactory: ObjectFactory) : De
             }
         }
 
-        project.configurations.findByName(ismlConfiguration)?.let { configuration ->
+        project.configurations.findByName(jspConfiguration.get())?.let { configuration ->
             if(configuration.isCanBeResolved) {
                 configuration.resolvedConfiguration.resolvedArtifacts.forEach { artifact ->
                     if (artifact.type == "cartridge") {
@@ -123,7 +113,7 @@ open class PrepareTagLibs @Inject constructor(objectFactory: ObjectFactory) : De
                     }
                 }
             } else {
-                project.logger.warn("Configuration '{}' can not be resolved!", ismlConfiguration)
+                project.logger.warn("Configuration '{}' can not be resolved!", jspConfiguration)
             }
         }
 

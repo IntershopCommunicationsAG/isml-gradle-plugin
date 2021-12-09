@@ -57,6 +57,7 @@ open class IsmlPlugin : Plugin<Project> {
             )
 
             addJSPJasperCompilerConfiguration(this, extension)
+            addIsmlConfiguration(this, extension)
 
             if (extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
@@ -81,36 +82,35 @@ open class IsmlPlugin : Plugin<Project> {
                 it.group = IsmlExtension.ISML_GROUP_NAME
             }
 
-            addIsmlConfiguration(this)
-            addJSPJasperCompilerConfiguration(this, extension)
             extension.sourceSets.all { ismlSourceSet ->
 
                 val ismlTask = tasks.register(ismlSourceSet.getIsmlTaskName(), Isml2Jsp::class.java) { ismltask ->
                     ismltask.group = IsmlExtension.ISML_GROUP_NAME
 
-                    ismltask.provideInputDir(ismlSourceSet.srcDir)
+                    ismltask.inputDir.set(ismlSourceSet.srcDir)
                     ismltask.outputDir.set( project.layout.buildDirectory.dir("generated/isml/${ismlSourceSet.name}") )
-                    ismltask.provideEncoding(extension.encodingProvider)
+                    ismltask.encoding.set(extension.encoding)
                 }
                 val jspTask = tasks.register(ismlSourceSet.getJspTaskName(), Jsp2Java::class.java) { jsptask ->
                     jsptask.group = IsmlExtension.ISML_GROUP_NAME
 
-                    jsptask.provideInputDir(project.provider { ismlTask.get().outputDir.get() })
+                    jsptask.inputDir.set(project.provider { ismlTask.get().outputDir.get() })
 
                     jsptask.outputDir.set( project.layout.buildDirectory.dir("generated/jsp/${ismlSourceSet.name}"))
-                    jsptask.provideJspPackage(ismlSourceSet.jspPackageProvider)
+                    jsptask.jspPackage.set(ismlSourceSet.jspPackage)
 
-                    jsptask.provideSourceCompatibility(extension.sourceCompatibilityProvider)
-                    jsptask.provideTargetCompatibility(extension.targetCompatibilityProvider)
-                    jsptask.provideEncoding(extension.encodingProvider)
+                    jsptask.jspConfigurationName.set(extension.jspConfigurationName)
+                    jsptask.sourceCompatibility.set(extension.sourceCompatibility)
+                    jsptask.targetCompatibility.set(extension.targetCompatibility)
+                    jsptask.encoding.set(extension.encoding)
 
-                    jsptask.provideEnableTldScan(extension.enableTldScanProvider)
-                    jsptask.provideEncoding(extension.encodingProvider)
+                    jsptask.enableTldScan.set(extension.enableTldScan)
+                    jsptask.encoding.set(extension.encoding)
 
-                    jsptask.provideSourceCompatibility(extension.sourceCompatibilityProvider)
-                    jsptask.provideTargetCompatibility(extension.targetCompatibilityProvider)
+                    jsptask.sourceCompatibility.set(extension.sourceCompatibility)
+                    jsptask.targetCompatibility.set(extension.targetCompatibility)
 
-                    jsptask.provideSourceSetName(extension.sourceSetNameProvider)
+                    jsptask.sourceSetName.set(extension.sourceSetName)
 
                     project.plugins.withType(JavaBasePlugin::class.java) {
                         project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
@@ -134,8 +134,8 @@ open class IsmlPlugin : Plugin<Project> {
         }
     }
 
-    private fun addIsmlConfiguration(project: Project) {
-        val configuration = project.configurations.maybeCreate("isml")
+    private fun addIsmlConfiguration(project: Project, extension: IsmlExtension) {
+        val configuration = project.configurations.maybeCreate(IsmlExtension.ISMLCOMPILER_CONFIGURATION_NAME)
         configuration
             .setVisible(false)
             .setTransitive(true)
@@ -143,19 +143,22 @@ open class IsmlPlugin : Plugin<Project> {
             .defaultDependencies { ds ->
                 // this will be executed if configuration is empty
                 val dependencyHandler = project.dependencies
-                ds.add(dependencyHandler.create("com.intershop.icm:isml-parser:1.0.0-SNAPSHOT"))
+                ds.add(
+                    dependencyHandler.create(
+                        "com.intershop.icm:isml-parser:${extension.ismlCompilerVersion.get()}"))
             }
     }
 
     private fun addJSPJasperCompilerConfiguration(project: Project, extension: IsmlExtension) {
-        val configuration = project.configurations.maybeCreate(IsmlExtension.JSPJASPERCOMPILER_CONFIGURATION_NAME)
+        val configuration = project.configurations.maybeCreate(IsmlExtension.JASPERCOMPILER_CONFIGURATION_NAME)
         configuration.setVisible(false)
                 .setTransitive(true)
                 .setDescription("Configuration for JSP compiler")
                 .defaultDependencies { ds ->
                     val dependencyHandler = project.dependencies
-                    ds.add(dependencyHandler.create("org.apache.tomcat:tomcat-jasper:".
-                            plus(extension.jspCompilerVersion)))
+                    ds.add(
+                        dependencyHandler.create(
+                            "org.apache.tomcat:tomcat-jasper:${extension.jspCompilerVersion.get()}"))
                     ds.removeIf {it.group == "ch.qos.logback" && it.name == "logback-classic" }
                 }
     }

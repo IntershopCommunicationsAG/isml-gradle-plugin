@@ -16,10 +16,7 @@
 package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
-import com.intershop.gradle.isml.utils.getValue
-import com.intershop.gradle.isml.utils.setValue
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileSystemOperations
@@ -27,7 +24,6 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
@@ -39,7 +35,6 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.workers.WorkerExecutor
 import java.io.File
 import org.apache.log4j.Level
-import org.gradle.api.plugins.JavaPluginExtension
 import javax.inject.Inject
 
 /**
@@ -52,13 +47,6 @@ open class Jsp2Java  @Inject constructor(
     @Internal val fileSystemOperations: FileSystemOperations,
     @Internal val workerExecutor: WorkerExecutor ) : DefaultTask() {
 
-    companion object {
-        /**
-         * Variable for default page compile folder name.
-         */
-        const val PAGECOMPILE_FOLDER = "pagecompile"
-    }
-
     /**
      * Output directory for generated files.
      *
@@ -67,7 +55,14 @@ open class Jsp2Java  @Inject constructor(
     @get:OutputDirectory
     val outputDir: DirectoryProperty = objectFactory.directoryProperty()
 
-    private val sourceCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
+    /**
+     * Configuration, that is used for the the jsp2java compiilation.
+     *
+     * @property jspConfigurationName
+     */
+    @get:Optional
+    @get:Input
+    val jspConfigurationName: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Source compatibility configuration for ISML processing.
@@ -75,15 +70,7 @@ open class Jsp2Java  @Inject constructor(
      * @property sourceCompatibility
      */
     @get:Input
-    var sourceCompatibility by sourceCompatibilityProperty
-
-    /**
-     * Add provider for sourceCompatibility.
-     */
-    fun provideSourceCompatibility(sourceCompatibility: Provider<String>) =
-        sourceCompatibilityProperty.set(sourceCompatibility)
-
-    private val targetCompatibilityProperty: Property<String> = objectFactory.property(String::class.java)
+    val sourceCompatibility: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Target compatibility configuration for ISML processing.
@@ -91,15 +78,7 @@ open class Jsp2Java  @Inject constructor(
      * @property targetCompatibility
      */
     @get:Input
-    var targetCompatibility by targetCompatibilityProperty
-
-    /**
-     * Add provider for targetCompatibility.
-     */
-    fun provideTargetCompatibility(targetCompatibility: Provider<String>) =
-        targetCompatibilityProperty.set(targetCompatibility)
-
-    private val encodingProperty: Property<String> = objectFactory.property(String::class.java)
+    val targetCompatibility: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Encoding configuration for ISML processing.
@@ -107,12 +86,7 @@ open class Jsp2Java  @Inject constructor(
      * @property encodingProperty
      */
     @get:Input
-    var encoding by encodingProperty
-
-    /**
-     * Add provider for encoding.
-     */
-    fun provideEncoding(encoding: Provider<String>) = encodingProperty.set(encoding)
+    val encoding: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Input directory for TagLibs.
@@ -123,8 +97,6 @@ open class Jsp2Java  @Inject constructor(
     @get:InputDirectory
     val tagLibsInputDir: DirectoryProperty = objectFactory.directoryProperty()
 
-    private val inputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
-
     /**
      * Input directory for ISML files.
      *
@@ -132,16 +104,7 @@ open class Jsp2Java  @Inject constructor(
      */
     @get:SkipWhenEmpty
     @get:InputDirectory
-    var inputDir: File
-        get() = inputDirProperty.get().asFile
-        set(value) = inputDirProperty.set(value)
-
-    /**
-     * Add provider for inputDir.
-     */
-    fun provideInputDir(inputDir: Provider<Directory>) = inputDirProperty.set(inputDir)
-
-    private val jspPackageProperty: Property<String> = objectFactory.property(String::class.java)
+    val inputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * JSP package configuration property.
@@ -149,15 +112,7 @@ open class Jsp2Java  @Inject constructor(
      * @property jspPackage
      */
     @get:Input
-    var jspPackage by jspPackageProperty
-
-    /**
-     * Add provider for jspPackage.
-     */
-    fun provideJspPackage(jspPackage: Provider<String>) = jspPackageProperty.set(jspPackage)
-
-    // java source set name
-    private val soureSetNameProperty: Property<String> = objectFactory.property(String::class.java)
+    val jspPackage: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Java source set name.
@@ -166,12 +121,7 @@ open class Jsp2Java  @Inject constructor(
      */
     @get:Optional
     @get:Input
-    var sourceSetName by soureSetNameProperty
-
-    /**
-     * Add provider for sourceSetName.
-     */
-    fun provideSourceSetName(sourceSetName: Provider<String>) = soureSetNameProperty.set(sourceSetName)
+    val sourceSetName: Property<String> = objectFactory.property(String::class.java)
 
     /**
      * Classpath files of the tools configuration.
@@ -182,62 +132,9 @@ open class Jsp2Java  @Inject constructor(
     val jspClasspathfiles : FileCollection by lazy {
         val returnFiles = project.files()
         // find files of original JASPER and Eclipse compiler
-        returnFiles.from(project.configurations.findByName(IsmlExtension.JSPJASPERCOMPILER_CONFIGURATION_NAME))
+        returnFiles.from(project.configurations.findByName(IsmlExtension.JASPERCOMPILER_CONFIGURATION_NAME))
         returnFiles
     }
-
-    private val tldScanExcludesListProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
-
-    /**
-     * List of filenames, that should be excluded from the JspC file scan.
-     * The file name is check for the beginning of the name.
-     *
-     * @property tldScanExcludes
-     */
-    @get:Input
-    var tldScanExcludes by tldScanExcludesListProperty
-
-    /**
-     * Add provider for encoding.
-     */
-    fun provideTldScanExcludes(excludeList: Provider<List<String>>) =
-        tldScanExcludesListProperty.set(excludeList)
-
-    private val tldScanIncludesListProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
-
-    /**
-     * List of filenames, that should be included in the JspC file scan.
-     * The file name is check for the beginning of the name.
-     *
-     * The default value will be generated from the classpath if exclude list is empty.
-     *
-     * @property tldScanIncludes
-     */
-    @get:Input
-    var tldScanIncludes by tldScanIncludesListProperty
-
-    /**
-     * Add provider for tldScanIncludes.
-     */
-    fun provideTldScanIncludes(includeList: Provider<List<String>>) =
-        tldScanExcludesListProperty.set(includeList)
-
-    private val enableTldScanProperty: Property<Boolean> = objectFactory.property(Boolean::class.java)
-
-    /**
-     * This will enable the TLD file scan of Jsp Compiler. It is only necessary if
-     * TLDs are used and available.
-     * Default value is false.
-     *
-     * @property enableTldScan
-     */
-    @get:Input
-    var enableTldScan by enableTldScanProperty
-
-    /**
-     * Add provider for enable TLD scan.
-     */
-    fun provideEnableTldScan(enableTldScan: Provider<Boolean>) = enableTldScanProperty.set(enableTldScan)
 
     /**
      * Classpath files of the isml configuration.
@@ -248,18 +145,45 @@ open class Jsp2Java  @Inject constructor(
     val classpathfiles : FileCollection by lazy {
         val returnFiles = project.files()
 
-        // search all files for classpath
-        if(project.extensions.findByType(JavaPluginExtension::class.java) != null) {
-            val javaConvention = project.extensions.findByType(JavaPluginExtension::class.java)
-            val mainSourceSet = javaConvention?.sourceSets?.getByName(sourceSetName)
+        returnFiles.from(project.configurations.findByName(jspConfigurationName.get())?.filter {
+            it.name.endsWith(".jar") && ! (it.name.startsWith("logback-classic") && ! it.path.contains("wrapper"))
+        })
 
-            returnFiles.from(mainSourceSet?.output?.classesDirs, mainSourceSet?.output?.resourcesDir)
-        }
         returnFiles
     }
 
+    /**
+     * List of filenames, that should be excluded from the JspC file scan.
+     * The file name is check for the beginning of the name.
+     *
+     * @property tldScanExcludes
+     */
+    @get:Input
+    val tldScanExcludes: ListProperty<String> = objectFactory.listProperty(String::class.java)
+
+    /**
+     * List of filenames, that should be included in the JspC file scan.
+     * The file name is check for the beginning of the name.
+     *
+     * The default value will be generated from the classpath if exclude list is empty.
+     *
+     * @property tldScanIncludes
+     */
+    @get:Input
+    val tldScanIncludes: ListProperty<String> = objectFactory.listProperty(String::class.java)
+
+    /**
+     * This will enable the TLD file scan of Jsp Compiler. It is only necessary if
+     * TLDs are used and available.
+     * Default value is false.
+     *
+     * @property enableTldScan
+     */
+    @get:Input
+    val enableTldScan: Property<Boolean> = objectFactory.property(Boolean::class.java)
+
     init {
-        enableTldScanProperty.convention(false)
+        enableTldScan.convention(false)
     }
 
     /**
@@ -268,16 +192,16 @@ open class Jsp2Java  @Inject constructor(
     @TaskAction
     fun runJsp2Java() {
         //prepare output director
-        val pageCompileFolder = outputDir.dir(PAGECOMPILE_FOLDER).get().asFile
-        val webinf = File(pageCompileFolder, IsmlExtension.WEB_XML_PATH)
+        val outputFolder = outputDir.get().asFile
+        val webinf = File(outputFolder, IsmlExtension.WEB_XML_PATH)
 
-        prepareFolder(pageCompileFolder.parentFile)
+        prepareFolder(outputFolder.parentFile)
 
         if(tagLibsInputDir.isPresent) {
             // copy taglib conf files with web-inf to the uriroot
             fileSystemOperations.copy {
                 it.from(tagLibsInputDir)
-                it.into(pageCompileFolder)
+                it.into(outputFolder)
             }
         } else {
             // create web-inf in uriroot
@@ -285,7 +209,7 @@ open class Jsp2Java  @Inject constructor(
             webinf.writeText(IsmlExtension.WEB_XML_CONTENT)
         }
 
-        val classpathCollection = project.files(classpathfiles, pageCompileFolder)
+        val classpathCollection = project.files(outputFolder, classpathfiles)
 
         val runLoggerLevel = when(project.logging.level) {
             LogLevel.INFO -> Level.INFO
@@ -300,7 +224,7 @@ open class Jsp2Java  @Inject constructor(
 
         // start runner
         workQueue.submit(Jsp2JavaRunner::class.java) {
-            it.outputDir.set(pageCompileFolder)
+            it.outputDir.set(outputDir)
             it.inputDir.set(inputDir)
 
             it.encoding.set(encoding)

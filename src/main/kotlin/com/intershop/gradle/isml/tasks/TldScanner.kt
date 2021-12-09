@@ -107,6 +107,7 @@ class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validati
             // TLD has already been parsed as a result of processing web.xml
             return
         }
+
         val tld = tldParser.parse(path)
         val uri = tld.uri
         if (uri != null && !uriTldResourcePathMap.containsKey(uri)) {

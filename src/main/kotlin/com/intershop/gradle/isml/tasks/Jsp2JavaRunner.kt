@@ -68,9 +68,9 @@ abstract class Jsp2JavaRunner : WorkAction<Jsp2JavaRunnerParameters> {
         jspc.tldScanExcludes = parameters.tldScanExcludes.get()
 
         jspc.classPath = parameters.classpath.get()
-        jspc.setUriroot(parameters.inputDir.get().absolutePath)
+        jspc.setUriroot(parameters.inputDir.get().asFile.absolutePath)
         jspc.setPackage(makeJavaPackageFromPackage(parameters.jspPackage.get()))
-        jspc.setOutputDir(parameters.outputDir.get().absolutePath)
+        jspc.setOutputDir(parameters.outputDir.get().asFile.absolutePath)
         jspc.javaEncoding = parameters.encoding.get()
         jspc.compilerSourceVM = parameters.sourceCompatibility.get()
         jspc.compilerTargetVM = parameters.targetCompatibility.get()

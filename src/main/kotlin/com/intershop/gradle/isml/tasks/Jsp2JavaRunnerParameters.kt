@@ -3,8 +3,8 @@ package com.intershop.gradle.isml.tasks
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.workers.WorkParameters
-import java.io.File
 import org.apache.log4j.Level
+import org.gradle.api.file.DirectoryProperty
 
 /**
  * Parameter interface for Isml2Jsp Runner.
@@ -59,13 +59,13 @@ interface Jsp2JavaRunnerParameters  : WorkParameters {
      * Source directory for JSP compilation.
      * @property inputDir
      */
-    val inputDir: Property<File>
+    val inputDir: DirectoryProperty
 
     /**
      * Target directory for ISML compilation.
      * @property outputDir
      */
-    val outputDir: Property<File>
+    val outputDir: DirectoryProperty
 
     /**
      * Loglevel for JSP and Java compilation.

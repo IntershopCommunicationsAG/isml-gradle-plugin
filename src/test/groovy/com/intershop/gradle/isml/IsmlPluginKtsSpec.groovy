@@ -81,8 +81,7 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
         tomcatVersion << getVersions('tomcat.version')
     }
 
-    @Ignore
-    def 'Test isml incemental build with a changed file'() {
+    def 'Test isml incremental build with a changed file'() {
         given:
         copyResources('test_isml')
 
@@ -91,23 +90,8 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
                 id("com.intershop.gradle.isml")
             }
 
-            configurations.create("implementation")
-
-            val runtime by configurations.creating {
-                extendsFrom(configurations["implementation"])
-            }
-            val runtimeClasspath by configurations.creating {
-                extendsFrom(configurations["implementation"])
-            }
-
-            dependencies {
-               ${getMainDependencies(platformVersion, servletVersion,
-                slf4jVersion, tomcatVersion)}
-            }
-
             repositories {
-                jcenter()
-                ${getMainRepositories()}
+                mavenCentral()
             }
         """.stripIndent()
 
@@ -125,26 +109,24 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
         %>
         """.stripIndent()
 
-        List<String> args = ['isml', '-s', '-i']
+        List<String> args = ['isml', '-s']
 
         def result = getPreparedGradleRunner()
                 .withArguments(args)
                 .withGradleVersion(gradleVersion)
                 .build()
 
-        File jspFile = new File(testProjectDir, "build/generated/isml/main/pagecompile/default/support/test.jsp")
-        File javaFile =  new File(testProjectDir, 'build/generated/isml/main/pagecompile/org/apache/jsp/testCartridge/default_/support/test_jsp.java')
-        File classFile = new File(testProjectDir, 'build/generated/isml/main/pagecompile/org/apache/jsp/testCartridge/default_/support/test_jsp.class')
-
+        File jspFile = new File(testProjectDir, "build/generated/isml/main/default/support/test.jsp")
+        File javaFile =  new File(testProjectDir, 'build/generated/jsp/main/org/apache/jsp/testCartridge/default_/support/test_jsp.java')
 
         then:
         result.task(':isml').outcome == SUCCESS
+        result.task(':isml').outcome == SUCCESS
+        result.task(':isml2jspMain').outcome == SUCCESS
+        result.task(':jsp2javaMain').outcome == SUCCESS
+
         jspFile.exists()
         javaFile.exists()
-        classFile.exists()
-
-        jspFile.lastModified() == javaFile.lastModified()
-        jspFile.lastModified() == classFile.lastModified()
 
         when:
         def result_step2 = getPreparedGradleRunner()
@@ -153,12 +135,7 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         then:
-        result_step2.task(':isml2classMain').outcome == UP_TO_DATE
-
-        jspFile.lastModified() == javaFile.lastModified()
-        jspFile.lastModified() == classFile.lastModified()
-
-        long lastmodified = jspFile.lastModified()
+        result_step2.task(':jsp2javaMain').outcome == UP_TO_DATE
 
         when:
         // change on input
@@ -174,20 +151,10 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         then:
-        result_step3.task(':isml2classMain').outcome == SUCCESS
-
-        javaFile.lastModified() >= lastmodified
-        classFile.lastModified() >= lastmodified
-        jspFile.lastModified() >= lastmodified
-        jspFile.lastModified() == javaFile.lastModified()
-        jspFile.lastModified() == classFile.lastModified()
+        result_step3.task(':jsp2javaMain').outcome == SUCCESS
 
         where:
         gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
     }
 
     @Ignore
@@ -291,7 +258,6 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
             configurations.create("implementation")
 
             repositories {
-                mavenLocal()
                 mavenCentral()
             }
         """.stripIndent()
@@ -310,14 +276,15 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
 
         then:
         result.task(':isml').outcome == SUCCESS
-        (new File(testProjectDir, 'build/generated/isml/main/pagecompile/org/apache/jsp/testCartridge/common/errorPages/error400_jsp.class')).exists()
+        result.task(':isml2jspMain').outcome == SUCCESS
+        result.task(':jsp2javaMain').outcome == SUCCESS
+        (new File(testProjectDir, 'build/generated/isml/main/common/errorPages/error400.jsp')).exists()
+        (new File(testProjectDir, 'build/generated/isml/main/default/support/test.jsp')).exists()
+        (new File(testProjectDir, 'build/generated/jsp/main/org/apache/jsp/testCartridge/common/errorPages/error400_jsp.java')).exists()
+        (new File(testProjectDir, 'build/generated/jsp/main/org/apache/jsp/testCartridge/default_/support/test_jsp.java')).exists()
 
         where:
         gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
     }
 
     @Ignore
@@ -507,57 +474,6 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
         servletVersion << getVersions('servlet.version')
         slf4jVersion << getVersions('slf4j.version')
         tomcatVersion << getVersions('tomcat.version')
-    }
-
-    List<String> getVersions(String propertyName) {
-        String versionsProps = System.properties[propertyName]?: ''
-        String[] versionList = versionsProps.split(',')
-        return versionList*.trim()
-    }
-
-    String getMainDependencies(String platformVersion, String servletVersion,
-                               String slf4jVersion, String tomcatVersion) {
-        return """
-            "implementation"("com.intershop.platform:core:${platformVersion}") {
-                isTransitive = false
-            }
-            "implementation"("com.intershop.platform:servletengine:${platformVersion}") {
-                isTransitive = false
-            }
-            "implementation"("com.intershop.platform:isml:${platformVersion}") {
-                isTransitive = false
-            }
-            "implementation"("javax.servlet:javax.servlet-api:${servletVersion}") {
-                isTransitive = false
-            }
-            "implementation"("org.slf4j:slf4j-api:${slf4jVersion}") {
-                isTransitive = false
-            }
-            "implementation"("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
-                isTransitive = false
-            }""".stripIndent()
-    }
-
-    String getMainRepositories() {
-        return """
-            ivy {
-                url = uri("${System.properties['intershop.host.url']}")
-                patternLayout {
-                    ivy("[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml")
-                    artifact("[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]")
-                }
-                credentials {
-                    username = "${System.properties['intershop.host.username']}"
-                    password = "${System.properties['intershop.host.userpassword']}"
-                }
-            }
-            maven {
-                url = uri("${System.properties['intershop.host.url']}")
-                credentials {
-                    username = "${System.properties['intershop.host.username']}"
-                    password = "${System.properties['intershop.host.userpassword']}"
-                }
-            }""".stripIndent()
     }
 
 
