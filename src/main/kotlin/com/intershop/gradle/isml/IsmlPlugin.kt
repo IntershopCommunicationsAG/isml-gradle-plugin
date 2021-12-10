@@ -123,11 +123,13 @@ open class IsmlPlugin : Plugin<Project> {
                     jsptask.dependsOn(ismlTask)
                 }
 
-                project.plugins.withType(JavaBasePlugin::class.java) {
-                    project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
-                        it.name == SourceSet.MAIN_SOURCE_SET_NAME
-                    }.forEach {
-                        it.java.srcDir(jspTask)
+                project.afterEvaluate {
+                    project.plugins.withType(JavaBasePlugin::class.java) {
+                        project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                            it.name == SourceSet.MAIN_SOURCE_SET_NAME
+                        }.forEach {
+                            it.java.srcDir(jspTask)
+                        }
                     }
                 }
 
