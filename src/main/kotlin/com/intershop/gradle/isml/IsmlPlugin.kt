@@ -114,19 +114,21 @@ open class IsmlPlugin : Plugin<Project> {
 
                     jsptask.sourceSetName.set(extension.sourceSetName)
 
-                    project.plugins.withType(JavaBasePlugin::class.java) {
-                        project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
-                            it.name == SourceSet.MAIN_SOURCE_SET_NAME
-                        }.forEach {
-                            it.java.srcDir(jsptask)
-                        }
-                    }
+
                     project.plugins.withType(IsmlTagLibPlugin::class.java) {
                         val ismlTagLib = tasks.named(IsmlTagLibPlugin.TASKNAME, PrepareTagLibs::class.java)
                         jsptask.tagLibsInputDir.set(project.provider { ismlTagLib.get().outputDir.get() })
                         jsptask.dependsOn(ismlTagLib)
                     }
                     jsptask.dependsOn(ismlTask)
+                }
+
+                project.plugins.withType(JavaBasePlugin::class.java) {
+                    project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                        it.name == SourceSet.MAIN_SOURCE_SET_NAME
+                    }.forEach {
+                        it.java.srcDir(jspTask)
+                    }
                 }
 
                 ismlMain.configure {
