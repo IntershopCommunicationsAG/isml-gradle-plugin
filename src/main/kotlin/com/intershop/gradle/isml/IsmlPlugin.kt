@@ -24,7 +24,6 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
-import java.util.*
 
 /**
  * Plugin Class implementation.
@@ -41,11 +40,6 @@ open class IsmlPlugin : Plugin<Project> {
          * Task name of this task.
          */
         const val TASKNAME = "isml"
-
-        /**
-         * Variable for default page compile folder name.
-         */
-        const val PAGECOMPILE_FOLDER = "pagecompile"
     }
 
     override fun apply(project: Project) {
@@ -124,7 +118,7 @@ open class IsmlPlugin : Plugin<Project> {
                         project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
                             it.name == SourceSet.MAIN_SOURCE_SET_NAME
                         }.forEach {
-                            it.java.srcDir(jsptask.outputs)
+                            it.java.srcDir(jsptask)
                         }
                     }
                     project.plugins.withType(IsmlTagLibPlugin::class.java) {
