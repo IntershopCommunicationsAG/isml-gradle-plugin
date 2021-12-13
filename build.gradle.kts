@@ -22,7 +22,7 @@ plugins {
     // project plugins
     `java-gradle-plugin`
     groovy
-    kotlin("jvm") version "1.4.20"
+    kotlin("jvm") version "1.5.31"
 
     // test coverage
     jacoco
@@ -40,13 +40,13 @@ plugins {
     id("com.intershop.gradle.scmversion") version "6.2.0"
 
     // plugin for documentation
-    id("org.asciidoctor.jvm.convert") version "3.3.0"
+    id("org.asciidoctor.jvm.convert") version "3.3.2"
 
     // documentation
     id("org.jetbrains.dokka") version "0.10.1"
 
     // code analysis for kotlin
-    id("io.gitlab.arturbosch.detekt") version "1.15.0"
+    id("io.gitlab.arturbosch.detekt") version "1.19.0"
 
     // plugin for publishing to Gradle Portal
     id("com.gradle.plugin-publish") version "0.13.0"
@@ -60,24 +60,11 @@ group = "com.intershop.gradle.isml"
 description = "ISML plugin for Intershop"
 version = scm.version.version
 
-val sonatypeUsername: String by project
+val sonatypeUsername: String? by project
 val sonatypePassword: String? by project
 
 repositories {
-    ivy {
-        url = uri("https://repository.intershop.de/releases/")
-        patternLayout {
-            ivy("[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml")
-            artifact("[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]")
-        }
-        credentials {
-            username = System.getenv("ISHUSERNAME") ?: System.getProperty("ISHUSERNAME")
-            password = System.getenv("ISHKEY") ?: System.getProperty("ISHKEY")
-        }
-    }
-
     mavenCentral()
-    jcenter()
 }
 
 val ismlPluginId = "com.intershop.gradle.isml"
@@ -108,8 +95,8 @@ pluginBundle {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 // set correct project status
@@ -118,26 +105,22 @@ if (project.version.toString().endsWith("-SNAPSHOT")) {
 }
 
 detekt {
-    input = files("src/main/kotlin")
+    source = files("src/main/kotlin")
     config = files("detekt.yml")
 }
 
 tasks {
     withType<KotlinCompile>().configureEach {
         kotlinOptions {
-            jvmTarget = "1.8"
+            jvmTarget = "11"
         }
     }
 
     withType<Test>().configureEach {
-        systemProperty("intershop.gradle.versions", "6.8")
-        systemProperty("platform.intershop.versions", "11.1.1")
-        systemProperty("servlet.version", "3.0.1")
-        systemProperty("slf4j.version", "1.7.12")
-        systemProperty("tomcat.version", "7.0.42")
-        systemProperty("intershop.host.url", "https://repository.intershop.de/releases/")
-        systemProperty("intershop.host.username", System.getenv("ISHUSERNAME") ?: System.getProperty("ISHUSERNAME"))
-        systemProperty("intershop.host.userpassword", System.getenv("ISHKEY") ?: System.getProperty("ISHKEY"))
+        testLogging.showStandardStreams = false
+
+        systemProperty("intershop.gradle.versions", "7.3")
+        useJUnitPlatform()
 
         dependsOn("jar")
     }
@@ -190,10 +173,10 @@ tasks {
 
     withType<JacocoReport> {
         reports {
-            xml.isEnabled = true
-            html.isEnabled = true
+            xml.required.set(true)
+            html.required.set(true)
 
-            html.destination = File(project.buildDir, "jacocoHtml")
+            html.outputLocation.set(File(project.buildDir, "jacocoHtml"))
         }
 
         val jacocoTestReport by tasks
@@ -203,7 +186,7 @@ tasks {
     getByName("jar").dependsOn("asciidoctor")
 
     val compileKotlin by getting(KotlinCompile::class) {
-        kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
+        kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
     val dokka by existing(DokkaTask::class) {
@@ -295,17 +278,12 @@ signing {
 dependencies {
     implementation(gradleKotlinDsl())
 
-    compileOnly("org.jetbrains:annotations:18.0.0")
+    compileOnly("org.apache.tomcat:tomcat-jasper:9.0.55")
+    compileOnly("org.apache.tomcat:tomcat-api:9.0.55")
 
-    compileOnly("org.eclipse.jdt.core.compiler:ecj:4.2.2")
-    compileOnly("org.apache.tomcat:tomcat-jasper:9.0.39")
-    compileOnly("org.apache.tomcat:tomcat-api:9.0.39")
 
-    compileOnly("com.intershop.platform:isml:21.0.0") {
-        exclude( group = "org.apache.tomcat" )
-        exclude( module = "servletengine" )
-    }
+    compileOnly("com.intershop.icm:isml-parser:11.0.0")
 
-    testImplementation("com.intershop.gradle.test:test-gradle-plugin:3.7.0")
+    testImplementation("com.intershop.gradle.test:test-gradle-plugin:4.1.1")
     testImplementation(gradleTestKit())
 }

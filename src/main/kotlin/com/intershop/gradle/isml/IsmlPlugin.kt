@@ -16,12 +16,14 @@
 package com.intershop.gradle.isml
 
 import com.intershop.gradle.isml.extension.IsmlExtension
-import com.intershop.gradle.isml.tasks.IsmlCompile
+import com.intershop.gradle.isml.tasks.Isml2Jsp
+import com.intershop.gradle.isml.tasks.Jsp2Java
 import com.intershop.gradle.isml.tasks.PrepareTagLibs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.BasePlugin
-import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.SourceSet
 
 /**
  * Plugin Class implementation.
@@ -32,7 +34,7 @@ open class IsmlPlugin : Plugin<Project> {
         /**
          * Task description of this task.
          */
-        const val TASKDESCRIPTION = "Compiles ISML template files to class files"
+        const val TASKDESCRIPTION = "Compiles ISML template files to java files"
 
         /**
          * Task name of this task.
@@ -48,16 +50,19 @@ open class IsmlPlugin : Plugin<Project> {
                 IsmlExtension::class.java
             )
 
-            addEclipseCompilerConfiguration(this, extension)
             addJSPJasperCompilerConfiguration(this, extension)
+            addIsmlConfiguration(this, extension)
 
             if (extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
-                mainIsmlSourceSet.srcDir = layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH).asFile
-                mainIsmlSourceSet.outputDir = layout.buildDirectory.dir(
+                mainIsmlSourceSet.srcDir.set(layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH))
+                mainIsmlSourceSet.ismlOutputDir.set(layout.buildDirectory.dir(
                     "${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}"
-                ).get().asFile
-                mainIsmlSourceSet.jspPackage = "org.apache.jsp.${project.name}"
+                ))
+                mainIsmlSourceSet.jspOutputDir.set(layout.buildDirectory.dir(
+                    "${IsmlExtension.JSP_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}"
+                ))
+                mainIsmlSourceSet.jspPackage.set("org.apache.jsp.${project.name}")
             }
 
             configureTask(this, extension)
@@ -71,69 +76,105 @@ open class IsmlPlugin : Plugin<Project> {
                 it.group = IsmlExtension.ISML_GROUP_NAME
             }
 
+            project.plugins.withType(JavaBasePlugin::class.java) {
+                project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                    it.name == SourceSet.MAIN_SOURCE_SET_NAME
+                }.forEach {
+                    addJavaDependencies(this, it.implementationConfigurationName)
+                }
+            }
+
             extension.sourceSets.all { ismlSourceSet ->
-                val isml = tasks.register(ismlSourceSet.getIsmlTaskName(), IsmlCompile::class.java) { ismlc ->
-                    ismlc.group = IsmlExtension.ISML_GROUP_NAME
 
-                    ismlc.provideIsmlConfiguration(extension.ismlConfigurationNameProvider)
-                    ismlc.provideOutputDir(ismlSourceSet.outputDirProvider)
-                    ismlc.provideInputDir(ismlSourceSet.srcDirectoryProvider)
-                    ismlc.provideJspPackage(ismlSourceSet.jspPackageProvider)
+                val ismlTask = tasks.register(ismlSourceSet.getIsmlTaskName(), Isml2Jsp::class.java) { ismltask ->
+                    ismltask.group = IsmlExtension.ISML_GROUP_NAME
 
-                    ismlc.provideSourceSetName(extension.sourceSetNameProvider)
+                    ismltask.inputDir.set(ismlSourceSet.srcDir)
+                    ismltask.outputDir.set( project.layout.buildDirectory.dir("generated/isml/${ismlSourceSet.name}") )
+                    ismltask.encoding.set(extension.encoding)
+                }
+                val jspTask = tasks.register(ismlSourceSet.getJspTaskName(), Jsp2Java::class.java) { jsptask ->
+                    jsptask.group = IsmlExtension.ISML_GROUP_NAME
 
-                    ismlc.provideSourceCompatibility(extension.sourceCompatibilityProvider)
-                    ismlc.provideTargetCompatibility(extension.targetCompatibilityProvider)
-                    ismlc.provideEncoding(extension.encodingProvider)
+                    jsptask.inputDir.set(project.provider { ismlTask.get().outputDir.get() })
 
-                    ismlc.provideEnableTldScan(extension.enableTldScanProvider)
+                    jsptask.outputDir.set( project.layout.buildDirectory.dir("generated/jsp/${ismlSourceSet.name}"))
+                    jsptask.jspPackage.set(ismlSourceSet.jspPackage)
+
+                    jsptask.jspConfigurationName.set(extension.jspConfigurationName)
+                    jsptask.sourceCompatibility.set(extension.sourceCompatibility)
+                    jsptask.targetCompatibility.set(extension.targetCompatibility)
+                    jsptask.encoding.set(extension.encoding)
+
+                    jsptask.enableTldScan.set(extension.enableTldScan)
+                    jsptask.encoding.set(extension.encoding)
+
+                    jsptask.sourceCompatibility.set(extension.sourceCompatibility)
+                    jsptask.targetCompatibility.set(extension.targetCompatibility)
+
+                    jsptask.sourceSetName.set(extension.sourceSetName)
+
+
+                    project.plugins.withType(IsmlTagLibPlugin::class.java) {
+                        val ismlTagLib = tasks.named(IsmlTagLibPlugin.TASKNAME, PrepareTagLibs::class.java)
+                        jsptask.tagLibsInputDir.set(project.provider { ismlTagLib.get().outputDir.get() })
+                        jsptask.dependsOn(ismlTagLib)
+                    }
+                    jsptask.dependsOn(ismlTask)
                 }
 
-                project.plugins.withType(IsmlTagLibPlugin::class.java) {
-                    val ismlTagLib = tasks.named(IsmlTagLibPlugin.TASKNAME, PrepareTagLibs::class.java)
-                    isml.configure {
-                        it.tagLibsInputDir.value(project.provider { ismlTagLib.get().outputDir.get() })
-                        it.dependsOn(ismlTagLib)
+                project.afterEvaluate {
+                    project.plugins.withType(JavaBasePlugin::class.java) {
+                        project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                            it.name == SourceSet.MAIN_SOURCE_SET_NAME
+                        }.forEach {
+                            it.java.srcDir(jspTask)
+                        }
                     }
                 }
 
                 ismlMain.configure {
-                    it.dependsOn(isml)
-                }
-            }
-
-            project.plugins.withType(BasePlugin::class.java) {
-                val assemble = tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
-                assemble.configure {
-                    it.dependsOn(ismlMain)
+                    it.dependsOn(jspTask)
                 }
             }
         }
     }
 
-    private fun addEclipseCompilerConfiguration(project: Project, extension: IsmlExtension) {
-        val configuration = project.configurations.maybeCreate(IsmlExtension.ECLIPSECOMPILER_CONFIGURATION_NAME)
-        configuration.setVisible(false)
-                .setTransitive(true)
-                .setDescription("Configuration for Eclipse compiler")
-                .defaultDependencies { ds ->
-                    val dependencyHandler = project.dependencies
-                    ds.add(dependencyHandler.create("org.eclipse.jdt:ecj:".
-                            plus(extension.eclipseCompilerVersion)))
-                    ds.removeIf {it.group == "ch.qos.logback" && it.name == "logback-classic" }
-                }
+    private fun addIsmlConfiguration(project: Project, extension: IsmlExtension) {
+        val configuration = project.configurations.maybeCreate(IsmlExtension.ISMLCOMPILER_CONFIGURATION_NAME)
+        configuration
+            .setVisible(false)
+            .setTransitive(true)
+            .setDescription("ISML parser configuration is used for jsp generation")
+            .defaultDependencies { ds ->
+                // this will be executed if configuration is empty
+                val dependencyHandler = project.dependencies
+                ds.add(
+                    dependencyHandler.create(
+                        "com.intershop.icm:isml-parser:${extension.ismlCompilerVersion.get()}"))
+            }
     }
 
     private fun addJSPJasperCompilerConfiguration(project: Project, extension: IsmlExtension) {
-        val configuration = project.configurations.maybeCreate(IsmlExtension.JSPJASPERCOMPILER_CONFIGURATION_NAME)
+        val configuration = project.configurations.maybeCreate(IsmlExtension.JASPERCOMPILER_CONFIGURATION_NAME)
         configuration.setVisible(false)
                 .setTransitive(true)
                 .setDescription("Configuration for JSP compiler")
                 .defaultDependencies { ds ->
                     val dependencyHandler = project.dependencies
-                    ds.add(dependencyHandler.create("org.apache.tomcat:tomcat-jasper:".
-                            plus(extension.jspCompilerVersion)))
+                    ds.add(
+                        dependencyHandler.create(
+                            "org.apache.tomcat:tomcat-jasper:${extension.jspCompilerVersion.get()}"))
                     ds.removeIf {it.group == "ch.qos.logback" && it.name == "logback-classic" }
                 }
+    }
+
+    private fun addJavaDependencies(project: Project, configName: String) {
+        val configuration = project.configurations.getByName(configName)
+        val dependencyHandler = project.dependencies
+        configuration.defaultDependencies {
+            dependencyHandler.create("org.apache.tomcat:tomcat-jasper")
+            dependencyHandler.create("org.slf4j:slf4j-api")
+        }
     }
 }

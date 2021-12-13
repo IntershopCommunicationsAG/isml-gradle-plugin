@@ -16,6 +16,7 @@
 package com.intershop.gradle.isml
 
 import com.intershop.gradle.test.AbstractIntegrationGroovySpec
+import spock.lang.Ignore
 import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
@@ -24,63 +25,7 @@ import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 @Unroll
 class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
-    def 'Test taglib and usage in one Cartridge - isml'() {
-        given:
-        copyResources('test_taglib')
-
-        File tplFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/taglibTest.isml.tpl')
-        File testFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/taglibTest.isml')
-
-        testFile << tplFile.text.replaceAll('@cartridge@', 'testCartridge')
-        tplFile.delete()
-
-        buildFile << """
-            plugins {
-                id 'java'
-                id 'com.intershop.gradle.ismltaglib'
-                id 'com.intershop.gradle.isml'
-            }
-
-            isml {
-                enableTldScan = true
-            }
-
-            dependencies {
-                ${getMainDependencies(platformVersion, servletVersion,
-                                slf4jVersion, tomcatVersion)}
-            }
-
-            repositories {
-                jcenter()
-                ${getMainRepositories()}
-            }
-        """.stripIndent()
-
-        File settingsGradle = new File(testProjectDir, 'settings.gradle')
-        settingsGradle << """
-        rootProject.name='testCartridge'
-        """.stripIndent()
-
-        when:
-        List<String> args = ['clean', 'isml', '-s', '-i']
-
-        def result = getPreparedGradleRunner()
-                .withArguments(args)
-                .withGradleVersion(gradleVersion)
-                .build()
-
-        then:
-        result.task(':isml').outcome == SUCCESS
-
-        where:
-        gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
-    }
-
-    def 'Test isml incemental build with a changed file'() {
+    def 'Test isml incremental build with a changed file'() {
         given:
         copyResources('test_isml')
 
@@ -89,20 +34,8 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 id 'com.intershop.gradle.isml'
             }
 
-            configurations {
-                compile
-                runtime.extendsFrom(compile)
-                runtimeClasspath.extendsFrom(compile)
-            }
-
-            dependencies {
-               ${getMainDependencies(platformVersion, servletVersion,
-                slf4jVersion, tomcatVersion)}
-            }
-
             repositories {
-                jcenter()
-                ${getMainRepositories()}
+                mavenCentral()
             }
         """.stripIndent()
 
@@ -121,26 +54,23 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         %>
         """.stripIndent()
 
-        List<String> args = ['isml', '-s', '-i']
+        List<String> args = ['isml', '-s']
 
         def result = getPreparedGradleRunner()
                 .withArguments(args)
                 .withGradleVersion(gradleVersion)
                 .build()
 
-        File jspFile = new File(testProjectDir, "build/generated/isml/main/pagecompile/default/support/test.jsp")
-        File javaFile =  new File(testProjectDir, 'build/generated/isml/main/pagecompile/org/apache/jsp/testCartridge/default_/support/test_jsp.java')
-        File classFile = new File(testProjectDir, 'build/generated/isml/main/pagecompile/org/apache/jsp/testCartridge/default_/support/test_jsp.class')
-
+        File jspFile = new File(testProjectDir, "build/generated/isml/main/default/support/test.jsp")
+        File javaFile =  new File(testProjectDir, 'build/generated/jsp/main/org/apache/jsp/testCartridge/default_/support/test_jsp.java')
 
         then:
         result.task(':isml').outcome == SUCCESS
+        result.task(':isml2jspMain').outcome == SUCCESS
+        result.task(':jsp2javaMain').outcome == SUCCESS
+
         jspFile.exists()
         javaFile.exists()
-        classFile.exists()
-
-        jspFile.lastModified() == javaFile.lastModified()
-        jspFile.lastModified() == classFile.lastModified()
 
         when:
         def result_step2 = getPreparedGradleRunner()
@@ -149,12 +79,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 .build()
 
         then:
-        result_step2.task(':isml2classMain').outcome == UP_TO_DATE
-
-        jspFile.lastModified() == javaFile.lastModified()
-        jspFile.lastModified() == classFile.lastModified()
-
-        long lastmodified = jspFile.lastModified()
+        result_step2.task(':jsp2javaMain').outcome == UP_TO_DATE
 
         when:
         // change on input
@@ -170,104 +95,10 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 .build()
 
         then:
-        result_step3.task(':isml2classMain').outcome == SUCCESS
-
-        javaFile.lastModified() >= lastmodified
-        classFile.lastModified() >= lastmodified
-        jspFile.lastModified() >= lastmodified
-        jspFile.lastModified() == javaFile.lastModified()
-        jspFile.lastModified() == classFile.lastModified()
+        result_step3.task(':jsp2javaMain').outcome == SUCCESS
 
         where:
         gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
-    }
-
-    def 'Test isml incemental build with a changed classpath'() {
-        given:
-        copyResources('test_isml')
-        copyResources('repo', 'repo')
-
-        buildFile << """
-            plugins {
-                id 'com.intershop.gradle.isml'
-            }
-
-            configurations {
-                compile
-                runtime.extendsFrom(compile)
-                runtimeClasspath.extendsFrom(compile)
-            }
-
-            dependencies {
-                ${getMainDependencies(platformVersion, servletVersion,
-                slf4jVersion, tomcatVersion)}
-                if(project.adddep == 'add') {
-                    println "Additional dependency ..."
-                    compile('com.test:testCartridge1:1.0.0') {
-                        transitive = false
-                    }
-                }
-            }
-
-            repositories {
-                jcenter()
-                ${getMainRepositories()}
-                ivy {
-                    url "\${project.projectDir.absolutePath.replaceAll('\\\\\\\\', '/')}/repo".toString()
-                    layout('pattern') {
-                        ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
-                        artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
-                    }
-                }
-            }
-        """.stripIndent()
-
-        File settingsGradle = new File(testProjectDir, 'settings.gradle')
-        settingsGradle << """
-        rootProject.name='testCartridge'
-        """.stripIndent()
-
-        when:
-        List<String> args = ['isml', '-Padddep=""', '-s', '-i']
-
-        def result = getPreparedGradleRunner()
-                .withArguments(args)
-                .withGradleVersion(gradleVersion)
-                .build()
-
-        then:
-        result.task(':isml').outcome == SUCCESS
-
-        when:
-        def result_step2 = getPreparedGradleRunner()
-                .withArguments(args)
-                .withGradleVersion(gradleVersion)
-                .build()
-
-        then:
-        result_step2.task(':isml2classMain').outcome == UP_TO_DATE
-
-        when:
-        List<String> args3 = ['isml', '-Padddep=add', '-s', '-i']
-        def result_step3 = getPreparedGradleRunner()
-                .withArguments(args3)
-                .withGradleVersion(gradleVersion)
-                .build()
-
-        then:
-        result_step3.output.contains("Additional dependency ...")
-        result_step3.task(':isml2classMain').outcome == SUCCESS
-
-        where:
-        gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
     }
 
     def 'Test isml'() {
@@ -276,6 +107,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
+                id 'java'
                 id 'com.intershop.gradle.isml'
             }
 
@@ -285,14 +117,8 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 runtimeClasspath.extendsFrom(compile)
             }
 
-            dependencies {
-                ${getMainDependencies(platformVersion, servletVersion,
-                slf4jVersion, tomcatVersion)}
-            }
-
             repositories {
-                jcenter()
-                ${getMainRepositories()}
+                mavenCentral()
             }
         """.stripIndent()
 
@@ -302,7 +128,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         """.stripIndent()
 
         when:
-        List<String> args = ['isml', '-s', '-d']
+        List<String> args = ['isml', '-s' ]
 
         def result = getPreparedGradleRunner()
                 .withArguments(args)
@@ -311,16 +137,18 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         then:
         result.task(':isml').outcome == SUCCESS
-        (new File(testProjectDir, 'build/generated/isml/main/pagecompile/org/apache/jsp/testCartridge/common/errorPages/error400_jsp.class')).exists()
+        result.task(':isml2jspMain').outcome == SUCCESS
+        result.task(':jsp2javaMain').outcome == SUCCESS
+        (new File(testProjectDir, 'build/generated/isml/main/common/errorPages/error400.jsp')).exists()
+        (new File(testProjectDir, 'build/generated/isml/main/default/support/test.jsp')).exists()
+        (new File(testProjectDir, 'build/generated/jsp/main/org/apache/jsp/testCartridge/common/errorPages/error400_jsp.java')).exists()
+        (new File(testProjectDir, 'build/generated/jsp/main/org/apache/jsp/testCartridge/default_/support/test_jsp.java')).exists()
 
         where:
         gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
     }
 
+    @Ignore("Tag lib support in multiproject should work ...")
     def 'Test taglib and usage with project dependencies - isml'() {
 
         given:
@@ -337,67 +165,25 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 id 'com.intershop.gradle.isml'
             }
 
-            subprojects {
+            project(':testCartridge1') {
                 apply plugin: 'java'
-                apply plugin: 'ivy-publish'
+            }
+
+            project(':testCartridge2') {
+                apply plugin: 'java'
                 apply plugin: 'com.intershop.gradle.ismltaglib'
                 apply plugin: 'com.intershop.gradle.isml'
-
-                version = '1.0.0'
-                group = 'com.test'
-
+                
                 isml {
                     enableTldScan = true
                 }
 
-                dependencies {
-                    ${getMainDependencies(platformVersion, servletVersion,
-                    slf4jVersion, tomcatVersion)}
-                }
-
                 repositories {
-                    jcenter()
-                    ${getMainRepositories()}
-                }
-            }
-
-            project(':testCartridge1') {
-
-                task createCartridge(type: Zip) {
-                    from 'staticfiles/cartridge'
-                    from isml2classMain
-                    into "\${project.name}/release"
-                }
-
-                afterEvaluate { project ->
-                    createCartridge.dependsOn project.tasks.isml
-                }
-
-
-                publishing {
-                    publications {
-                        ivy(IvyPublication) {
-                            artifact(createCartridge) {
-                                type = 'cartridge'
-                            }
-                            artifact(jar)
-                        }
-                    }
-                    repositories {
-                        ivy {
-                            url "\${project.buildDir.absolutePath.replaceAll('\\\\\\\\', '/')}/repo".toString()
-                            layout('pattern') {
-                                ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
-                                artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
-                            }
-                        }
-                    }
-                }
-            }
-
-            project(':testCartridge2') {
+                    mavenCentral()
+                }      
+                
                 dependencies {
-                    compile project(':testCartridge1')
+                    implementation project(':testCartridge1')
                 }
             }
         """.stripIndent()
@@ -422,7 +208,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         tplFile2.delete()
 
         when:
-        List<String> args = ['isml', 'publish', '-s', '-d']
+        List<String> args = ['isml', '-s']
 
         def result = getPreparedGradleRunner()
                 .withArguments(args)
@@ -435,12 +221,9 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         where:
         gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
     }
 
+    @Ignore("Tag lib support should work with externals ...")
     def 'Test taglib and usage with dependencies - isml'() {
 
         given:
@@ -466,23 +249,20 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             }
 
             dependencies {
-                ${getMainDependencies(platformVersion, servletVersion,
-                slf4jVersion, tomcatVersion)}
-                compile('com.test:testCartridge1:1.0.0') {
+                runtimeOnly('com.test:testCartridge1:1.0.0') {
                     transitive = false
                 }
             }
 
             repositories {
-                jcenter()
+                mavenCentral()
                 ivy {
-                    url "\${project.projectDir.absolutePath.replaceAll('\\\\\\\\', '/')}/repo".toString()
-                    layout('pattern') {
+                    url "\${project.projectDir.absolutePath.replaceAll('\\\\\\\\', '/')}/repo".toString()                                       
+                    patternLayout {
                         ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
                         artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
                     }
                 }
-                ${getMainRepositories()}
             }
         """.stripIndent()
 
@@ -492,7 +272,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
         """.stripIndent()
 
         when:
-        List<String> args = ['isml', '-s', '-i']
+        List<String> args = ['isml', '-s']
 
         def result = getPreparedGradleRunner()
                 .withArguments(args)
@@ -504,62 +284,6 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         where:
         gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
     }
-
-    List<String> getVersions(String propertyName) {
-        String versionsProps = System.properties[propertyName]?: ''
-        String[] versionList = versionsProps.split(',')
-        return versionList*.trim()
-    }
-
-    String getMainDependencies(String platformVersion, String servletVersion,
-                               String slf4jVersion, String tomcatVersion) {
-        return """
-            compile("com.intershop.platform:core:${platformVersion}") {
-                transitive = false
-            }
-            compile("com.intershop.platform:servletengine:${platformVersion}") {
-                transitive = false
-            }
-            compile("com.intershop.platform:isml:${platformVersion}") {
-                transitive = false
-            }
-            compile("javax.servlet:javax.servlet-api:${servletVersion}") {
-                transitive = false
-            }
-            compile("org.slf4j:slf4j-api:${slf4jVersion}") {
-                transitive = false
-            }
-            compile("org.apache.tomcat:tomcat-el-api:${tomcatVersion}") {
-                transitive = false
-            }""".stripIndent()
-    }
-
-    String getMainRepositories() {
-        return """
-            ivy {
-                url '${System.properties['intershop.host.url']}'
-                layout('pattern') {
-                    ivy '[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml'
-                    artifact '[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]'
-                }
-                credentials {
-                    username '${System.properties['intershop.host.username']}'
-                    password '${System.properties['intershop.host.userpassword']}'
-                }
-            }
-            maven {
-                url '${System.properties['intershop.host.url']}'
-                credentials {
-                    username '${System.properties['intershop.host.username']}'
-                    password '${System.properties['intershop.host.userpassword']}'
-                }
-            }""".stripIndent()
-    }
-
 
 }

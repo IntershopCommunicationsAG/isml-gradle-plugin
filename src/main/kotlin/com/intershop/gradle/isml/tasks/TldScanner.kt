@@ -25,6 +25,10 @@ import javax.servlet.ServletContext
 
 /**
  * Project specific TldScanner for Jasper Compiler.
+ * @param context
+ * @param namespaceAware
+ * @param validation
+ * @param blockExternal
  */
 class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validation: Boolean, blockExternal: Boolean)
     : org.apache.jasper.servlet.TldScanner(context, namespaceAware, validation, blockExternal) {
@@ -103,12 +107,11 @@ class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validati
             // TLD has already been parsed as a result of processing web.xml
             return
         }
+
         val tld = tldParser.parse(path)
         val uri = tld.uri
-        if (uri != null) {
-            if (!uriTldResourcePathMap.containsKey(uri)) {
-                uriTldResourcePathMap[uri] = path
-            }
+        if (uri != null && !uriTldResourcePathMap.containsKey(uri)) {
+            uriTldResourcePathMap[uri] = path
         }
         tldResourcePathTaglibXmlMap[path] = tld
         if (tld.listeners != null) {
@@ -184,8 +187,7 @@ class TldScanner(var context: ServletContext?, namespaceAware: Boolean, validati
                 override fun visitFile(file: Path,
                                        attrs: BasicFileAttributes): FileVisitResult {
                     val fileName = file.fileName
-                    if (fileName == null || !fileName.toString().toLowerCase(
-                                    Locale.ENGLISH).endsWith(TLD_EXT)) {
+                    if (fileName == null || !fileName.toString().lowercase(Locale.ENGLISH).endsWith(TLD_EXT)) {
                         return FileVisitResult.CONTINUE
                     }
                     foundFileWithoutTld = true

@@ -132,9 +132,6 @@ class JspC: org.apache.jasper.JspC() {
         val paths = classpath.split(":")
 
         paths.forEach {
-            if(IsmlCompileRunner.log.isDebugEnabled) {
-                IsmlCompileRunner.log.debug("Adding to classpath {}" , it)
-            }
             urls.add(File(it).toURI().toURL())
         }
 
