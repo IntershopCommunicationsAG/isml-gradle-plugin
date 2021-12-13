@@ -60,10 +60,6 @@ group = "com.intershop.gradle.isml"
 description = "ISML plugin for Intershop"
 version = scm.version.version
 
-// used for publishing
-val repoUser: String by project
-val repoPassword: String by project
-
 val sonatypeUsername: String? by project
 val sonatypePassword: String? by project
 
@@ -109,7 +105,7 @@ if (project.version.toString().endsWith("-SNAPSHOT")) {
 }
 
 detekt {
-    input = files("src/main/kotlin")
+    source = files("src/main/kotlin")
     config = files("detekt.yml")
 }
 
@@ -177,10 +173,10 @@ tasks {
 
     withType<JacocoReport> {
         reports {
-            xml.isEnabled = true
-            html.isEnabled = true
+            xml.required.set(true)
+            html.required.set(true)
 
-            html.destination = File(project.buildDir, "jacocoHtml")
+            html.outputLocation.set(File(project.buildDir, "jacocoHtml"))
         }
 
         val jacocoTestReport by tasks
