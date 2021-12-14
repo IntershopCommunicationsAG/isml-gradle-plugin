@@ -76,14 +76,6 @@ open class IsmlPlugin : Plugin<Project> {
                 it.group = IsmlExtension.ISML_GROUP_NAME
             }
 
-            project.plugins.withType(JavaBasePlugin::class.java) {
-                project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
-                    it.name == SourceSet.MAIN_SOURCE_SET_NAME
-                }.forEach {
-                    addJavaDependencies(this, it.implementationConfigurationName)
-                }
-            }
-
             extension.sourceSets.all { ismlSourceSet ->
 
                 val ismlTask = tasks.register(ismlSourceSet.getIsmlTaskName(), Isml2Jsp::class.java) { ismltask ->
@@ -128,6 +120,7 @@ open class IsmlPlugin : Plugin<Project> {
                         project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
                             it.name == SourceSet.MAIN_SOURCE_SET_NAME
                         }.forEach {
+							addJavaDependencies(this, it.implementationConfigurationName)
                             it.java.srcDir(jspTask)
                         }
                     }
@@ -169,12 +162,8 @@ open class IsmlPlugin : Plugin<Project> {
                 }
     }
 
-    private fun addJavaDependencies(project: Project, configName: String) {
-        val configuration = project.configurations.getByName(configName)
-        val dependencyHandler = project.dependencies
-        configuration.defaultDependencies {
-            dependencyHandler.create("org.apache.tomcat:tomcat-jasper")
-            dependencyHandler.create("org.slf4j:slf4j-api")
-        }
-    }
+	private fun addJavaDependencies(project: Project, configName: String) {
+		project.dependencies.add(configName, "org.apache.tomcat:tomcat-jasper")
+		project.dependencies.add(configName, "org.slf4j:slf4j-api")
+	}
 }
