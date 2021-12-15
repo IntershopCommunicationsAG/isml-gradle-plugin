@@ -53,6 +53,16 @@ open class IsmlPlugin : Plugin<Project> {
             addJSPJasperCompilerConfiguration(this, extension)
             addIsmlConfiguration(this, extension)
 
+            afterEvaluate {
+                plugins.withType(JavaBasePlugin::class.java) {
+                    project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                        it.name == SourceSet.MAIN_SOURCE_SET_NAME
+                    }.forEach {
+                        addJavaDependencies(this, it.implementationConfigurationName)
+                    }
+                }
+            }
+
             if (extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
                 mainIsmlSourceSet.srcDir.set(layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH))
@@ -74,14 +84,6 @@ open class IsmlPlugin : Plugin<Project> {
             val ismlMain = tasks.register(TASKNAME) {
                 it.description = TASKDESCRIPTION
                 it.group = IsmlExtension.ISML_GROUP_NAME
-            }
-
-            project.plugins.withType(JavaBasePlugin::class.java) {
-                project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
-                    it.name == SourceSet.MAIN_SOURCE_SET_NAME
-                }.forEach {
-                    addJavaDependencies(this, it.implementationConfigurationName)
-                }
             }
 
             extension.sourceSets.all { ismlSourceSet ->
