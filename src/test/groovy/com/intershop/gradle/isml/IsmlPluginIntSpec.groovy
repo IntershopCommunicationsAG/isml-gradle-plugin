@@ -111,10 +111,9 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
                 id 'com.intershop.gradle.isml'
             }
 
-            configurations {
-                compile
-                runtime.extendsFrom(compile)
-                runtimeClasspath.extendsFrom(compile)
+            dependencies {
+                implementation platform('org.apache.tomcat:tomcat-jasper:9.0.56')
+                implementation platform('org.slf4j:slf4j-api:1.7.32')
             }
 
             repositories {
