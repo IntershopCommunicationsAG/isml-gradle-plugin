@@ -174,9 +174,7 @@ open class IsmlPlugin : Plugin<Project> {
     private fun addJavaDependencies(project: Project, configName: String) {
         val configuration = project.configurations.getByName(configName)
         val dependencyHandler = project.dependencies
-        configuration.defaultDependencies {
-            dependencyHandler.create("org.apache.tomcat:tomcat-jasper")
-            dependencyHandler.create("org.slf4j:slf4j-api")
-        }
+        configuration.dependencies.add( dependencyHandler.create("org.apache.tomcat:tomcat-jasper") )
+        configuration.dependencies.add( dependencyHandler.create("org.slf4j:slf4j-api") )
     }
 }
