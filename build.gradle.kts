@@ -278,8 +278,8 @@ signing {
 dependencies {
     implementation(gradleKotlinDsl())
 
-    compileOnly("org.apache.tomcat:tomcat-jasper:9.0.55")
-    compileOnly("org.apache.tomcat:tomcat-api:9.0.55")
+    compileOnly("org.apache.tomcat:tomcat-jasper:10.0.18")
+    compileOnly("org.apache.tomcat:tomcat-api:10.0.18")
 
 
     compileOnly("com.intershop.icm:isml-parser:11.0.0")
