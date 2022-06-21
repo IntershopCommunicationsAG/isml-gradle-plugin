@@ -30,8 +30,8 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
         given:
         copyResources('test_taglib')
 
-        File tplFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/taglibTest.isml.tpl')
-        File testFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/taglibTest.isml')
+        File tplFile = new File(testProjectDir, 'src/main/ism/testCartridge/default/support/taglibTest.isml.tpl')
+        File testFile = new File(testProjectDir, 'src/main/ism/testCartridge/default/support/taglibTest.isml')
 
         testFile << tplFile.text.replaceAll('@cartridge@', 'testCartridge')
         tplFile.delete()
@@ -99,7 +99,7 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
         rootProject.name="testCartridge"
         """.stripIndent()
 
-        File ismlFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/test.isml')
+        File ismlFile = new File(testProjectDir, 'src/main/isml/testCartridge/default/support/test.isml')
 
         when:
         // change on input
@@ -376,15 +376,15 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
 
         copyResources('test_taglib', 'testCartridge1')
 
-        File tplFile1 = new File(testProjectDir, 'testCartridge1/staticfiles/cartridge/templates/default/support/taglibTest.isml.tpl')
-        File testFile1 = new File(testProjectDir, 'testCartridge1/staticfiles/cartridge/templates/default/support/taglibTest.isml')
+        File tplFile1 = new File(testProjectDir, 'testCartridge1/src/main/isml/testCartridge1/default/support/taglibTest.isml.tpl')
+        File testFile1 = new File(testProjectDir, 'testCartridge1/src/main/isml/testCartridge1/default/support/taglibTest.isml')
 
         testFile1 << tplFile1.text.replaceAll('@cartridge@', 'testCartridge1')
 
         copyResources('use_taglib', 'testCartridge2')
 
-        File tplFile2 = new File(testProjectDir, 'testCartridge2/staticfiles/cartridge/templates/default/support/useTaglibTest.isml.tpl')
-        File testFile2 = new File(testProjectDir, 'testCartridge2/staticfiles/cartridge/templates/default/support/useTaglibTest.isml')
+        File tplFile2 = new File(testProjectDir, 'testCartridge2/src/main/isml/testCartridge2/default/support/useTaglibTest.isml.tpl')
+        File testFile2 = new File(testProjectDir, 'testCartridge2/src/main/isml/testCartridge2/default/support/useTaglibTest.isml')
 
         testFile2 << tplFile2.text.replaceAll('@cartridge@', 'testCartridge1')
 
@@ -416,8 +416,8 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
         given:
         copyResources('use_taglib')
 
-        File tplFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/useTaglibTest.isml.tpl')
-        File testFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/useTaglibTest.isml')
+        File tplFile = new File(testProjectDir, 'src/main/ism/testCartridge1/default/support/useTaglibTest.isml.tpl')
+        File testFile = new File(testProjectDir, 'src/main/ism/testCartridge1/default/support/useTaglibTest.isml')
 
         testFile << tplFile.text.replaceAll('@cartridge@', 'testCartridge1')
         tplFile.delete()
