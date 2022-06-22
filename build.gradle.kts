@@ -79,12 +79,6 @@ gradlePlugin {
             displayName = project.name
             description = project.description
         }
-        create("ismltaglibPlugin") {
-            id = ismltaglibPluginId
-            implementationClass = "com.intershop.gradle.isml.IsmlTagLibPlugin"
-            displayName = project.name
-            description = project.description
-        }
     }
 }
 

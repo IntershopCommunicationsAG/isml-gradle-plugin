@@ -15,6 +15,7 @@
  */
 package com.intershop.gradle.isml.tasks
 
+import org.apache.jasper.JspC
 import org.gradle.workers.WorkAction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -43,11 +44,10 @@ abstract class Jsp2JavaRunner : WorkAction<Jsp2JavaRunnerParameters> {
 
     override fun execute() {
         val fileList = mutableListOf<String>()
+        // disable scanning of jar files during jsp to java
+        System.setProperty( org.apache.tomcat.util.scan.Constants.SKIP_JARS_PROPERTY, "*.jar");
 
-        if (parameters.enableTldScan.get() == true &&
-            parameters.tldScanIncludes.get().size >= 0 &&
-            parameters.tldScanExcludes.get().size == 0 &&
-            parameters.classpath.get().isNotEmpty()) {
+        if (parameters.classpath.get().isNotEmpty()) {
             val cpList = parameters.classpath.get().split(":")
             cpList.forEach {
                 if (!it.endsWith(File.pathSeparator)) {
@@ -55,17 +55,10 @@ abstract class Jsp2JavaRunner : WorkAction<Jsp2JavaRunnerParameters> {
                     log.debug("Add file name {} to list", File(it).name)
                 }
             }
-
-            fileList.addAll(parameters.tldScanIncludes.get())
         }
 
         // run JSP compiler
         val jspc = JspC()
-        jspc.setLogging(parameters.logLevel.get())
-
-        jspc.enableTldScan = parameters.enableTldScan.get()
-        jspc.tldScanIncludes = fileList
-        jspc.tldScanExcludes = parameters.tldScanExcludes.get()
 
         jspc.classPath = parameters.classpath.get()
         jspc.setUriroot(parameters.inputDir.get().asFile.absolutePath)

@@ -64,8 +64,6 @@ The ISML Gradle plugin adds one task `isml` to the project. This task depends on
 [cols="25%,30%,45%", width="90%, options="header"]
 |===
 |Task name  |Type            |Description
-|prepareTagLibs | com.intershop.gradle.isml.tasks.PrepareTagLibs | This task prepares the environment for ISML compilation with TagLibs.
-The output of this task is directly used by the isml2class* tasks.
 |isml       | Task           | Overall ``isml`` code generation task of a project. This task depends on all ``isml2class`` tasks.
 |isml2class<source set name> | com.intershop.gradle.isml.tasks.IsmlCompile | This task compiles ISML files to class files.
 |===

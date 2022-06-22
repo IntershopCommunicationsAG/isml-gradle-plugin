@@ -18,7 +18,6 @@ package com.intershop.gradle.isml
 import com.intershop.gradle.isml.extension.IsmlExtension
 import com.intershop.gradle.isml.tasks.Isml2Jsp
 import com.intershop.gradle.isml.tasks.Jsp2Java
-import com.intershop.gradle.isml.tasks.PrepareTagLibs
 import com.intershop.gradle.resourcelist.extension.ResourceListExtension
 import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
@@ -27,6 +26,7 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
+import java.util.*
 
 /**
  * Plugin Class implementation.
@@ -68,7 +68,8 @@ open class IsmlPlugin : Plugin<Project> {
 
             if (extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
-                mainIsmlSourceSet.srcDir.set(layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH + "/" + project.name))
+                mainIsmlSourceSet.srcDir.set(
+                    layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH + "/" + project.name))
                 mainIsmlSourceSet.ismlOutputDir.set(layout.buildDirectory.dir(
                     "${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}"
                 ))
@@ -111,20 +112,12 @@ open class IsmlPlugin : Plugin<Project> {
                     jsptask.targetCompatibility.set(extension.targetCompatibility)
                     jsptask.encoding.set(extension.encoding)
 
-                    jsptask.enableTldScan.set(extension.enableTldScan)
                     jsptask.encoding.set(extension.encoding)
 
                     jsptask.sourceCompatibility.set(extension.sourceCompatibility)
                     jsptask.targetCompatibility.set(extension.targetCompatibility)
 
                     jsptask.sourceSetName.set(extension.sourceSetName)
-
-
-                    project.plugins.withType(IsmlTagLibPlugin::class.java) {
-                        val ismlTagLib = tasks.named(IsmlTagLibPlugin.TASKNAME, PrepareTagLibs::class.java)
-                        jsptask.tagLibsInputDir.set(project.provider { ismlTagLib.get().outputDir.get() })
-                        jsptask.dependsOn(ismlTagLib)
-                    }
                     jsptask.dependsOn(ismlTask)
                 }
 
@@ -192,7 +185,7 @@ open class IsmlPlugin : Plugin<Project> {
             task.group = IsmlExtension.ISML_GROUP_NAME
             task.fileExtension = "jsp"
             task.resourceListFileName =
-                String.format("resources/%s/isml/isml.resource", project.name)
+                String.format(Locale.getDefault() ,"resources/%s/isml/isml.resource", project.name)
             task.sourceSetName = "main"
             task.include("**/**/*.jsp")
             task.outputDir.set(
