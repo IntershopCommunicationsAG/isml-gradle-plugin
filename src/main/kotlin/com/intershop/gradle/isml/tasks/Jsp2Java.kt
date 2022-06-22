@@ -89,15 +89,6 @@ open class Jsp2Java  @Inject constructor(
     val encoding: Property<String> = objectFactory.property(String::class.java)
 
     /**
-     * Input directory for TagLibs.
-     *
-     * @property tagLibsInputDir
-     */
-    @get:Optional
-    @get:InputDirectory
-    val tagLibsInputDir: DirectoryProperty = objectFactory.directoryProperty()
-
-    /**
      * Input directory for ISML files.
      *
      * @property inputDir
@@ -153,40 +144,6 @@ open class Jsp2Java  @Inject constructor(
     }
 
     /**
-     * List of filenames, that should be excluded from the JspC file scan.
-     * The file name is check for the beginning of the name.
-     *
-     * @property tldScanExcludes
-     */
-    @get:Input
-    val tldScanExcludes: ListProperty<String> = objectFactory.listProperty(String::class.java)
-
-    /**
-     * List of filenames, that should be included in the JspC file scan.
-     * The file name is check for the beginning of the name.
-     *
-     * The default value will be generated from the classpath if exclude list is empty.
-     *
-     * @property tldScanIncludes
-     */
-    @get:Input
-    val tldScanIncludes: ListProperty<String> = objectFactory.listProperty(String::class.java)
-
-    /**
-     * This will enable the TLD file scan of Jsp Compiler. It is only necessary if
-     * TLDs are used and available.
-     * Default value is false.
-     *
-     * @property enableTldScan
-     */
-    @get:Input
-    val enableTldScan: Property<Boolean> = objectFactory.property(Boolean::class.java)
-
-    init {
-        enableTldScan.convention(false)
-    }
-
-    /**
      * This is the task action and processes ISML files.
      */
     @TaskAction
@@ -197,17 +154,8 @@ open class Jsp2Java  @Inject constructor(
 
         prepareFolder(outputFolder.parentFile)
 
-        if(tagLibsInputDir.isPresent) {
-            // copy taglib conf files with web-inf to the uriroot
-            fileSystemOperations.copy {
-                it.from(tagLibsInputDir)
-                it.into(outputFolder)
-            }
-        } else {
-            // create web-inf in uriroot
-            webinf.parentFile.mkdirs()
-            webinf.writeText(IsmlExtension.WEB_XML_CONTENT)
-        }
+        webinf.parentFile.mkdirs()
+        webinf.writeText(IsmlExtension.WEB_XML_CONTENT)
 
         val classpathCollection = project.files(outputFolder, classpathfiles)
 
@@ -232,9 +180,6 @@ open class Jsp2Java  @Inject constructor(
             it.sourceCompatibility.set(sourceCompatibility)
             it.targetCompatibility.set(targetCompatibility)
 
-            it.tldScanIncludes.set(tldScanIncludes)
-            it.tldScanExcludes.set(tldScanExcludes)
-            it.enableTldScan.set(enableTldScan)
             it.logLevel.set(runLoggerLevel)
             it.classpath.set(classpathCollection.asPath)
         }

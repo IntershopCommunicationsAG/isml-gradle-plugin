@@ -68,7 +68,7 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
         /**
          * Default path of ISML files.
          */
-        const val MAIN_TEMPLATE_PATH = "staticfiles/cartridge/templates"
+        const val MAIN_TEMPLATE_PATH = "src/main/isml"
 
         /**
          * Default target path of ISML compilation.

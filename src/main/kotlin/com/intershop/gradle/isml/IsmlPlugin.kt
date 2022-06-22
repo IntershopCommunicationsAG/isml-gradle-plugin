@@ -18,12 +18,15 @@ package com.intershop.gradle.isml
 import com.intershop.gradle.isml.extension.IsmlExtension
 import com.intershop.gradle.isml.tasks.Isml2Jsp
 import com.intershop.gradle.isml.tasks.Jsp2Java
-import com.intershop.gradle.isml.tasks.PrepareTagLibs
+import com.intershop.gradle.resourcelist.extension.ResourceListExtension
+import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.TaskProvider
+import java.util.*
 
 /**
  * Plugin Class implementation.
@@ -65,7 +68,8 @@ open class IsmlPlugin : Plugin<Project> {
 
             if (extension.sourceSets.findByName(IsmlExtension.ISML_MAIN_SOURCESET) == null) {
                 val mainIsmlSourceSet = extension.sourceSets.create(IsmlExtension.ISML_MAIN_SOURCESET)
-                mainIsmlSourceSet.srcDir.set(layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH))
+                mainIsmlSourceSet.srcDir.set(
+                    layout.projectDirectory.dir(IsmlExtension.MAIN_TEMPLATE_PATH + "/" + project.name))
                 mainIsmlSourceSet.ismlOutputDir.set(layout.buildDirectory.dir(
                     "${IsmlExtension.ISML_OUTPUTPATH}/${IsmlExtension.ISML_MAIN_SOURCESET}"
                 ))
@@ -108,20 +112,12 @@ open class IsmlPlugin : Plugin<Project> {
                     jsptask.targetCompatibility.set(extension.targetCompatibility)
                     jsptask.encoding.set(extension.encoding)
 
-                    jsptask.enableTldScan.set(extension.enableTldScan)
                     jsptask.encoding.set(extension.encoding)
 
                     jsptask.sourceCompatibility.set(extension.sourceCompatibility)
                     jsptask.targetCompatibility.set(extension.targetCompatibility)
 
                     jsptask.sourceSetName.set(extension.sourceSetName)
-
-
-                    project.plugins.withType(IsmlTagLibPlugin::class.java) {
-                        val ismlTagLib = tasks.named(IsmlTagLibPlugin.TASKNAME, PrepareTagLibs::class.java)
-                        jsptask.tagLibsInputDir.set(project.provider { ismlTagLib.get().outputDir.get() })
-                        jsptask.dependsOn(ismlTagLib)
-                    }
                     jsptask.dependsOn(ismlTask)
                 }
 
@@ -131,6 +127,11 @@ open class IsmlPlugin : Plugin<Project> {
                             it.name == SourceSet.MAIN_SOURCE_SET_NAME
                         }.forEach {
                             it.java.srcDir(jspTask)
+
+                            val ismlListTask = createISMLResourceTask(project).get()
+                            it.java.srcDir(ismlTask.get().outputDir.get())
+                            it.output.dir(ismlListTask.outputs)
+                            ismlListTask.dependsOn(ismlTask)
                         }
                     }
                 }
@@ -176,5 +177,20 @@ open class IsmlPlugin : Plugin<Project> {
         val dependencyHandler = project.dependencies
         configuration.dependencies.add( dependencyHandler.create("org.apache.tomcat:tomcat-jasper") )
         configuration.dependencies.add( dependencyHandler.create("org.slf4j:slf4j-api") )
+    }
+
+    private fun createISMLResourceTask(project: Project): TaskProvider<ResourceListFileTask> {
+        return project.tasks.register("resourceListISML", ResourceListFileTask::class.java) { task ->
+            task.description = "Creates a resource file with a list of ISML templates"
+            task.group = IsmlExtension.ISML_GROUP_NAME
+            task.fileExtension = "jsp"
+            task.resourceListFileName =
+                String.format(Locale.getDefault() ,"resources/%s/isml/isml.resource", project.name)
+            task.sourceSetName = "main"
+            task.include("**/**/*.jsp")
+            task.outputDir.set(
+                project.layout.buildDirectory.dir(
+                    "${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/isml").get())
+        }
     }
 }

@@ -30,8 +30,8 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
         given:
         copyResources('test_taglib')
 
-        File tplFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/taglibTest.isml.tpl')
-        File testFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/taglibTest.isml')
+        File tplFile = new File(testProjectDir, 'src/main/ism/testCartridge/default/support/taglibTest.isml.tpl')
+        File testFile = new File(testProjectDir, 'src/main/ism/testCartridge/default/support/taglibTest.isml')
 
         testFile << tplFile.text.replaceAll('@cartridge@', 'testCartridge')
         tplFile.delete()
@@ -99,7 +99,7 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
         rootProject.name="testCartridge"
         """.stripIndent()
 
-        File ismlFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/test.isml')
+        File ismlFile = new File(testProjectDir, 'src/main/isml/testCartridge/default/support/test.isml')
 
         when:
         // change on input
@@ -289,195 +289,4 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
         where:
         gradleVersion << supportedGradleVersions
     }
-
-    @Ignore
-    def 'Test taglib and usage with project dependencies - isml'() {
-
-        given:
-
-        settingsFile << """
-        rootProject.name="testProject"
-        """.stripIndent()
-
-        buildFile << """
-            plugins {
-                `java`
-                `ivy-publish`
-                id("com.intershop.gradle.ismltaglib")
-                id("com.intershop.gradle.isml")
-            }
-
-            subprojects {
-                apply(plugin = "java")
-                apply(plugin = "ivy-publish")
-                apply(plugin = "com.intershop.gradle.ismltaglib")
-                apply(plugin = "com.intershop.gradle.isml")
-
-                version = "1.0.0"
-                group = "com.test"
-
-                isml {
-                    enableTldScan = true
-                }
-
-                dependencies {
-                    ${getMainDependencies(platformVersion, servletVersion, slf4jVersion, tomcatVersion)}
-                }
-
-                repositories {
-                    jcenter()
-                    ${getMainRepositories()}
-                }
-            }
-
-            project(":testCartridge1") {
-                apply(plugin = "ivy-publish")
-
-                tasks {
-                    val createCartridge = register<Zip>("createCartridge") {
-                        dependsOn(project.tasks["isml"])
-
-                        from("staticfiles/cartridge")
-                        from(isml2classMain.get().outputs)
-                        into("\${project.name}/release")
-                    }
-                }
-
-                publishing {
-                    publications {
-                        create("ivy", IvyPublication::class.java) {
-                            artifact(tasks.getByName("createCartridge")) {
-                                type = "cartridge"
-                            }
-                            artifact(tasks.getByName("jar"))
-                        }
-                    }
-                    repositories {
-                        ivy {
-                            url = uri("\${project.buildDir.absolutePath.replace("\\\\", "/")}/repo".toString())
-                            patternLayout {
-                                ivy("[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml")
-                                artifact("[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]")
-                            }
-                        }
-                    }
-                }
-            }
-            
-            project(":testCartridge2") {
-                dependencies {
-                    implementation(project(":testCartridge1"))
-                }
-            }
-        """.stripIndent()
-
-        createSubProject('testCartridge1', '')
-        createSubProject('testCartridge2', '')
-
-        copyResources('test_taglib', 'testCartridge1')
-
-        File tplFile1 = new File(testProjectDir, 'testCartridge1/staticfiles/cartridge/templates/default/support/taglibTest.isml.tpl')
-        File testFile1 = new File(testProjectDir, 'testCartridge1/staticfiles/cartridge/templates/default/support/taglibTest.isml')
-
-        testFile1 << tplFile1.text.replaceAll('@cartridge@', 'testCartridge1')
-
-        copyResources('use_taglib', 'testCartridge2')
-
-        File tplFile2 = new File(testProjectDir, 'testCartridge2/staticfiles/cartridge/templates/default/support/useTaglibTest.isml.tpl')
-        File testFile2 = new File(testProjectDir, 'testCartridge2/staticfiles/cartridge/templates/default/support/useTaglibTest.isml')
-
-        testFile2 << tplFile2.text.replaceAll('@cartridge@', 'testCartridge1')
-
-        tplFile2.delete()
-
-        when:
-        List<String> args = ['isml', 'publish', '-s', '-d']
-
-        def result = getPreparedGradleRunner()
-                .withArguments(args)
-                .withGradleVersion(gradleVersion)
-                .build()
-
-        then:
-        result.task(':testCartridge1:isml').outcome == SUCCESS
-        result.task(':testCartridge2:isml').outcome == SUCCESS
-
-        where:
-        gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
-    }
-
-    @Ignore
-    def 'Test taglib and usage with dependencies - isml'() {
-
-        given:
-        copyResources('use_taglib')
-
-        File tplFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/useTaglibTest.isml.tpl')
-        File testFile = new File(testProjectDir, 'staticfiles/cartridge/templates/default/support/useTaglibTest.isml')
-
-        testFile << tplFile.text.replaceAll('@cartridge@', 'testCartridge1')
-        tplFile.delete()
-
-        copyResources('repo', 'repo')
-
-        buildFile << """
-            plugins {
-                `java`
-                id("com.intershop.gradle.ismltaglib")
-                id("com.intershop.gradle.isml")
-            }
-
-            isml {
-                enableTldScan = true
-            }
-
-            dependencies {
-                ${getMainDependencies(platformVersion, servletVersion,
-                slf4jVersion, tomcatVersion)}
-                "implementation"("com.test:testCartridge1:1.0.0") {
-                    isTransitive = false
-                }
-            }
-
-            repositories {
-                jcenter()
-                ivy {
-                    url = uri("\${project.projectDir.absolutePath.replace("\\\\", "/")}/repo".toString())
-                    patternLayout {
-                        ivy("[organisation]/[module]/[revision]/[type]s/ivy-[revision].xml")
-                        artifact("[organisation]/[module]/[revision]/[ext]s/[artifact]-[type](-[classifier])-[revision].[ext]")
-                    }
-                }
-                ${getMainRepositories()}
-            }
-        """.stripIndent()
-
-        settingsFile << """
-        rootProject.name="testCartridge2"
-        """.stripIndent()
-
-        when:
-        List<String> args = ['isml', '-s', '-i']
-
-        def result = getPreparedGradleRunner()
-                .withArguments(args)
-                .withGradleVersion(gradleVersion)
-                .build()
-
-        then:
-        result.task(':isml').outcome == SUCCESS
-
-        where:
-        gradleVersion << supportedGradleVersions
-        platformVersion << getVersions('platform.intershop.versions')
-        servletVersion << getVersions('servlet.version')
-        slf4jVersion << getVersions('slf4j.version')
-        tomcatVersion << getVersions('tomcat.version')
-    }
-
-
 }
