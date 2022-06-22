@@ -46,6 +46,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
         File ismlFile = new File(testProjectDir, 'src/main/isml/testCartridge/default/support/test.isml')
 
+
         when:
         // change on input
         ismlFile << '\n' << """
