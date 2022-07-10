@@ -16,6 +16,7 @@
 package com.intershop.gradle.isml
 
 import com.intershop.gradle.isml.extension.IsmlExtension
+import com.intershop.gradle.isml.extension.IsmlSourceSet
 import com.intershop.gradle.isml.tasks.Isml2Jsp
 import com.intershop.gradle.isml.tasks.Jsp2Java
 import com.intershop.gradle.resourcelist.extension.ResourceListExtension
@@ -26,6 +27,7 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.tasks.bundling.Jar
 import java.util.*
 
 /**
@@ -90,40 +92,31 @@ open class IsmlPlugin : Plugin<Project> {
                 it.group = IsmlExtension.ISML_GROUP_NAME
             }
 
+            val ismlSourceJar = tasks.register("ismlSourcesJar", Jar::class.java) { sourceJar ->
+                sourceJar.group = IsmlExtension.ISML_GROUP_NAME
+                sourceJar.archiveClassifier.set("ismlSources")
+            }
+
             extension.sourceSets.all { ismlSourceSet ->
 
-                val ismlTask = tasks.register(ismlSourceSet.getIsmlTaskName(), Isml2Jsp::class.java) { ismltask ->
-                    ismltask.group = IsmlExtension.ISML_GROUP_NAME
+                val ismlTask = configureISMLTask(this, extension, ismlSourceSet)
+                val jspTask = cnfigureJSPTask(this, extension, ismlSourceSet, ismlTask)
 
-                    ismltask.inputDir.set(ismlSourceSet.srcDir)
-                    ismltask.outputDir.set( project.layout.buildDirectory.dir("generated/isml/${ismlSourceSet.name}") )
-                    ismltask.encoding.set(extension.encoding)
-                }
-                val jspTask = tasks.register(ismlSourceSet.getJspTaskName(), Jsp2Java::class.java) { jsptask ->
-                    jsptask.group = IsmlExtension.ISML_GROUP_NAME
-
-                    jsptask.inputDir.set(project.provider { ismlTask.get().outputDir.get() })
-
-                    jsptask.outputDir.set( project.layout.buildDirectory.dir("generated/jsp/${ismlSourceSet.name}"))
-                    jsptask.jspPackage.set(ismlSourceSet.jspPackage)
-
-                    jsptask.jspConfigurationName.set(extension.jspConfigurationName)
-                    jsptask.sourceCompatibility.set(extension.sourceCompatibility)
-                    jsptask.targetCompatibility.set(extension.targetCompatibility)
-                    jsptask.encoding.set(extension.encoding)
-
-                    jsptask.encoding.set(extension.encoding)
-
-                    jsptask.sourceCompatibility.set(extension.sourceCompatibility)
-                    jsptask.targetCompatibility.set(extension.targetCompatibility)
-
-                    jsptask.sourceSetName.set(extension.sourceSetName)
-                    jsptask.dependsOn(ismlTask)
+                ismlSourceJar.configure {
+                    it.from(ismlSourceSet.srcDir)
                 }
 
-                project.afterEvaluate {
-                    project.plugins.withType(JavaBasePlugin::class.java) {
-                        project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                tasks.whenTaskAdded { task ->
+                    if (task.name == "sourcesJar" && task is Jar) {
+                        task.exclude("default/**/*.jsp")
+                        task.exclude("org/apache/jsp/")
+                        task.includeEmptyDirs = false
+                    }
+                }
+
+                this.afterEvaluate {
+                    plugins.withType(JavaBasePlugin::class.java) {
+                        extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
                             it.name == SourceSet.MAIN_SOURCE_SET_NAME
                         }.forEach {
                             it.java.srcDir(jspTask)
@@ -133,6 +126,7 @@ open class IsmlPlugin : Plugin<Project> {
                             it.output.dir(ismlListTask.outputs)
                             ismlListTask.dependsOn(ismlTask)
                         }
+
                     }
                 }
 
@@ -140,6 +134,46 @@ open class IsmlPlugin : Plugin<Project> {
                     it.dependsOn(jspTask)
                 }
             }
+        }
+    }
+
+    private fun configureISMLTask(project: Project,
+                                  extension: IsmlExtension,
+                                  srcSet: IsmlSourceSet): TaskProvider<Isml2Jsp> {
+        return project.tasks.register(srcSet.getIsmlTaskName(), Isml2Jsp::class.java) { ismltask ->
+            ismltask.group = IsmlExtension.ISML_GROUP_NAME
+
+            ismltask.inputDir.set(srcSet.srcDir)
+            ismltask.outputDir.set( project.layout.buildDirectory.dir("generated/isml/${srcSet.name}") )
+            ismltask.encoding.set(extension.encoding)
+        }
+
+    }
+
+    private fun cnfigureJSPTask(project: Project,
+                                extension: IsmlExtension,
+                                srcSet: IsmlSourceSet,
+                                ismlTask: TaskProvider<Isml2Jsp>): TaskProvider<Jsp2Java> {
+        return project.tasks.register(srcSet.getJspTaskName(), Jsp2Java::class.java) { jsptask ->
+            jsptask.group = IsmlExtension.ISML_GROUP_NAME
+
+            jsptask.inputDir.set(project.provider { ismlTask.get().outputDir.get() })
+
+            jsptask.outputDir.set( project.layout.buildDirectory.dir("generated/jsp/${srcSet.name}"))
+            jsptask.jspPackage.set(srcSet.jspPackage)
+
+            jsptask.jspConfigurationName.set(extension.jspConfigurationName)
+            jsptask.sourceCompatibility.set(extension.sourceCompatibility)
+            jsptask.targetCompatibility.set(extension.targetCompatibility)
+            jsptask.encoding.set(extension.encoding)
+
+            jsptask.encoding.set(extension.encoding)
+
+            jsptask.sourceCompatibility.set(extension.sourceCompatibility)
+            jsptask.targetCompatibility.set(extension.targetCompatibility)
+
+            jsptask.sourceSetName.set(extension.sourceSetName)
+            jsptask.dependsOn(ismlTask)
         }
     }
 
