@@ -17,10 +17,9 @@ package com.intershop.gradle.isml
 
 import com.intershop.gradle.isml.extension.IsmlExtension
 import com.intershop.gradle.isml.extension.IsmlSourceSet
+import com.intershop.gradle.isml.tasks.ISMLListFileTask
 import com.intershop.gradle.isml.tasks.Isml2Jsp
 import com.intershop.gradle.isml.tasks.Jsp2Java
-import com.intershop.gradle.resourcelist.extension.ResourceListExtension
-import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
@@ -100,7 +99,8 @@ open class IsmlPlugin : Plugin<Project> {
             extension.sourceSets.all { ismlSourceSet ->
 
                 val ismlTask = configureISMLTask(this, extension, ismlSourceSet)
-                val jspTask = cnfigureJSPTask(this, extension, ismlSourceSet, ismlTask)
+                val jspTask = configureJSPTask(this, extension, ismlSourceSet, ismlTask)
+                val ismlListTask = configureISMLResourceTask(this, ismlSourceSet, ismlTask)
 
                 ismlSourceJar.configure {
                     it.from(ismlSourceSet.srcDir)
@@ -119,14 +119,10 @@ open class IsmlPlugin : Plugin<Project> {
                         extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
                             it.name == SourceSet.MAIN_SOURCE_SET_NAME
                         }.forEach {
+
                             it.java.srcDir(jspTask)
-
-                            val ismlListTask = createISMLResourceTask(project).get()
-                            it.java.srcDir(ismlTask.get().outputDir.get())
-                            it.output.dir(ismlListTask.outputs)
-                            ismlListTask.dependsOn(ismlTask)
+                            it.resources.srcDir(ismlListTask)
                         }
-
                     }
                 }
 
@@ -150,7 +146,7 @@ open class IsmlPlugin : Plugin<Project> {
 
     }
 
-    private fun cnfigureJSPTask(project: Project,
+    private fun configureJSPTask(project: Project,
                                 extension: IsmlExtension,
                                 srcSet: IsmlSourceSet,
                                 ismlTask: TaskProvider<Isml2Jsp>): TaskProvider<Jsp2Java> {
@@ -213,18 +209,18 @@ open class IsmlPlugin : Plugin<Project> {
         configuration.dependencies.add( dependencyHandler.create("org.slf4j:slf4j-api") )
     }
 
-    private fun createISMLResourceTask(project: Project): TaskProvider<ResourceListFileTask> {
-        return project.tasks.register("resourceListISML", ResourceListFileTask::class.java) { task ->
+    private fun configureISMLResourceTask(project: Project,
+                                          srcSet: IsmlSourceSet,
+                                          ismlTask: TaskProvider<Isml2Jsp>): TaskProvider<ISMLListFileTask> {
+        return project.tasks.register("listISML", ISMLListFileTask::class.java) { task ->
             task.description = "Creates a resource file with a list of ISML templates"
             task.group = IsmlExtension.ISML_GROUP_NAME
-            task.fileExtension = "jsp"
-            task.resourceListFileName =
-                String.format(Locale.getDefault() ,"resources/%s/isml/isml.resource", project.name)
-            task.sourceSetName = "main"
+            task.fileExtension.set("jsp")
+            task.listFileName.set(String.format(Locale.getDefault() ,"resources/%s/isml/isml.resource", project.name))
             task.include("**/**/*.jsp")
-            task.outputDir.set(
-                project.layout.buildDirectory.dir(
-                    "${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/isml").get())
+            task.inputDir.set(project.provider { ismlTask.get().outputDir.get() })
+            task.outputDir.set( project.layout.buildDirectory.dir("generated/ismlresourcelist/${srcSet.name}"))
+            task.dependsOn(ismlTask)
         }
     }
 }
