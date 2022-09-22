@@ -268,7 +268,7 @@ dependencies {
     compileOnly("org.apache.tomcat:tomcat-api:10.0.23")
 
     compileOnly("com.intershop.icm:isml-parser:11.0.0")
-    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:4.4.0")
+    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:4.4.1")
 
     testImplementation("com.intershop.gradle.test:test-gradle-plugin:4.1.2")
     testImplementation(gradleTestKit())
