@@ -43,7 +43,7 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
         /**
          * Default JSP compiler version.
          */
-        const val JSP_COMPILER_VERSION = "10.0.18"
+        const val JSP_COMPILER_VERSION = "10.0.23"
 
         /**
          * Default ISML compiler version.

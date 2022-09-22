@@ -1,10 +1,8 @@
-
 import org.asciidoctor.gradle.jvm.AsciidoctorTask
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 /*
- * Copyright 2021 Intershop Communications AG.
+ * Copyright 2022 Intershop Communications AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +17,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
  *  limitations under the License.
  */
 plugins {
+
     // project plugins
     `java-gradle-plugin`
     groovy
-    kotlin("jvm") version "1.5.31"
+
+    kotlin("jvm") version "1.7.10"
 
     // test coverage
     jacoco
@@ -43,13 +43,13 @@ plugins {
     id("org.asciidoctor.jvm.convert") version "3.3.2"
 
     // documentation
-    id("org.jetbrains.dokka") version "0.10.1"
+    id("org.jetbrains.dokka") version "1.5.0"
 
     // code analysis for kotlin
-    id("io.gitlab.arturbosch.detekt") version "1.19.0"
+    id("io.gitlab.arturbosch.detekt") version "1.18.0"
 
     // plugin for publishing to Gradle Portal
-    id("com.gradle.plugin-publish") version "0.13.0"
+    id("com.gradle.plugin-publish") version "1.0.0"
 }
 
 scm {
@@ -86,7 +86,7 @@ pluginBundle {
     val pluginURL = "https://github.com/IntershopCommunicationsAG/${project.name}"
     website = pluginURL
     vcsUrl = pluginURL
-    tags = listOf("intershop", "gradle", "plugin", "build", "isml")
+    tags = listOf("intershop", "build", "isml")
 }
 
 java {
@@ -105,22 +105,16 @@ detekt {
 }
 
 tasks {
-    withType<KotlinCompile>().configureEach {
-        kotlinOptions {
-            jvmTarget = "11"
-        }
-    }
-
     withType<Test>().configureEach {
         testLogging.showStandardStreams = false
 
-        systemProperty("intershop.gradle.versions", "7.3")
+        systemProperty("intershop.gradle.versions", "7.2,7.5.1")
         useJUnitPlatform()
 
         dependsOn("jar")
     }
 
-    val copyAsciiDoc = register<Copy>("copyAsciiDoc") {
+    register<Copy>("copyAsciiDoc") {
         includeEmptyDirs = false
 
         val outputDir = file("$buildDir/tmp/asciidoctorSrc")
@@ -141,7 +135,7 @@ tasks {
     }
 
     withType<AsciidoctorTask> {
-        dependsOn(copyAsciiDoc)
+        dependsOn("copyAsciiDoc")
 
         setSourceDir(file("$buildDir/tmp/asciidoctorSrc"))
         sources(delegateClosureOf<PatternSet> {
@@ -171,7 +165,7 @@ tasks {
             xml.required.set(true)
             html.required.set(true)
 
-            html.outputLocation.set(File(project.buildDir, "jacocoHtml"))
+            html.outputLocation.set( File(project.buildDir, "jacocoHtml") )
         }
 
         val jacocoTestReport by tasks
@@ -180,30 +174,29 @@ tasks {
 
     getByName("jar").dependsOn("asciidoctor")
 
-    val compileKotlin by getting(KotlinCompile::class) {
-        kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
+    withType<KotlinCompile>  {
+        kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 
-    val dokka by existing(DokkaTask::class) {
-        outputFormat = "javadoc"
-        outputDirectory = "$buildDir/javadoc"
-
-        // Java 8 is only version supported both by Oracle/OpenJDK and Dokka itself
-        // https://github.com/Kotlin/dokka/issues/294
-        enabled = JavaVersion.current().isJava8
+    dokkaJavadoc.configure {
+        outputDirectory.set(buildDir.resolve("dokka"))
     }
 
-    register<Jar>("sourceJar") {
-        description = "Creates a JAR that contains the source code."
-
-        from(sourceSets.getByName("main").allSource)
-        archiveClassifier.set("sources")
+    withType<Sign> {
+        val sign = this
+        withType<PublishToMavenLocal> {
+            this.dependsOn(sign)
+        }
+        withType<PublishToMavenRepository> {
+            this.dependsOn(sign)
+        }
     }
 
-    register<Jar>("javaDoc") {
-        dependsOn(dokka)
-        from(dokka)
-        archiveClassifier.set("javadoc")
+    afterEvaluate {
+        getByName<Jar>("javadocJar") {
+            dependsOn(dokkaJavadoc)
+            from(dokkaJavadoc)
+        }
     }
 }
 
@@ -212,8 +205,6 @@ publishing {
         create("intershopMvn", MavenPublication::class.java) {
 
             from(components["java"])
-            artifact(tasks.getByName("sourceJar"))
-            artifact(tasks.getByName("javaDoc"))
 
             artifact(File(buildDir, "docs/asciidoc/html5/README.html")) {
                 classifier = "reference"
@@ -273,12 +264,12 @@ signing {
 dependencies {
     implementation(gradleKotlinDsl())
 
-    compileOnly("org.apache.tomcat:tomcat-jasper:10.0.18")
-    compileOnly("org.apache.tomcat:tomcat-api:10.0.18")
+    compileOnly("org.apache.tomcat:tomcat-jasper:10.0.23")
+    compileOnly("org.apache.tomcat:tomcat-api:10.0.23")
 
     compileOnly("com.intershop.icm:isml-parser:11.0.0")
-    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:4.3.3")
+    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:4.4.0")
 
-    testImplementation("com.intershop.gradle.test:test-gradle-plugin:4.1.1")
+    testImplementation("com.intershop.gradle.test:test-gradle-plugin:4.1.2")
     testImplementation(gradleTestKit())
 }
