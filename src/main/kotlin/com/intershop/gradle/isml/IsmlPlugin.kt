@@ -28,6 +28,7 @@ import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.language.jvm.tasks.ProcessResources
 import java.util.*
 
 /**
@@ -120,11 +121,19 @@ open class IsmlPlugin : Plugin<Project> {
                             it.name == SourceSet.MAIN_SOURCE_SET_NAME
                         }.forEach {
                             it.java.srcDir(jspTask)
+                            it.java.srcDir(ismlTask)
 
-                            val ismlListTask = createISMLResourceTask(project).get()
-                            it.java.srcDir(ismlTask.get().outputDir.get())
-                            it.output.dir(ismlListTask.outputs)
-                            ismlListTask.dependsOn(ismlTask)
+                            val ismlListTask = createISMLResourceTask(project)
+
+                            project.tasks.named(it.processResourcesTaskName,
+                                ProcessResources::class.java).configure { pr ->
+                                pr.from( ismlListTask )
+                                pr.dependsOn(ismlListTask)
+                            }
+
+                            ismlListTask.configure { rlf ->
+                                rlf.dependsOn(jspTask)
+                            }
                         }
 
                     }
