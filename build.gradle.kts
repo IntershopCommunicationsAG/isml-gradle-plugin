@@ -22,7 +22,7 @@ plugins {
     `java-gradle-plugin`
     groovy
 
-    kotlin("jvm") version "1.7.10"
+    kotlin("jvm") version "1.7.20"
 
     // test coverage
     jacoco
@@ -90,8 +90,10 @@ pluginBundle {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
+        vendor.set(JvmVendorSpec.ADOPTIUM)
+    }
 }
 
 // set correct project status
@@ -104,11 +106,17 @@ detekt {
     config = files("detekt.yml")
 }
 
+kotlin {
+    jvmToolchain {
+        this.languageVersion.set(JavaLanguageVersion.of(11))
+    }
+}
+
 tasks {
     withType<Test>().configureEach {
         testLogging.showStandardStreams = false
 
-        systemProperty("intershop.gradle.versions", "7.2,7.5.1")
+        systemProperty("intershop.gradle.versions", "7.5.1")
         useJUnitPlatform()
 
         dependsOn("jar")
@@ -173,10 +181,6 @@ tasks {
     }
 
     getByName("jar").dependsOn("asciidoctor")
-
-    withType<KotlinCompile>  {
-        kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
-    }
 
     dokkaJavadoc.configure {
         outputDirectory.set(buildDir.resolve("dokka"))
@@ -267,7 +271,7 @@ dependencies {
     compileOnly("org.apache.tomcat:tomcat-jasper:10.0.23")
     compileOnly("org.apache.tomcat:tomcat-api:10.0.23")
 
-    compileOnly("com.intershop.icm:isml-parser:11.1.0")
+    compileOnly("com.intershop.icm:isml-parser:11.1.1")
     implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:4.4.1")
 
     testImplementation("com.intershop.gradle.test:test-gradle-plugin:4.1.2")
