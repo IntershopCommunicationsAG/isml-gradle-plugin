@@ -48,7 +48,7 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
         /**
          * Default ISML compiler version.
          */
-        const val ISML_COMPILER_VERSION = "11.1.0"
+        const val ISML_COMPILER_VERSION = "11.1.2"
 
         /**
          * Gradle configuration for jsp compiler.
