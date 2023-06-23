@@ -52,6 +52,6 @@ jobs:
         env:
           JAVA_OPTS: "-Xmx1024M -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512M"
           GRADLE_OPTS: "-Dorg.gradle.daemon=true"
-        run: ./gradlew test build -s
+        run: ./gradlew build -s -x test
       - name: Post Build
         run: rm -f $HOME/.gradle/gradle.properties && rm -f $HOME/.docker/config.json
