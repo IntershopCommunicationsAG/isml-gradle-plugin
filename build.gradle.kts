@@ -268,5 +268,5 @@ dependencies {
     compileOnly("org.apache.tomcat:tomcat-api:10.1.25")
 
     compileOnly("com.intershop.icm:isml-parser:12.0.0")
-    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:5.0.0")
+    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:5.0.1")
 }
