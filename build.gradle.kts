@@ -92,7 +92,7 @@ testing {
     suites.withType<JvmTestSuite> {
         useSpock()
         dependencies {
-            implementation("com.intershop.gradle.test:test-gradle-plugin:5.0.1")
+            implementation("com.intershop.gradle.test:test-gradle-plugin:5.1.0")
             implementation(gradleTestKit())
         }
 
@@ -262,11 +262,11 @@ signing {
 }
 
 dependencies {
+    compileOnly("org.apache.tomcat:tomcat-jasper:10.1.30")
+    compileOnly("org.apache.tomcat:tomcat-api:10.1.30")
+
+    compileOnly("com.intershop.icm:isml-parser:12.0.1")
+
     implementation(gradleKotlinDsl())
-
-    compileOnly("org.apache.tomcat:tomcat-jasper:10.1.25")
-    compileOnly("org.apache.tomcat:tomcat-api:10.1.25")
-
-    compileOnly("com.intershop.icm:isml-parser:12.0.0")
-    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:5.0.1")
+    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:5.0.2")
 }
