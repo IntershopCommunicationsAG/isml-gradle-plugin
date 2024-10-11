@@ -1,19 +1,11 @@
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
-        mavenLocal()
-    }
-}
-
 plugins {
-    id("com.gradle.enterprise") version "3.16.1"
+    id("com.gradle.develocity") version "3.18.1"
 }
 
-gradleEnterprise {
+develocity {
     buildScan {
-        termsOfServiceUrl = "https://gradle.com/terms-of-service"
-        termsOfServiceAgree = "yes"
+        termsOfUseUrl = "https://gradle.com/help/legal-terms-of-use"
+        termsOfUseAgree = "yes"
     }
 }
 
