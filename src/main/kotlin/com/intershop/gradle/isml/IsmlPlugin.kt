@@ -51,6 +51,8 @@ open class IsmlPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         with(project) {
+            plugins.apply(JavaBasePlugin::class.java) // JavaPlugin is required for the isml -> jsp -> java -> classes
+
             logger.info("Isml plugin adds extension {} to {}", IsmlExtension.ISML_EXTENSION_NAME, name)
             val extension = extensions.findByType(IsmlExtension::class.java) ?: extensions.create(
                 IsmlExtension.ISML_EXTENSION_NAME,
@@ -61,8 +63,6 @@ open class IsmlPlugin : Plugin<Project> {
             addIsmlConfiguration(this, extension)
 
             afterEvaluate {
-                plugins.apply(JavaPlugin::class.java) // JavaPlugin is required for the isml -> jsp -> java -> classes
-
                 project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
                     it.name == SourceSet.MAIN_SOURCE_SET_NAME
                 }.forEach {
