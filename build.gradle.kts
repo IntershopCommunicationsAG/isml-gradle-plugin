@@ -286,5 +286,5 @@ dependencies {
     compileOnly("com.intershop.icm:isml-parser:12.0.1")
 
     implementation(gradleKotlinDsl())
-    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:5.0.2")
+    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:5.0.3")
 }

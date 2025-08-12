@@ -24,6 +24,7 @@ import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
@@ -60,12 +61,12 @@ open class IsmlPlugin : Plugin<Project> {
             addIsmlConfiguration(this, extension)
 
             afterEvaluate {
-                plugins.withType(JavaBasePlugin::class.java) {
-                    project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
-                        it.name == SourceSet.MAIN_SOURCE_SET_NAME
-                    }.forEach {
-                        addJavaDependencies(this, it.implementationConfigurationName)
-                    }
+                plugins.apply(JavaPlugin::class.java) // JavaPlugin is required for the isml -> jsp -> java -> classes
+
+                project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                    it.name == SourceSet.MAIN_SOURCE_SET_NAME
+                }.forEach {
+                    addJavaDependencies(this, it.implementationConfigurationName)
                 }
             }
 
