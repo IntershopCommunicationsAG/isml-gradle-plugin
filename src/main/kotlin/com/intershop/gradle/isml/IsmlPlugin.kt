@@ -24,6 +24,7 @@ import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
@@ -50,6 +51,8 @@ open class IsmlPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         with(project) {
+            plugins.apply(JavaBasePlugin::class.java) // JavaPlugin is required for the isml -> jsp -> java -> classes
+
             logger.info("Isml plugin adds extension {} to {}", IsmlExtension.ISML_EXTENSION_NAME, name)
             val extension = extensions.findByType(IsmlExtension::class.java) ?: extensions.create(
                 IsmlExtension.ISML_EXTENSION_NAME,
@@ -60,12 +63,10 @@ open class IsmlPlugin : Plugin<Project> {
             addIsmlConfiguration(this, extension)
 
             afterEvaluate {
-                plugins.withType(JavaBasePlugin::class.java) {
-                    project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
-                        it.name == SourceSet.MAIN_SOURCE_SET_NAME
-                    }.forEach {
-                        addJavaDependencies(this, it.implementationConfigurationName)
-                    }
+                project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                    it.name == SourceSet.MAIN_SOURCE_SET_NAME
+                }.forEach {
+                    addJavaDependencies(this, it.implementationConfigurationName)
                 }
             }
 
