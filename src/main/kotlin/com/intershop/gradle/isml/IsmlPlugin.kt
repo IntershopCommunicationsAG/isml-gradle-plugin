@@ -190,7 +190,6 @@ open class IsmlPlugin : Plugin<Project> {
     private fun addIsmlConfiguration(project: Project, extension: IsmlExtension) {
         val configuration = project.configurations.maybeCreate(IsmlExtension.ISMLCOMPILER_CONFIGURATION_NAME)
         configuration
-            .setVisible(false)
             .setTransitive(true)
             .setDescription("ISML parser configuration is used for jsp generation")
             .defaultDependencies { ds ->
@@ -204,7 +203,7 @@ open class IsmlPlugin : Plugin<Project> {
 
     private fun addJSPJasperCompilerConfiguration(project: Project, extension: IsmlExtension) {
         val configuration = project.configurations.maybeCreate(IsmlExtension.JASPERCOMPILER_CONFIGURATION_NAME)
-        configuration.setVisible(false)
+        configuration
                 .setTransitive(true)
                 .setDescription("Configuration for JSP compiler")
                 .defaultDependencies { ds ->

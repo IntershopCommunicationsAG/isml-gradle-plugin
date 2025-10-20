@@ -43,12 +43,12 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
         /**
          * Default JSP compiler version.
          */
-        const val JSP_COMPILER_VERSION = "10.0.23"
+        const val JSP_COMPILER_VERSION = "11.0.11"
 
         /**
          * Default ISML compiler version.
          */
-        const val ISML_COMPILER_VERSION = "11.1.3"
+        const val ISML_COMPILER_VERSION = "13.0.0"
 
         /**
          * Gradle configuration for jsp compiler.
@@ -182,8 +182,8 @@ open class IsmlExtension @Inject constructor(objectFactory: ObjectFactory, proje
 
         jspConfigurationName.convention("runtimeClasspath")
 
-        sourceCompatibility.convention("11")
-        targetCompatibility.convention("11")
+        sourceCompatibility.convention("21")
+        targetCompatibility.convention("21")
 
         encoding.set(DEFAULT_FILEENCODING)
 

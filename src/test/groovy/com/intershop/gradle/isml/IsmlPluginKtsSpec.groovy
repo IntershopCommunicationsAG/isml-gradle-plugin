@@ -53,7 +53,8 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
             }
 
             repositories {
-                jcenter()
+                mavenCentral()
+                mavenLocal()
                 ${getMainRepositories()}
             }
         """.stripIndent()
@@ -92,6 +93,7 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
 
             repositories {
                 mavenCentral()
+                mavenLocal()
             }
         """.stripIndent()
 
@@ -262,6 +264,7 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
             }
             repositories {
                 mavenCentral()
+                mavenLocal()
             }
         """.stripIndent()
 
