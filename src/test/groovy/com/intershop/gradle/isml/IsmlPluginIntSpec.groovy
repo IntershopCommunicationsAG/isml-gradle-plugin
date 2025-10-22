@@ -36,6 +36,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
             repositories {
                 mavenCentral()
+                mavenLocal()
             }
         """.stripIndent()
 
@@ -119,6 +120,7 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
 
             repositories {
                 mavenCentral()
+                mavenLocal()
             }
         """.stripIndent()
 

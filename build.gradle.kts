@@ -22,7 +22,7 @@ plugins {
     `java-gradle-plugin`
     groovy
 
-    kotlin("jvm") version "1.9.25"
+    kotlin("jvm") version "2.2.20"
 
     // test coverage
     jacoco
@@ -37,13 +37,13 @@ plugins {
     signing
 
     // plugin for documentation
-    id("org.asciidoctor.jvm.convert") version "4.0.3"
+    id("org.asciidoctor.jvm.convert") version "4.0.5"
 
     // documentation
-    id("org.jetbrains.dokka") version "1.9.20"
+    id("org.jetbrains.dokka-javadoc") version "2.0.0"
 
     // plugin for publishing to Gradle Portal
-    id("com.gradle.plugin-publish") version "1.3.0"
+    id("com.gradle.plugin-publish") version "2.0.0"
 
     id("io.gitee.pkmer.pkmerboot-central-publisher") version "1.1.1"
 }
@@ -82,7 +82,7 @@ java {
     withJavadocJar()
     withSourcesJar()
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -95,14 +95,14 @@ testing {
     suites.withType<JvmTestSuite> {
         useSpock()
         dependencies {
-            implementation("com.intershop.gradle.test:test-gradle-plugin:5.1.0")
+            implementation("com.intershop.gradle.test:test-gradle-plugin:6.0.0")
             implementation(gradleTestKit())
         }
 
         targets {
             all {
                 testTask.configure {
-                    systemProperty("intershop.gradle.versions", "8.5,8.10.2")
+                    systemProperty("intershop.gradle.versions", "8.5,8.10.2,9.1.0")
                     testLogging {
                         showStandardStreams = true
                     }
@@ -173,16 +173,11 @@ tasks {
             html.outputLocation.set( project.layout.buildDirectory.dir("jacocoHtml") )
         }
 
-        val jacocoTestReport by tasks
-        jacocoTestReport.dependsOn(test)
+        dependsOn(test)
     }
 
     jar.configure {
         dependsOn(asciidoctor)
-    }
-
-    dokkaJavadoc.configure {
-        outputDirectory.set(project.layout.buildDirectory.dir("dokka"))
     }
 
     withType<Sign> {
@@ -196,9 +191,9 @@ tasks {
     }
 
     afterEvaluate {
-        named<Jar>("javadocJar") {
-            dependsOn(dokkaJavadoc)
-            from(dokkaJavadoc)
+        getByName<Jar>("javadocJar") {
+            dependsOn(dokkaGenerate)
+            from(dokkaGeneratePublicationJavadoc)
         }
     }
 }
@@ -280,11 +275,11 @@ signing {
 }
 
 dependencies {
-    compileOnly("org.apache.tomcat:tomcat-jasper:10.1.30")
-    compileOnly("org.apache.tomcat:tomcat-api:10.1.30")
-
-    compileOnly("com.intershop.icm:isml-parser:12.0.1")
-
     implementation(gradleKotlinDsl())
-    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:5.0.3")
+    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:6.0.0")
+
+    compileOnly("org.apache.tomcat:tomcat-jasper:11.0.11")
+    compileOnly("org.apache.tomcat:tomcat-api:11.0.11")
+    compileOnly("com.intershop.icm:isml-parser:13.0.0")
+
 }
