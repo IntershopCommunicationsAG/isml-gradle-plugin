@@ -22,11 +22,14 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.workers.WorkerExecutor
@@ -41,6 +44,7 @@ import javax.inject.Inject
  * @param workerExecutor    run the workload of this task
  * @param objectFactory     creates all configurations of this task
  */
+@CacheableTask
 open class Isml2Jsp @Inject constructor(
     objectFactory: ObjectFactory,
     @Internal val fileSystemOperations: FileSystemOperations,
@@ -68,6 +72,7 @@ open class Isml2Jsp @Inject constructor(
      */
     @get:SkipWhenEmpty
     @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
     val inputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
