@@ -276,7 +276,7 @@ signing {
 
 dependencies {
     implementation(gradleKotlinDsl())
-    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:6.0.0")
+    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:6.1.0")
 
     compileOnly("org.apache.tomcat:tomcat-jasper:11.0.11")
     compileOnly("org.apache.tomcat:tomcat-api:11.0.11")
