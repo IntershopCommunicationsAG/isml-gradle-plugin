@@ -24,7 +24,6 @@ import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
@@ -102,7 +101,7 @@ open class IsmlPlugin : Plugin<Project> {
             extension.sourceSets.all { ismlSourceSet ->
 
                 val ismlTask = configureISMLTask(this, extension, ismlSourceSet)
-                val jspTask = cnfigureJSPTask(this, extension, ismlSourceSet, ismlTask)
+                val jspTask = configureJSPTask(this, extension, ismlSourceSet, ismlTask)
 
                 ismlSourceJar.configure {
                     it.from(ismlSourceSet.srcDir)
@@ -160,10 +159,10 @@ open class IsmlPlugin : Plugin<Project> {
 
     }
 
-    private fun cnfigureJSPTask(project: Project,
-                                extension: IsmlExtension,
-                                srcSet: IsmlSourceSet,
-                                ismlTask: TaskProvider<Isml2Jsp>): TaskProvider<Jsp2Java> {
+    private fun configureJSPTask(project: Project,
+                                 extension: IsmlExtension,
+                                 srcSet: IsmlSourceSet,
+                                 ismlTask: TaskProvider<Isml2Jsp>): TaskProvider<Jsp2Java> {
         return project.tasks.register(srcSet.getJspTaskName(), Jsp2Java::class.java) { jsptask ->
             jsptask.group = IsmlExtension.ISML_GROUP_NAME
 
