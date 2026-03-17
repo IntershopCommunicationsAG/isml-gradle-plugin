@@ -248,6 +248,108 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
         tomcatVersion << getVersions('tomcat.version')
     }
 
+    def 'resourceListISML task generates isml.resource with correct content'() {
+        given:
+        copyResources('test_isml')
+
+        buildFile << """
+            plugins {
+                java
+                id("com.intershop.gradle.isml")
+            }
+
+            dependencies {
+                implementation(platform("org.apache.tomcat:tomcat-jasper:11.0.11"))
+                implementation(platform("org.slf4j:slf4j-api:1.7.36"))
+            }
+
+            repositories {
+                mavenCentral()
+                mavenLocal()
+            }
+        """.stripIndent()
+
+        settingsFile << """
+        rootProject.name="testCartridge"
+        """.stripIndent()
+
+        when:
+        def result = getPreparedGradleRunner()
+                .withArguments('resourceListISML', '-s')
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        File resourceFile = new File(testProjectDir,
+                'build/generated/resourcelist/isml/resources/testCartridge/isml/isml.resource')
+
+        then:
+        result.task(':resourceListISML').outcome == SUCCESS
+        resourceFile.exists()
+        resourceFile.text.contains('default.support.test')
+        // only .isml sources -> no .jsp entries must leak into the resource list
+        !resourceFile.text.contains('.jsp')
+
+        where:
+        gradleVersion << supportedGradleVersions
+    }
+
+    def 'resourceListISML task re-runs and includes new entry when an ISML file is added'() {
+        given:
+        copyResources('test_isml')
+
+        buildFile << """
+            plugins {
+                java
+                id("com.intershop.gradle.isml")
+            }
+
+            dependencies {
+                implementation(platform("org.apache.tomcat:tomcat-jasper:11.0.11"))
+                implementation(platform("org.slf4j:slf4j-api:1.7.36"))
+            }
+
+            repositories {
+                mavenCentral()
+                mavenLocal()
+            }
+        """.stripIndent()
+
+        settingsFile << """
+        rootProject.name="testCartridge"
+        """.stripIndent()
+
+        when: 'initial build'
+        def result1 = getPreparedGradleRunner()
+                .withArguments('resourceListISML', '-s')
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        then:
+        result1.task(':resourceListISML').outcome == SUCCESS
+
+        when: 'a new ISML template is added to the source directory'
+        File newIsml = new File(testProjectDir,
+                'src/main/isml/testCartridge/default/support/newTemplate.isml')
+        newIsml.parentFile.mkdirs()
+        newIsml << '<!---[New Template]--->\n<iscontent type="text/html" charset="UTF-8">\n'
+
+        def result2 = getPreparedGradleRunner()
+                .withArguments('resourceListISML', '-s')
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        File resourceFile = new File(testProjectDir,
+                'build/generated/resourcelist/isml/resources/testCartridge/isml/isml.resource')
+
+        then:
+        result2.task(':resourceListISML').outcome == SUCCESS
+        resourceFile.text.contains('default.support.test')
+        resourceFile.text.contains('default.support.newTemplate')
+
+        where:
+        gradleVersion << supportedGradleVersions
+    }
+
     def 'Test isml'() {
         given:
         copyResources('test_isml')
@@ -259,8 +361,8 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
             }
 
             dependencies {
-                implementation(platform("org.apache.tomcat:tomcat-jasper:9.0.56"))
-                implementation(platform("org.slf4j:slf4j-api:1.7.32"))
+                implementation(platform("org.apache.tomcat:tomcat-jasper:11.0.11"))
+                implementation(platform("org.slf4j:slf4j-api:1.7.36"))
             }
             repositories {
                 mavenCentral()

@@ -29,7 +29,6 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.language.jvm.tasks.ProcessResources
-import java.util.*
 
 /**
  * Plugin Class implementation.
@@ -225,11 +224,14 @@ open class IsmlPlugin : Plugin<Project> {
         return project.tasks.register("resourceListISML", ResourceListFileTask::class.java) { task ->
             task.description = "Creates a resource file with a list of ISML templates"
             task.group = IsmlExtension.ISML_GROUP_NAME
-            task.fileExtension = "jsp"
-            task.resourceListFileName =
-                String.format(Locale.getDefault() ,"resources/%s/isml/isml.resource", project.name)
+            task.fileExtension = "isml"
+            task.resourceListFileName = "resources/%s/isml/isml.resource".format(project.name)
             task.sourceSetName = "main"
-            task.include("**/**/*.jsp")
+            task.sourceFiles.from(
+                project.fileTree("%s/%s".format(IsmlExtension.MAIN_TEMPLATE_PATH, project.name)) {
+                    it.include("**/**/*.isml")
+                }
+            )
             task.outputDir.set(
                 project.layout.buildDirectory.dir(
                     "${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/isml").get())
