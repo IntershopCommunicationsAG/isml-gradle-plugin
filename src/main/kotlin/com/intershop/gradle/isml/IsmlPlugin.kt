@@ -24,13 +24,11 @@ import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.language.jvm.tasks.ProcessResources
-import java.util.*
 
 /**
  * Plugin Class implementation.
@@ -102,7 +100,7 @@ open class IsmlPlugin : Plugin<Project> {
             extension.sourceSets.all { ismlSourceSet ->
 
                 val ismlTask = configureISMLTask(this, extension, ismlSourceSet)
-                val jspTask = cnfigureJSPTask(this, extension, ismlSourceSet, ismlTask)
+                val jspTask = configureJSPTask(this, extension, ismlSourceSet, ismlTask)
 
                 ismlSourceJar.configure {
                     it.from(ismlSourceSet.srcDir)
@@ -160,10 +158,10 @@ open class IsmlPlugin : Plugin<Project> {
 
     }
 
-    private fun cnfigureJSPTask(project: Project,
-                                extension: IsmlExtension,
-                                srcSet: IsmlSourceSet,
-                                ismlTask: TaskProvider<Isml2Jsp>): TaskProvider<Jsp2Java> {
+    private fun configureJSPTask(project: Project,
+                                 extension: IsmlExtension,
+                                 srcSet: IsmlSourceSet,
+                                 ismlTask: TaskProvider<Isml2Jsp>): TaskProvider<Jsp2Java> {
         return project.tasks.register(srcSet.getJspTaskName(), Jsp2Java::class.java) { jsptask ->
             jsptask.group = IsmlExtension.ISML_GROUP_NAME
 
@@ -226,11 +224,14 @@ open class IsmlPlugin : Plugin<Project> {
         return project.tasks.register("resourceListISML", ResourceListFileTask::class.java) { task ->
             task.description = "Creates a resource file with a list of ISML templates"
             task.group = IsmlExtension.ISML_GROUP_NAME
-            task.fileExtension = "jsp"
-            task.resourceListFileName =
-                String.format(Locale.getDefault() ,"resources/%s/isml/isml.resource", project.name)
+            task.fileExtension = "isml"
+            task.resourceListFileName = "resources/%s/isml/isml.resource".format(project.name)
             task.sourceSetName = "main"
-            task.include("**/**/*.jsp")
+            task.sourceFiles.from(
+                project.fileTree("%s/%s".format(IsmlExtension.MAIN_TEMPLATE_PATH, project.name)) {
+                    it.include("**/**/*.isml")
+                }
+            )
             task.outputDir.set(
                 project.layout.buildDirectory.dir(
                     "${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/isml").get())

@@ -243,6 +243,40 @@ class CacheabilityKtsSpec extends AbstractIntegrationKotlinSpec {
         gradleVersion << supportedGradleVersions
     }
 
+    def 'resourceListISML task should be cacheable'() {
+        given:
+        copyResources('test_isml')
+
+        buildFile << """
+            ${TASK_BASE_CONFIGURATION}
+        """.stripIndent()
+
+        when: 'First build populates the build cache'
+        def result1 = getPreparedGradleRunner()
+                .withArguments('resourceListISML', '--build-cache', '-s')
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        then: 'Task executes successfully and result is stored in cache'
+        result1.task(':resourceListISML').outcome == SUCCESS
+        new File(testProjectDir,
+                'build/generated/resourcelist/isml/resources/testCartridge/isml/isml.resource').exists()
+
+        when: 'Clean and rebuild using the build cache'
+        def result2 = getPreparedGradleRunner()
+                .withArguments('clean', 'resourceListISML', '--build-cache', '-s')
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        then: 'Task output is restored from cache'
+        result2.task(':resourceListISML').outcome == FROM_CACHE
+        new File(testProjectDir,
+                'build/generated/resourcelist/isml/resources/testCartridge/isml/isml.resource').exists()
+
+        where:
+        gradleVersion << supportedGradleVersions
+    }
+
     private static void copyDirectory(File source, File target) {
         def sourceRoot = source.toPath()
         def targetRoot = target.toPath()
