@@ -156,6 +156,8 @@ open class IsmlPlugin : Plugin<Project> {
             ismltask.inputDir.set(srcSet.srcDir)
             ismltask.outputDir.set( project.layout.buildDirectory.dir("generated/isml/${srcSet.name}") )
             ismltask.encoding.set(extension.encoding)
+
+            ismltask.ismlClasspathfiles.from(project.configurations.named(IsmlExtension.ISMLCOMPILER_CONFIGURATION_NAME))
         }
 
     }
@@ -184,6 +186,20 @@ open class IsmlPlugin : Plugin<Project> {
 
             jsptask.sourceSetName.set(extension.sourceSetName)
             jsptask.dependsOn(ismlTask)
+
+            jsptask.jspClasspathfiles.from(
+                project.configurations.named(IsmlExtension.JASPERCOMPILER_CONFIGURATION_NAME))
+
+            jsptask.classpathfiles.from(
+                extension.jspConfigurationName.flatMap { configName ->
+                    project.configurations.named(configName).map { config ->
+                        config.filter { f ->
+                            f.name.endsWith(".jar") &&
+                            !(f.name.startsWith("logback-classic") && !f.path.contains("wrapper"))
+                        }
+                    }
+                }
+            )
         }
     }
 

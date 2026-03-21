@@ -15,10 +15,9 @@
  */
 package com.intershop.gradle.isml.tasks
 
-import com.intershop.gradle.isml.extension.IsmlExtension
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
@@ -78,7 +77,7 @@ open class Isml2Jsp @Inject constructor(
     /**
      * Encoding configuration for ISML processing.
      *
-     * @property encodingProperty
+     * @property encoding
      */
     @get:Input
     val encoding: Property<String> = objectFactory.property(String::class.java)
@@ -89,11 +88,7 @@ open class Isml2Jsp @Inject constructor(
      * @property ismlClasspathfiles
      */
     @get:Classpath
-    val ismlClasspathfiles: FileCollection by lazy {
-        val returnFiles = project.files()
-        returnFiles.from(project.configurations.findByName(IsmlExtension.ISMLCOMPILER_CONFIGURATION_NAME))
-        returnFiles
-    }
+    val ismlClasspathfiles: ConfigurableFileCollection = objectFactory.fileCollection()
 
     /**
      * This is the task action and processes ISML files.

@@ -17,8 +17,8 @@ package com.intershop.gradle.isml.tasks
 
 import com.intershop.gradle.isml.extension.IsmlExtension
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.model.ObjectFactory
@@ -59,7 +59,7 @@ open class Jsp2Java  @Inject constructor(
     val outputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
-     * Configuration, that is used for the the jsp2java compiilation.
+     * Configuration, that is used for the jsp2java compilation.
      *
      * @property jspConfigurationName
      */
@@ -86,7 +86,7 @@ open class Jsp2Java  @Inject constructor(
     /**
      * Encoding configuration for ISML processing.
      *
-     * @property encodingProperty
+     * @property encoding
      */
     @get:Input
     val encoding: Property<String> = objectFactory.property(String::class.java)
@@ -121,15 +121,10 @@ open class Jsp2Java  @Inject constructor(
     /**
      * Classpath files of the tools configuration.
      *
-     * @property classpathfiles
+     * @property jspClasspathfiles
      */
     @get:Classpath
-    val jspClasspathfiles : FileCollection by lazy {
-        val returnFiles = project.files()
-        // find files of original JASPER and Eclipse compiler
-        returnFiles.from(project.configurations.findByName(IsmlExtension.JASPERCOMPILER_CONFIGURATION_NAME))
-        returnFiles
-    }
+    val jspClasspathfiles: ConfigurableFileCollection = objectFactory.fileCollection()
 
     /**
      * Classpath files of the isml configuration.
@@ -137,15 +132,7 @@ open class Jsp2Java  @Inject constructor(
      * @property classpathfiles
      */
     @get:Classpath
-    val classpathfiles : FileCollection by lazy {
-        val returnFiles = project.files()
-
-        returnFiles.from(project.configurations.findByName(jspConfigurationName.get())?.filter {
-            it.name.endsWith(".jar") && ! (it.name.startsWith("logback-classic") && ! it.path.contains("wrapper"))
-        })
-
-        returnFiles
-    }
+    val classpathfiles: ConfigurableFileCollection = objectFactory.fileCollection()
 
     /**
      * This is the task action and processes ISML files.
@@ -161,9 +148,9 @@ open class Jsp2Java  @Inject constructor(
         webinf.parentFile.mkdirs()
         webinf.writeText(IsmlExtension.WEB_XML_CONTENT)
 
-        val classpathCollection = project.files(outputFolder, classpathfiles)
+        val classpathCollection = (listOf(outputFolder) + classpathfiles.files)
 
-        val runLoggerLevel = when(project.logging.level) {
+        val runLoggerLevel = when(logging.level) {
             LogLevel.INFO -> Level.INFO
             LogLevel.DEBUG -> Level.DEBUG
             LogLevel.ERROR -> Level.ERROR
@@ -185,7 +172,7 @@ open class Jsp2Java  @Inject constructor(
             it.targetCompatibility.set(targetCompatibility)
 
             it.logLevel.set(runLoggerLevel)
-            it.classpath.set(classpathCollection.asPath)
+            it.classpath.set(classpathCollection.joinToString(File.pathSeparator))
         }
 
         workerExecutor.await()
