@@ -24,7 +24,6 @@ import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
@@ -117,6 +116,21 @@ open class IsmlPlugin : Plugin<Project> {
                 }
 
                 this.afterEvaluate {
+                    // Wire classpathfiles now that all plugins (including java) have been applied.
+                    // findByName returns null when runtimeClasspath does not exist (e.g. when the
+                    // java plugin is absent).
+                    val configName = extension.jspConfigurationName.get()
+                    configurations.findByName(configName)?.let { config ->
+                        jspTask.configure { task ->
+                            task.classpathfiles.from(
+                                config.filter { f ->
+                                    f.name.endsWith(".jar") &&
+                                    !(f.name.startsWith("logback-classic") && !f.path.contains("wrapper"))
+                                }
+                            )
+                        }
+                    }
+
                     plugins.withType(JavaBasePlugin::class.java) {
                         extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
                             it.name == SourceSet.MAIN_SOURCE_SET_NAME
@@ -187,19 +201,7 @@ open class IsmlPlugin : Plugin<Project> {
             jsptask.sourceSetName.set(extension.sourceSetName)
             jsptask.dependsOn(ismlTask)
 
-            jsptask.jspClasspathfiles.from(
-                project.configurations.named(IsmlExtension.JASPERCOMPILER_CONFIGURATION_NAME))
-
-            jsptask.classpathfiles.from(
-                extension.jspConfigurationName.flatMap { configName ->
-                    project.configurations.named(configName).map { config ->
-                        config.filter { f ->
-                            f.name.endsWith(".jar") &&
-                            !(f.name.startsWith("logback-classic") && !f.path.contains("wrapper"))
-                        }
-                    }
-                }
-            )
+            jsptask.jspClasspathfiles.from(project.configurations.named(IsmlExtension.JASPERCOMPILER_CONFIGURATION_NAME))
         }
     }
 
