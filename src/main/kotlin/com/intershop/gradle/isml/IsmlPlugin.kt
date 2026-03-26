@@ -115,6 +115,21 @@ open class IsmlPlugin : Plugin<Project> {
                 }
 
                 this.afterEvaluate {
+                    // Wire classpathfiles now that all plugins (including java) have been applied.
+                    // findByName returns null when runtimeClasspath does not exist (e.g. when the
+                    // java plugin is absent).
+                    val configName = extension.jspConfigurationName.get()
+                    configurations.findByName(configName)?.let { config ->
+                        jspTask.configure { task ->
+                            task.classpathfiles.from(
+                                config.filter { f ->
+                                    f.name.endsWith(".jar") &&
+                                    !(f.name.startsWith("logback-classic") && !f.path.contains("wrapper"))
+                                }
+                            )
+                        }
+                    }
+
                     plugins.withType(JavaBasePlugin::class.java) {
                         extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
                             it.name == SourceSet.MAIN_SOURCE_SET_NAME
@@ -154,6 +169,8 @@ open class IsmlPlugin : Plugin<Project> {
             ismltask.inputDir.set(srcSet.srcDir)
             ismltask.outputDir.set( project.layout.buildDirectory.dir("generated/isml/${srcSet.name}") )
             ismltask.encoding.set(extension.encoding)
+
+            ismltask.ismlClasspathfiles.from(project.configurations.named(IsmlExtension.ISMLCOMPILER_CONFIGURATION_NAME))
         }
 
     }
@@ -182,6 +199,8 @@ open class IsmlPlugin : Plugin<Project> {
 
             jsptask.sourceSetName.set(extension.sourceSetName)
             jsptask.dependsOn(ismlTask)
+
+            jsptask.jspClasspathfiles.from(project.configurations.named(IsmlExtension.JASPERCOMPILER_CONFIGURATION_NAME))
         }
     }
 
