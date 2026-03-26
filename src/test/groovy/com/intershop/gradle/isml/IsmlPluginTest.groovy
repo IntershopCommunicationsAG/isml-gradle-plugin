@@ -24,6 +24,19 @@ import org.gradle.api.file.ConfigurableFileCollection
 
 class IsmlPluginTest extends AbstractProjectSpec {
 
+    File fakeIsmlJar
+    File fakeJspJar
+
+    def setup() {
+        fakeIsmlJar = File.createTempFile('fake-isml', '.jar')
+        fakeJspJar = File.createTempFile('fake-jsp', '.jar')
+    }
+
+    def cleanup() {
+        fakeIsmlJar?.delete()
+        fakeJspJar?.delete()
+    }
+
     @Override
     Plugin getPlugin() {
         return new IsmlPlugin()
@@ -94,15 +107,13 @@ class IsmlPluginTest extends AbstractProjectSpec {
 
         // Add a local file directly to the ismlCompiler configuration
         // If the collection is correctly wired, the file must appear when resolved
-        def fakeJar = File.createTempFile('fake-isml', '.jar')
-        fakeJar.deleteOnExit()
-        project.dependencies.add('ismlCompiler', project.files(fakeJar))
+        project.dependencies.add('ismlCompiler', project.files(fakeIsmlJar))
 
         when:
         def task = project.tasks.findByName('isml2jspMain') as Isml2Jsp
 
         then: 'the file added to ismlCompiler is visible through the task classpath'
-        task.ismlClasspathfiles.files.contains(fakeJar)
+        task.ismlClasspathfiles.files.contains(fakeIsmlJar)
     }
 
     def 'Jsp2Java.jspClasspathfiles should be wired to the jspCompiler configuration'() {
@@ -110,14 +121,12 @@ class IsmlPluginTest extends AbstractProjectSpec {
         plugin.apply(project)
 
         // Add a local file directly to the jspCompiler configuration.
-        def fakeJar = File.createTempFile('fake-jsp', '.jar')
-        fakeJar.deleteOnExit()
-        project.dependencies.add('jspCompiler', project.files(fakeJar))
+        project.dependencies.add('jspCompiler', project.files(fakeJspJar))
 
         when:
         def task = project.tasks.findByName('jsp2javaMain') as Jsp2Java
 
         then: 'the file added to jspCompiler is visible through the task classpath'
-        task.jspClasspathfiles.files.contains(fakeJar)
+        task.jspClasspathfiles.files.contains(fakeJspJar)
     }
 }
