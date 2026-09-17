@@ -259,8 +259,8 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
             }
 
             dependencies {
-                implementation(platform("org.apache.tomcat:tomcat-jasper:11.0.11"))
-                implementation(platform("org.slf4j:slf4j-api:1.7.36"))
+                implementation(platform("org.apache.tomcat:tomcat-jasper:11.0.26"))
+                implementation(platform("org.slf4j:slf4j-api:2.0.19"))
             }
 
             repositories {
@@ -304,8 +304,8 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
             }
 
             dependencies {
-                implementation(platform("org.apache.tomcat:tomcat-jasper:11.0.11"))
-                implementation(platform("org.slf4j:slf4j-api:1.7.36"))
+                implementation(platform("org.apache.tomcat:tomcat-jasper:11.0.26"))
+                implementation(platform("org.slf4j:slf4j-api:2.0.19"))
             }
 
             repositories {
@@ -361,8 +361,8 @@ class IsmlPluginKtsSpec extends AbstractIntegrationKotlinSpec {
             }
 
             dependencies {
-                implementation(platform("org.apache.tomcat:tomcat-jasper:11.0.11"))
-                implementation(platform("org.slf4j:slf4j-api:1.7.36"))
+                implementation(platform("org.apache.tomcat:tomcat-jasper:11.0.26"))
+                implementation(platform("org.slf4j:slf4j-api:2.0.19"))
             }
             repositories {
                 mavenCentral()

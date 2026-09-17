@@ -22,7 +22,7 @@ plugins {
     `java-gradle-plugin`
     groovy
 
-    kotlin("jvm") version "2.2.20"
+    kotlin("jvm") version "2.4.20"
 
     // test coverage
     jacoco
@@ -37,13 +37,19 @@ plugins {
     signing
 
     // plugin for documentation
+    // NOTE: 4.0.5 (Aug 2025) is the latest release; its internal 'grolifant' library still calls the
+    // deprecated StartParameter.isConfigurationCacheRequested, which will be removed in Gradle 10.
+    // There is no alternative plugin (the xbib fork is broken on Gradle 9, all other asciidoc
+    // plugins are generators, not renderers). An org.asciidoctor 5.0.0-alpha.1 line exists since
+    // Sep 2025, so a final 5.x is expected to be available by the time Gradle 10 is released -
+    // upgrade to it then.
     id("org.asciidoctor.jvm.convert") version "4.0.5"
 
     // documentation
-    id("org.jetbrains.dokka-javadoc") version "2.0.0"
+    id("org.jetbrains.dokka-javadoc") version "2.2.0"
 
     // plugin for publishing to Gradle Portal
-    id("com.gradle.plugin-publish") version "2.0.0"
+    id("com.gradle.plugin-publish") version "2.2.1"
 
     id("io.gitee.pkmer.pkmerboot-central-publisher") version "1.1.1"
 }
@@ -51,11 +57,11 @@ plugins {
 group = "com.intershop.gradle.isml"
 description = "ISML plugin for Intershop"
 // apply gradle property 'projectVersion' to project.version, default to 'LOCAL'
-val projectVersion : String? by project
+val projectVersion = project.findProperty("projectVersion") as String?
 version = projectVersion ?: "LOCAL"
 
-val sonatypeUsername: String? by project
-val sonatypePassword: String? by project
+val sonatypeUsername = project.findProperty("sonatypeUsername") as String?
+val sonatypePassword = project.findProperty("sonatypePassword") as String?
 
 repositories {
     gradlePluginPortal()
@@ -91,18 +97,37 @@ if (project.version.toString().endsWith("-SNAPSHOT")) {
     status = "snapshot"
 }
 
+/*
+ * Gradle 9.7.1 bundles Groovy 4.0.32 and 'gradleTestKit()' puts the whole Gradle distribution -
+ * including that bundled groovy jar - on the compile classpath. The Groovy plugin's automatic
+ * groovyClasspath inference therefore picks up Groovy 4, which makes Spock's global AST transform
+ * (spock-bom 2.4-groovy-5.0, pulled in via test-gradle-plugin) abort with
+ * IncompatibleGroovyVersionException.
+ *
+ * Fix: use a dedicated, isolated configuration that contains *only* Groovy 5 as the compiler
+ * classpath, so the Groovy compiler and Spock's AST transform both see Groovy 5.
+ */
+val groovyCompiler: Configuration = configurations.create("groovyCompiler") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
+tasks.withType<GroovyCompile>().configureEach {
+    groovyClasspath = groovyCompiler
+}
+
 testing {
     suites.withType<JvmTestSuite> {
         useSpock()
         dependencies {
-            implementation("com.intershop.gradle.test:test-gradle-plugin:6.0.0")
+            implementation("com.intershop.gradle.test:test-gradle-plugin:7.0.0")
             implementation(gradleTestKit())
         }
 
         targets {
             all {
                 testTask.configure {
-                    systemProperty("intershop.gradle.versions", "8.5,8.10.2,9.1.0")
+                    systemProperty("intershop.gradle.versions", "8.5,8.10.2,9.1.0,9.7.1")
                     testLogging {
                         showStandardStreams = true
                     }
@@ -274,12 +299,35 @@ signing {
     sign(publishing.publications["intershopMvn"])
 }
 
+// dependency versions
+val groovyVersion = "5.1.2"
+// NOTE: these two must stay in sync with the defaults in
+// src/main/kotlin/com/intershop/gradle/isml/extension/IsmlExtension.kt
+// (JSP_COMPILER_VERSION / ISML_COMPILER_VERSION) - they are the versions the plugin resolves at
+// runtime when a consuming project does not override them.
+val tomcatVersion = "11.0.26"
+val ismlParserVersion = "14.0.0"
+
 dependencies {
-    implementation(gradleKotlinDsl())
-    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:6.2.0")
+    // NOTE: do NOT declare implementation(gradleApi()) / implementation(gradleKotlinDsl()) here.
+    // The 'java-gradle-plugin' plugin already provides the Gradle API for compilation. Declaring them
+    // as 'implementation' additionally puts the *current* Gradle distribution jars
+    // (gradle-api-<version>.jar, <dist>/lib/*) on the runtime classpath, which TestKit then injects
+    // into every test build via withPluginClasspath(). Older Gradle versions under test (8.5, 8.10.2)
+    // cannot instrument those 9.x jars and fail with
+    // "Failed to create Jar file ... gradle-api-9.7.1.jar".
 
-    compileOnly("org.apache.tomcat:tomcat-jasper:11.0.11")
-    compileOnly("org.apache.tomcat:tomcat-api:11.0.11")
-    compileOnly("com.intershop.icm:isml-parser:13.0.0")
+    implementation("com.intershop.gradle.resourcelist:resourcelist-gradle-plugin:7.0.0")
 
+    compileOnly("org.apache.tomcat:tomcat-jasper:$tomcatVersion")
+    compileOnly("org.apache.tomcat:tomcat-api:$tomcatVersion")
+    compileOnly("com.intershop.icm:isml-parser:$ismlParserVersion")
+
+    // isolated Groovy compiler classpath - see the groovyCompiler configuration above
+    groovyCompiler(platform("org.apache.groovy:groovy-bom:$groovyVersion"))
+    groovyCompiler("org.apache.groovy:groovy")
+    groovyCompiler("org.apache.groovy:groovy-ant")
+    groovyCompiler("org.apache.groovy:groovy-json")
+    groovyCompiler("org.apache.groovy:groovy-xml")
+    groovyCompiler("org.apache.groovy:groovy-templates")
 }
