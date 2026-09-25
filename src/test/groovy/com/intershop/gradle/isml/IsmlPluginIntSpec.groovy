@@ -114,8 +114,8 @@ class IsmlPluginIntSpec extends AbstractIntegrationGroovySpec {
             }
 
             dependencies {
-                implementation platform('org.apache.tomcat:tomcat-jasper:9.0.56')
-                implementation platform('org.slf4j:slf4j-api:1.7.32')
+                implementation platform('org.apache.tomcat:tomcat-jasper:11.0.26')
+                implementation platform('org.slf4j:slf4j-api:2.0.19')
             }
 
             repositories {
